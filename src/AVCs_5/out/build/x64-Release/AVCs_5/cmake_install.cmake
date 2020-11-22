@@ -1,8 +1,8 @@
-# Install script for directory: C:/Users/drick/source/repos/AVCs_5/AVCs_5
+# Install script for directory: C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "C:/Users/drick/source/repos/AVCs_5/out/install/x64-Release")
+  set(CMAKE_INSTALL_PREFIX "C:/Users/drick/Source/Repos/drick0230/AVCs/src/AVCs_5/out/install/x64-Release")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -34,7 +34,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/cmake_install.cmake")
+  include("C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/cmake_install.cmake")
 
 endif()
 

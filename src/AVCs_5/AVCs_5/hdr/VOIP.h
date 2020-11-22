@@ -1,5 +1,6 @@
 #pragma once
 #include <SFML/Network.hpp>
+#include <SFML/Audio.hpp>
 #include <iostream>
 
 class VOIP {
@@ -7,10 +8,13 @@ private:
 
 public:
 	// Variables
+	sf::SoundBuffer buffer;
+	sf::Sound sound;
+
 	sf::UdpSocket socket;
 
-	unsigned short roomSize;
-	unsigned short maxReceivedPacket;
+	//unsigned short roomSize;
+	//unsigned short maxReceivedPacket;
 
 	sf::IpAddress myIp;
 	unsigned short myPort;
@@ -18,7 +22,7 @@ public:
 	std::vector<sf::IpAddress> theirsIp;
 	std::vector<unsigned int> theirsPort;
 
-	sf::Packet** theirsPacket;
+	std::vector<std::vector<sf::Packet>> theirsPacket;
 
 	inline int nbUser() { return theirsIp.size(); }
 
@@ -36,6 +40,7 @@ public:
 	void Broadcast(sf::Packet*);
 	void Receive();
 	void Treat();
+	void TreatAudio();
 
 	void Update();
 

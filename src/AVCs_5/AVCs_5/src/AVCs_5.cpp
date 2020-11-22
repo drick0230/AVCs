@@ -57,21 +57,40 @@ int main()
                 voip.Connect(splitCommand[1], myParse<unsigned int>(splitCommand[2]));
             }
             else if (splitCommand[0] == "send") {
+                recorder.stop();
+
+                sf::Uint64 _sampleCount = buffer.getSampleCount();
+                unsigned int _channelCount = buffer.getChannelCount();
+                unsigned int _sampleRate = buffer.getSampleRate();
+
                 sf::Packet _packet;
-                _packet << "Hello VOIP!!!";
+
+                _packet << _sampleCount;
+                _packet << _channelCount;
+                _packet << _sampleRate;
+
+                for (unsigned int i = 0; i < buffer.getSampleCount(); i++)
+                {
+                    sf::Int16 _sample = buffer.getSamples()[i];
+                    _packet << _sample;
+                }
+
+
                 voip.Broadcast(&_packet);
             }
             else if (splitCommand[0] == "receive") {
                 voip.Receive();
-                voip.Treat();
+                voip.TreatAudio();
             }
             else if (splitCommand[0] == "record" && sf::SoundBufferRecorder::isAvailable() && !isRecording) {
                 recorder.start();
                 isRecording = true;
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                recorder.stop();
+                isRecording = false;
             }
             else if (splitCommand[0] == "stop" && sf::SoundBufferRecorder::isAvailable() && isRecording) {
                 recorder.stop();
-                sound.setBuffer(buffer);
                 isRecording = false;
             }
         }

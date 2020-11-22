@@ -2,43 +2,28 @@
 
 // Constructors
 VOIP::VOIP(std::string _myIp, unsigned short _myPort) : myIp(_myIp), myPort(_myPort){
-	roomSize = 10;
-	maxReceivedPacket = 10;
+	//roomSize = 10;
+	//maxReceivedPacket = 10;
 
 	// Initialize theirsIp and theirsPort at length of maxUsers and their elements at '\0'
 	// Initialise theirsPackets at length of [maxUsers][maxPackets] and clear his elements 
-	unsigned short _maxUsers = roomSize + 1;
-	unsigned short _maxReceivedPacket = maxReceivedPacket + 1;
+	//unsigned short _maxUsers = roomSize + 1;
+	//unsigned short _maxReceivedPacket = maxReceivedPacket + 1;
 
 	theirsIp.clear();
 	theirsPort.clear();
-	theirsPacket = new sf::Packet * [_maxUsers];
-	for (unsigned short i = 0; i < _maxUsers; i++)
-	{
-	    theirsPacket[i] = new sf::Packet[_maxReceivedPacket];
-		for (unsigned short i2 = 0; i2 < _maxReceivedPacket; i2++)
-			theirsPacket[i][i2].clear();
-	}
+	theirsPacket.clear();
 
 	Host();
 }
 
 // Destructors
-VOIP::~VOIP() {
-	unsigned short _maxUsers = roomSize + 1;
-	unsigned short _maxReceivedPacket = maxReceivedPacket + 1;
-
-	for (unsigned short i = 0; i < _maxUsers; i++)
-	{
-		delete theirsPacket[i];
-	}
-
-	delete theirsPacket;
-}
+VOIP::~VOIP() {}
 
 void VOIP::Connect(sf::IpAddress _hisIp, unsigned int _hisPort) {
 	theirsIp.push_back(_hisIp);
 	theirsPort.push_back(_hisPort);
+	theirsPacket.emplace_back();
 }
 
 void VOIP::Host() {
@@ -69,9 +54,7 @@ void VOIP::Receive() {
 		else if (_sendIp == theirsIp[_i] && _sendPort == theirsPort[_i]) {
 			// If received something, add the packet at end of theirsPacket
 			if (_receivedPacket.getDataSize() > 0) {
-				unsigned short _lastElement = GetLastElement(theirsPacket[_i]);
-
-				theirsPacket[_i][_lastElement] = _receivedPacket;
+				theirsPacket[_i].push_back(_receivedPacket);
 			}
 		}
 		else {
@@ -83,8 +66,6 @@ void VOIP::Receive() {
 }
 
 void VOIP::Treat() {
-	sf::Packet _receivedPacket;
-
 	// Receive _packet from all connected users (Theirs)
 	for (unsigned int _i = 0; _i < nbUser(); _i++) {
 		unsigned short _i2 = 0;
@@ -92,6 +73,40 @@ void VOIP::Treat() {
 			std::string _msg;
 			theirsPacket[_i][_i2] >> _msg;
 			std::cout << _msg << '\n';
+			theirsPacket[_i].erase(theirsPacket[_i].begin() + _i2);
+		}
+	}
+}
+
+void VOIP::TreatAudio() {
+	// Receive _packet from all connected users (Theirs)
+	for (unsigned int _i = 0; _i < nbUser(); _i++) {
+		for (unsigned int _i2 = 0; _i2 < theirsPacket[_i].size(); _i2++)
+		{
+			sf::Uint64 _sampleCount = 0;
+			unsigned int _channelCount = 0;
+			unsigned int _sampleRate = 0;
+
+			theirsPacket[_i][_i2] >> _sampleCount;
+			theirsPacket[_i][_i2] >> _channelCount;
+			theirsPacket[_i][_i2] >> _sampleRate;
+
+			std::vector<sf::Int16> _samples(_sampleCount);
+
+			for (unsigned int i = 0; i < _sampleCount; i++)
+			{
+				sf::Int16 _sample;
+				theirsPacket[_i][_i2] >> _sample;
+				_samples[i] = _sample;
+				//_samples.push_back(_sample);
+			}
+
+			std::cout << "_sampleCount <" << _sampleCount << "> _channelCount <" << _channelCount << "> _sampleRate <" << _sampleRate << "> \n";
+			buffer.loadFromSamples(&_samples[0], _sampleCount, _channelCount, _sampleRate);
+			sound.setBuffer(buffer);
+			sound.play();
+
+			theirsPacket[_i].erase(theirsPacket[_i].begin() + _i2);
 		}
 	}
 }
