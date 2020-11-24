@@ -2,14 +2,6 @@
 
 // Constructors
 VOIP::VOIP(std::string _myIp, unsigned short _myPort) : myIp(_myIp), myPort(_myPort){
-	//roomSize = 10;
-	//maxReceivedPacket = 10;
-
-	// Initialize theirsIp and theirsPort at length of maxUsers and their elements at '\0'
-	// Initialise theirsPackets at length of [maxUsers][maxPackets] and clear his elements 
-	//unsigned short _maxUsers = roomSize + 1;
-	//unsigned short _maxReceivedPacket = maxReceivedPacket + 1;
-
 	theirsIp.clear();
 	theirsPort.clear();
 	theirsPacket.clear();
@@ -37,6 +29,28 @@ void VOIP::Broadcast(sf::Packet* _packet) {
 			std::cout << "Error at <void VOIP::Broadcast(sf::Packet* _packet)> with user" << theirsIp[_i] << ' ' << theirsPort[_i] << '\n';
 		}
 	}
+}
+
+void VOIP::BroadcastVoice() {
+	const sf::SoundBuffer& _soundBuffer = voiceRecorder.getBuffer();
+
+	sf::Uint64 _sampleCount = _soundBuffer.getSampleCount();
+	unsigned int _channelCount = _soundBuffer.getChannelCount();
+	unsigned int _sampleRate = _soundBuffer.getSampleRate();
+
+	sf::Packet _packet;
+
+	_packet << _sampleCount;
+	_packet << _channelCount;
+	_packet << _sampleRate;
+
+	for (unsigned int i = 0; i < _soundBuffer.getSampleCount(); i++)
+	{
+		sf::Int16 _sample = _soundBuffer.getSamples()[i];
+		_packet << _sample;
+	}
+
+	Broadcast(&_packet);
 }
 
 void VOIP::Receive() {
@@ -102,8 +116,8 @@ void VOIP::TreatAudio() {
 			}
 
 			std::cout << "_sampleCount <" << _sampleCount << "> _channelCount <" << _channelCount << "> _sampleRate <" << _sampleRate << "> \n";
-			buffer.loadFromSamples(&_samples[0], _sampleCount, _channelCount, _sampleRate);
-			sound.setBuffer(buffer);
+			soundBuffer.loadFromSamples(&_samples[0], _sampleCount, _channelCount, _sampleRate);
+			sound.setBuffer(soundBuffer);
 			sound.play();
 
 			theirsPacket[_i].erase(theirsPacket[_i].begin() + _i2);
@@ -113,14 +127,25 @@ void VOIP::TreatAudio() {
 
 void VOIP::Update() {
 	// Broadcast my voice to connected users (Theirs)
-	sf::Packet _packet;
-	_packet << "Hello VOIP!!!";
-	Broadcast(&_packet);
+	Send();
+
 
 	// Receive connected users' (Theirs) voice
 	Receive();
 
 	// Treat connected users' (Theirs) voice
+	TreatAudio();
+}
+
+void VOIP::Record() {
+	voiceRecorder.start();
+	std::this_thread::sleep_for(std::chrono::milliseconds(500));
+	voiceRecorder.stop();
+}
+
+void VOIP::Send() {
+	Record();
+	BroadcastVoice();
 }
 
 unsigned short VOIP::GetLastElement(sf::IpAddress* _ipAdress) {

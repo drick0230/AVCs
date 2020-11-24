@@ -2,13 +2,17 @@
 #include <SFML/Network.hpp>
 #include <SFML/Audio.hpp>
 #include <iostream>
+#include <thread>			// std::this_thread::sleep_for
+#include <chrono>			// std::chrono::seconds
 
 class VOIP {
 private:
 
 public:
 	// Variables
-	sf::SoundBuffer buffer;
+	// Audio Recording
+	sf::SoundBufferRecorder voiceRecorder;
+	sf::SoundBuffer soundBuffer;
 	sf::Sound sound;
 
 	sf::UdpSocket socket;
@@ -26,7 +30,6 @@ public:
 
 	inline int nbUser() { return theirsIp.size(); }
 
-
 	// Constructors
 	//VOIP();
 	VOIP(std::string, unsigned short);
@@ -37,12 +40,18 @@ public:
 	// Functions
 	void Connect(sf::IpAddress, unsigned int);
 	void Host();
+
 	void Broadcast(sf::Packet*);
+	void BroadcastVoice();
+
 	void Receive();
+
 	void Treat();
 	void TreatAudio();
 
 	void Update();
+	void Record();
+	void Send();
 
 	unsigned short GetLastElement(sf::IpAddress*);
 	unsigned short GetLastElement(sf::Packet*);
