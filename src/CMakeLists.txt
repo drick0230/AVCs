@@ -13,4 +13,5 @@ set(BUILD_SHARED_LIBS FALSE)
 
 # Incluez les sous-projets.
 add_subdirectory ("SFML-2.5.1")
-add_subdirectory ("AVCs")
+add_subdirectory ("Client")
+add_subdirectory ("Server")
