@@ -8,7 +8,7 @@
 #include <chrono>			// std::chrono::seconds
 #include "VOIP.h"
 
-void RecordPlaybackAudio();
+void ConsoleIO(bool*, bool*, bool*, bool*, VOIP*);
 
 template <class T>
 T myParse(std::string);

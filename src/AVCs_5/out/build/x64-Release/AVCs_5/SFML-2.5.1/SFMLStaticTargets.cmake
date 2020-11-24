@@ -50,7 +50,7 @@ add_library(sfml-system STATIC IMPORTED)
 
 set_target_properties(sfml-system PROPERTIES
   INTERFACE_COMPILE_DEFINITIONS "SFML_STATIC"
-  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/include"
+  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/include"
   INTERFACE_LINK_LIBRARIES "\$<LINK_ONLY:winmm>"
 )
 
@@ -59,7 +59,7 @@ add_library(sfml-main STATIC IMPORTED)
 
 set_target_properties(sfml-main PROPERTIES
   INTERFACE_COMPILE_DEFINITIONS "SFML_STATIC"
-  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/include"
+  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/include"
 )
 
 # Create imported target sfml-window
@@ -67,7 +67,7 @@ add_library(sfml-window STATIC IMPORTED)
 
 set_target_properties(sfml-window PROPERTIES
   INTERFACE_COMPILE_DEFINITIONS "SFML_STATIC"
-  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/include"
+  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/include"
   INTERFACE_LINK_LIBRARIES "sfml-system;\$<LINK_ONLY:OpenGL>;\$<LINK_ONLY:winmm>;\$<LINK_ONLY:gdi32>"
 )
 
@@ -83,7 +83,7 @@ add_library(sfml-network STATIC IMPORTED)
 
 set_target_properties(sfml-network PROPERTIES
   INTERFACE_COMPILE_DEFINITIONS "SFML_STATIC"
-  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/include"
+  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/include"
   INTERFACE_LINK_LIBRARIES "sfml-system;\$<LINK_ONLY:ws2_32>"
 )
 
@@ -92,7 +92,7 @@ add_library(sfml-graphics STATIC IMPORTED)
 
 set_target_properties(sfml-graphics PROPERTIES
   INTERFACE_COMPILE_DEFINITIONS "SFML_STATIC"
-  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/include"
+  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/include"
   INTERFACE_LINK_LIBRARIES "sfml-window;\$<LINK_ONLY:OpenGL>;\$<LINK_ONLY:Freetype>"
 )
 
@@ -100,16 +100,16 @@ set_target_properties(sfml-graphics PROPERTIES
 add_library(Freetype INTERFACE IMPORTED)
 
 set_target_properties(Freetype PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/headers/freetype2"
-  INTERFACE_LINK_LIBRARIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/freetype.lib"
+  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/headers/freetype2"
+  INTERFACE_LINK_LIBRARIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/freetype.lib"
 )
 
 # Create imported target OpenAL
 add_library(OpenAL INTERFACE IMPORTED)
 
 set_target_properties(OpenAL PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/headers/AL"
-  INTERFACE_LINK_LIBRARIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/openal32.lib"
+  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/headers/AL"
+  INTERFACE_LINK_LIBRARIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/openal32.lib"
 )
 
 # Create imported target Vorbis
@@ -117,8 +117,8 @@ add_library(Vorbis INTERFACE IMPORTED)
 
 set_target_properties(Vorbis PROPERTIES
   INTERFACE_COMPILE_DEFINITIONS "OV_EXCLUDE_STATIC_CALLBACKS"
-  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/headers;C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/headers"
-  INTERFACE_LINK_LIBRARIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/vorbisenc.lib;C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/vorbisfile.lib;C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/vorbis.lib;C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/ogg.lib"
+  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/headers;C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/headers"
+  INTERFACE_LINK_LIBRARIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/vorbisenc.lib;C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/vorbisfile.lib;C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/vorbis.lib;C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/ogg.lib"
 )
 
 # Create imported target FLAC
@@ -126,8 +126,8 @@ add_library(FLAC INTERFACE IMPORTED)
 
 set_target_properties(FLAC PROPERTIES
   INTERFACE_COMPILE_DEFINITIONS "FLAC__NO_DLL"
-  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/headers"
-  INTERFACE_LINK_LIBRARIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/flac.lib"
+  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/headers"
+  INTERFACE_LINK_LIBRARIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/extlibs/libs-msvc-universal/x64/flac.lib"
 )
 
 # Create imported target sfml-audio
@@ -135,7 +135,7 @@ add_library(sfml-audio STATIC IMPORTED)
 
 set_target_properties(sfml-audio PROPERTIES
   INTERFACE_COMPILE_DEFINITIONS "SFML_STATIC"
-  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/include"
+  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/include"
   INTERFACE_LINK_LIBRARIES "\$<LINK_ONLY:OpenAL>;sfml-system;\$<LINK_ONLY:Vorbis>;\$<LINK_ONLY:FLAC>"
 )
 
@@ -143,42 +143,42 @@ set_target_properties(sfml-audio PROPERTIES
 set_property(TARGET sfml-system APPEND PROPERTY IMPORTED_CONFIGURATIONS RELWITHDEBINFO)
 set_target_properties(sfml-system PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_RELWITHDEBINFO "CXX"
-  IMPORTED_LOCATION_RELWITHDEBINFO "C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/lib/sfml-system-s.lib"
+  IMPORTED_LOCATION_RELWITHDEBINFO "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/lib/sfml-system-s.lib"
   )
 
 # Import target "sfml-main" for configuration "RelWithDebInfo"
 set_property(TARGET sfml-main APPEND PROPERTY IMPORTED_CONFIGURATIONS RELWITHDEBINFO)
 set_target_properties(sfml-main PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_RELWITHDEBINFO "CXX"
-  IMPORTED_LOCATION_RELWITHDEBINFO "C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/lib/sfml-main.lib"
+  IMPORTED_LOCATION_RELWITHDEBINFO "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/lib/sfml-main.lib"
   )
 
 # Import target "sfml-window" for configuration "RelWithDebInfo"
 set_property(TARGET sfml-window APPEND PROPERTY IMPORTED_CONFIGURATIONS RELWITHDEBINFO)
 set_target_properties(sfml-window PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_RELWITHDEBINFO "CXX"
-  IMPORTED_LOCATION_RELWITHDEBINFO "C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/lib/sfml-window-s.lib"
+  IMPORTED_LOCATION_RELWITHDEBINFO "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/lib/sfml-window-s.lib"
   )
 
 # Import target "sfml-network" for configuration "RelWithDebInfo"
 set_property(TARGET sfml-network APPEND PROPERTY IMPORTED_CONFIGURATIONS RELWITHDEBINFO)
 set_target_properties(sfml-network PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_RELWITHDEBINFO "CXX"
-  IMPORTED_LOCATION_RELWITHDEBINFO "C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/lib/sfml-network-s.lib"
+  IMPORTED_LOCATION_RELWITHDEBINFO "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/lib/sfml-network-s.lib"
   )
 
 # Import target "sfml-graphics" for configuration "RelWithDebInfo"
 set_property(TARGET sfml-graphics APPEND PROPERTY IMPORTED_CONFIGURATIONS RELWITHDEBINFO)
 set_target_properties(sfml-graphics PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_RELWITHDEBINFO "CXX"
-  IMPORTED_LOCATION_RELWITHDEBINFO "C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/lib/sfml-graphics-s.lib"
+  IMPORTED_LOCATION_RELWITHDEBINFO "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/lib/sfml-graphics-s.lib"
   )
 
 # Import target "sfml-audio" for configuration "RelWithDebInfo"
 set_property(TARGET sfml-audio APPEND PROPERTY IMPORTED_CONFIGURATIONS RELWITHDEBINFO)
 set_target_properties(sfml-audio PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_RELWITHDEBINFO "CXX"
-  IMPORTED_LOCATION_RELWITHDEBINFO "C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/lib/sfml-audio-s.lib"
+  IMPORTED_LOCATION_RELWITHDEBINFO "C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/lib/sfml-audio-s.lib"
   )
 
 # This file does not depend on other imported targets which have

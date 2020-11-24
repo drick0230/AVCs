@@ -39,7 +39,7 @@ include CMakeFiles\rules.ninja
 # Utility command for install/local
 
 build CMakeFiles\install\local.util: CUSTOM_COMMAND all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
   DESC = Installing only the local directory...
   pool = console
   restat = 1
@@ -51,7 +51,7 @@ build install\local: phony CMakeFiles\install\local.util
 # Utility command for install
 
 build CMakeFiles\install.util: CUSTOM_COMMAND all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
   DESC = Install the project...
   pool = console
   restat = 1
@@ -63,7 +63,7 @@ build install: phony CMakeFiles\install.util
 # Utility command for edit_cache
 
 build CMakeFiles\edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
   DESC = No interactive CMake dialog available...
   restat = 1
 
@@ -74,7 +74,7 @@ build edit_cache: phony CMakeFiles\edit_cache.util
 # Utility command for rebuild_cache
 
 build CMakeFiles\rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\AVCs_5 -BC:\Users\drick\source\repos\AVCs_5\out\build\x64-Release"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5 -BC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -89,7 +89,7 @@ build list_install_components: phony
 
 # =============================================================================
 # Write statements declared in CMakeLists.txt:
-# C:/Users/drick/source/repos/AVCs_5/CMakeLists.txt
+# C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/CMakeLists.txt
 # =============================================================================
 
 # =============================================================================
@@ -144,7 +144,7 @@ build AVCs_5\AVCs_5.exe: CXX_EXECUTABLE_LINKER__AVCs_5_RelWithDebInfo AVCs_5\CMa
 # Utility command for install/local
 
 build AVCs_5\CMakeFiles\install\local.util: CUSTOM_COMMAND AVCs_5\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
   DESC = Installing only the local directory...
   pool = console
   restat = 1
@@ -156,7 +156,7 @@ build AVCs_5\install\local: phony AVCs_5\CMakeFiles\install\local.util
 # Utility command for install
 
 build AVCs_5\CMakeFiles\install.util: CUSTOM_COMMAND AVCs_5\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
   DESC = Install the project...
   pool = console
   restat = 1
@@ -168,7 +168,7 @@ build AVCs_5\install: phony AVCs_5\CMakeFiles\install.util
 # Utility command for edit_cache
 
 build AVCs_5\CMakeFiles\edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
   DESC = No interactive CMake dialog available...
   restat = 1
 
@@ -179,7 +179,7 @@ build AVCs_5\edit_cache: phony AVCs_5\CMakeFiles\edit_cache.util
 # Utility command for rebuild_cache
 
 build AVCs_5\CMakeFiles\rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\AVCs_5 -BC:\Users\drick\source\repos\AVCs_5\out\build\x64-Release"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5 -BC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -194,7 +194,7 @@ build AVCs_5\list_install_components: phony
 
 # =============================================================================
 # Write statements declared in CMakeLists.txt:
-# C:/Users/drick/source/repos/AVCs_5/AVCs_5/CMakeLists.txt
+# C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/CMakeLists.txt
 # =============================================================================
 
 
@@ -202,7 +202,7 @@ build AVCs_5\list_install_components: phony
 # Utility command for install/local
 
 build AVCs_5\SFML-2.5.1\CMakeFiles\install\local.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
   DESC = Installing only the local directory...
   pool = console
   restat = 1
@@ -214,7 +214,7 @@ build AVCs_5\SFML-2.5.1\install\local: phony AVCs_5\SFML-2.5.1\CMakeFiles\instal
 # Utility command for install
 
 build AVCs_5\SFML-2.5.1\CMakeFiles\install.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
   DESC = Install the project...
   pool = console
   restat = 1
@@ -226,7 +226,7 @@ build AVCs_5\SFML-2.5.1\install: phony AVCs_5\SFML-2.5.1\CMakeFiles\install.util
 # Utility command for edit_cache
 
 build AVCs_5\SFML-2.5.1\CMakeFiles\edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
   DESC = No interactive CMake dialog available...
   restat = 1
 
@@ -237,7 +237,7 @@ build AVCs_5\SFML-2.5.1\edit_cache: phony AVCs_5\SFML-2.5.1\CMakeFiles\edit_cach
 # Utility command for rebuild_cache
 
 build AVCs_5\SFML-2.5.1\CMakeFiles\rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\AVCs_5 -BC:\Users\drick\source\repos\AVCs_5\out\build\x64-Release"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1 && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5 -BC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -252,7 +252,7 @@ build AVCs_5\SFML-2.5.1\list_install_components: phony
 
 # =============================================================================
 # Write statements declared in CMakeLists.txt:
-# C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/CMakeLists.txt
+# C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/CMakeLists.txt
 # =============================================================================
 
 
@@ -260,7 +260,7 @@ build AVCs_5\SFML-2.5.1\list_install_components: phony
 # Utility command for install/local
 
 build AVCs_5\SFML-2.5.1\src\SFML\CMakeFiles\install\local.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
   DESC = Installing only the local directory...
   pool = console
   restat = 1
@@ -272,7 +272,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\install\local: phony AVCs_5\SFML-2.5.1\src\SFML
 # Utility command for install
 
 build AVCs_5\SFML-2.5.1\src\SFML\CMakeFiles\install.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
   DESC = Install the project...
   pool = console
   restat = 1
@@ -284,7 +284,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\install: phony AVCs_5\SFML-2.5.1\src\SFML\CMake
 # Utility command for edit_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\CMakeFiles\edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
   DESC = No interactive CMake dialog available...
   restat = 1
 
@@ -295,7 +295,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\edit_cache: phony AVCs_5\SFML-2.5.1\src\SFML\CM
 # Utility command for rebuild_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\CMakeFiles\rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\AVCs_5 -BC:\Users\drick\source\repos\AVCs_5\out\build\x64-Release"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5 -BC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -310,7 +310,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\list_install_components: phony
 
 # =============================================================================
 # Write statements declared in CMakeLists.txt:
-# C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/src/SFML/CMakeLists.txt
+# C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/src/SFML/CMakeLists.txt
 # =============================================================================
 
 # =============================================================================
@@ -489,7 +489,7 @@ build AVCs_5\SFML-2.5.1\lib\sfml-system-s.lib: CXX_STATIC_LIBRARY_LINKER__sfml-s
 # Utility command for install/local
 
 build AVCs_5\SFML-2.5.1\src\SFML\System\CMakeFiles\install\local.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\System\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\System && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\System && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
   DESC = Installing only the local directory...
   pool = console
   restat = 1
@@ -501,7 +501,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\System\install\local: phony AVCs_5\SFML-2.5.1\s
 # Utility command for install
 
 build AVCs_5\SFML-2.5.1\src\SFML\System\CMakeFiles\install.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\System\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\System && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\System && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
   DESC = Install the project...
   pool = console
   restat = 1
@@ -513,7 +513,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\System\install: phony AVCs_5\SFML-2.5.1\src\SFM
 # Utility command for edit_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\System\CMakeFiles\edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\System && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\System && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
   DESC = No interactive CMake dialog available...
   restat = 1
 
@@ -524,7 +524,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\System\edit_cache: phony AVCs_5\SFML-2.5.1\src\
 # Utility command for rebuild_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\System\CMakeFiles\rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\System && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\AVCs_5 -BC:\Users\drick\source\repos\AVCs_5\out\build\x64-Release"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\System && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5 -BC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -539,7 +539,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\System\list_install_components: phony
 
 # =============================================================================
 # Write statements declared in CMakeLists.txt:
-# C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/src/SFML/CMakeLists.txt
+# C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/src/SFML/CMakeLists.txt
 # =============================================================================
 
 
@@ -547,7 +547,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\System\list_install_components: phony
 # Utility command for rebuild_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\Main\CMakeFiles\rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Main && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\AVCs_5 -BC:\Users\drick\source\repos\AVCs_5\out\build\x64-Release"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Main && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5 -BC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -595,7 +595,7 @@ build AVCs_5\SFML-2.5.1\lib\sfml-main.lib: CXX_STATIC_LIBRARY_LINKER__sfml-main_
 # Utility command for install/local
 
 build AVCs_5\SFML-2.5.1\src\SFML\Main\CMakeFiles\install\local.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\Main\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Main && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Main && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
   DESC = Installing only the local directory...
   pool = console
   restat = 1
@@ -607,7 +607,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Main\install\local: phony AVCs_5\SFML-2.5.1\src
 # Utility command for install
 
 build AVCs_5\SFML-2.5.1\src\SFML\Main\CMakeFiles\install.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\Main\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Main && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Main && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
   DESC = Install the project...
   pool = console
   restat = 1
@@ -619,7 +619,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Main\install: phony AVCs_5\SFML-2.5.1\src\SFML\
 # Utility command for edit_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\Main\CMakeFiles\edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Main && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Main && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
   DESC = No interactive CMake dialog available...
   restat = 1
 
@@ -633,7 +633,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Main\list_install_components: phony
 
 # =============================================================================
 # Write statements declared in CMakeLists.txt:
-# C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/src/SFML/CMakeLists.txt
+# C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/src/SFML/CMakeLists.txt
 # =============================================================================
 
 # =============================================================================
@@ -884,7 +884,7 @@ build AVCs_5\SFML-2.5.1\lib\sfml-window-s.lib: CXX_STATIC_LIBRARY_LINKER__sfml-w
 # Utility command for install/local
 
 build AVCs_5\SFML-2.5.1\src\SFML\Window\CMakeFiles\install\local.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\Window\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Window && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Window && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
   DESC = Installing only the local directory...
   pool = console
   restat = 1
@@ -896,7 +896,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Window\install\local: phony AVCs_5\SFML-2.5.1\s
 # Utility command for install
 
 build AVCs_5\SFML-2.5.1\src\SFML\Window\CMakeFiles\install.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\Window\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Window && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Window && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
   DESC = Install the project...
   pool = console
   restat = 1
@@ -908,7 +908,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Window\install: phony AVCs_5\SFML-2.5.1\src\SFM
 # Utility command for edit_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\Window\CMakeFiles\edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Window && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Window && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
   DESC = No interactive CMake dialog available...
   restat = 1
 
@@ -919,7 +919,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Window\edit_cache: phony AVCs_5\SFML-2.5.1\src\
 # Utility command for rebuild_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\Window\CMakeFiles\rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Window && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\AVCs_5 -BC:\Users\drick\source\repos\AVCs_5\out\build\x64-Release"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Window && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5 -BC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -934,7 +934,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Window\list_install_components: phony
 
 # =============================================================================
 # Write statements declared in CMakeLists.txt:
-# C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/src/SFML/CMakeLists.txt
+# C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/src/SFML/CMakeLists.txt
 # =============================================================================
 
 
@@ -1065,7 +1065,7 @@ build AVCs_5\SFML-2.5.1\lib\sfml-network-s.lib: CXX_STATIC_LIBRARY_LINKER__sfml-
 # Utility command for install/local
 
 build AVCs_5\SFML-2.5.1\src\SFML\Network\CMakeFiles\install\local.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\Network\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Network && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Network && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
   DESC = Installing only the local directory...
   pool = console
   restat = 1
@@ -1077,7 +1077,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Network\install\local: phony AVCs_5\SFML-2.5.1\
 # Utility command for install
 
 build AVCs_5\SFML-2.5.1\src\SFML\Network\CMakeFiles\install.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\Network\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Network && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Network && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
   DESC = Install the project...
   pool = console
   restat = 1
@@ -1089,7 +1089,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Network\install: phony AVCs_5\SFML-2.5.1\src\SF
 # Utility command for edit_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\Network\CMakeFiles\edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Network && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Network && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
   DESC = No interactive CMake dialog available...
   restat = 1
 
@@ -1100,7 +1100,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Network\edit_cache: phony AVCs_5\SFML-2.5.1\src
 # Utility command for rebuild_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\Network\CMakeFiles\rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Network && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\AVCs_5 -BC:\Users\drick\source\repos\AVCs_5\out\build\x64-Release"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Network && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5 -BC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -1109,7 +1109,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Network\rebuild_cache: phony AVCs_5\SFML-2.5.1\
 
 # =============================================================================
 # Write statements declared in CMakeLists.txt:
-# C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/src/SFML/CMakeLists.txt
+# C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/src/SFML/CMakeLists.txt
 # =============================================================================
 
 
@@ -1117,7 +1117,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Network\rebuild_cache: phony AVCs_5\SFML-2.5.1\
 # Utility command for rebuild_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\Graphics\CMakeFiles\rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Graphics && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\AVCs_5 -BC:\Users\drick\source\repos\AVCs_5\out\build\x64-Release"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Graphics && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5 -BC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -1435,7 +1435,7 @@ build AVCs_5\SFML-2.5.1\lib\sfml-graphics-s.lib: CXX_STATIC_LIBRARY_LINKER__sfml
 # Utility command for install/local
 
 build AVCs_5\SFML-2.5.1\src\SFML\Graphics\CMakeFiles\install\local.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\Graphics\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Graphics && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Graphics && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
   DESC = Installing only the local directory...
   pool = console
   restat = 1
@@ -1447,7 +1447,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Graphics\install\local: phony AVCs_5\SFML-2.5.1
 # Utility command for install
 
 build AVCs_5\SFML-2.5.1\src\SFML\Graphics\CMakeFiles\install.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\Graphics\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Graphics && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Graphics && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
   DESC = Install the project...
   pool = console
   restat = 1
@@ -1459,7 +1459,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Graphics\install: phony AVCs_5\SFML-2.5.1\src\S
 # Utility command for edit_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\Graphics\CMakeFiles\edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Graphics && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Graphics && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
   DESC = No interactive CMake dialog available...
   restat = 1
 
@@ -1473,7 +1473,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Graphics\list_install_components: phony
 
 # =============================================================================
 # Write statements declared in CMakeLists.txt:
-# C:/Users/drick/source/repos/AVCs_5/AVCs_5/SFML-2.5.1/src/SFML/CMakeLists.txt
+# C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/AVCs_5/SFML-2.5.1/src/SFML/CMakeLists.txt
 # =============================================================================
 
 # =============================================================================
@@ -1688,7 +1688,7 @@ build AVCs_5\SFML-2.5.1\lib\sfml-audio-s.lib: CXX_STATIC_LIBRARY_LINKER__sfml-au
 # Utility command for install/local
 
 build AVCs_5\SFML-2.5.1\src\SFML\Audio\CMakeFiles\install\local.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\Audio\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Audio && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Audio && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake"
   DESC = Installing only the local directory...
   pool = console
   restat = 1
@@ -1700,7 +1700,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Audio\install\local: phony AVCs_5\SFML-2.5.1\sr
 # Utility command for install
 
 build AVCs_5\SFML-2.5.1\src\SFML\Audio\CMakeFiles\install.util: CUSTOM_COMMAND AVCs_5\SFML-2.5.1\src\SFML\Audio\all
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Audio && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Audio && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -P cmake_install.cmake"
   DESC = Install the project...
   pool = console
   restat = 1
@@ -1712,7 +1712,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Audio\install: phony AVCs_5\SFML-2.5.1\src\SFML
 # Utility command for edit_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\Audio\CMakeFiles\edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Audio && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Audio && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E echo "No interactive CMake dialog available.""
   DESC = No interactive CMake dialog available...
   restat = 1
 
@@ -1723,7 +1723,7 @@ build AVCs_5\SFML-2.5.1\src\SFML\Audio\edit_cache: phony AVCs_5\SFML-2.5.1\src\S
 # Utility command for rebuild_cache
 
 build AVCs_5\SFML-2.5.1\src\SFML\Audio\CMakeFiles\rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Audio && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\AVCs_5 -BC:\Users\drick\source\repos\AVCs_5\out\build\x64-Release"
+  COMMAND = cmd.exe /C "cd /D C:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release\AVCs_5\SFML-2.5.1\src\SFML\Audio && "C:\Program Files (x86)\Microsoft Visual Studio\2019\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --regenerate-during-build -SC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5 -BC:\Users\drick\source\repos\drick0230\AVCs\src\AVCs_5\out\build\x64-Release"
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
@@ -1773,70 +1773,70 @@ build sfml-window-s.lib: phony AVCs_5\SFML-2.5.1\lib\sfml-window-s.lib
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release
+# Folder: C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release
 
 build all: phony AVCs_5\all
 
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5
+# Folder: C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5
 
 build AVCs_5\all: phony AVCs_5\AVCs_5.exe AVCs_5\SFML-2.5.1\all
 
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1
+# Folder: C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1
 
 build AVCs_5\SFML-2.5.1\all: phony AVCs_5\SFML-2.5.1\src\SFML\all
 
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML
+# Folder: C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML
 
 build AVCs_5\SFML-2.5.1\src\SFML\all: phony AVCs_5\SFML-2.5.1\src\SFML\System\all AVCs_5\SFML-2.5.1\src\SFML\Main\all AVCs_5\SFML-2.5.1\src\SFML\Window\all AVCs_5\SFML-2.5.1\src\SFML\Network\all AVCs_5\SFML-2.5.1\src\SFML\Graphics\all AVCs_5\SFML-2.5.1\src\SFML\Audio\all
 
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML/Audio
+# Folder: C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML/Audio
 
 build AVCs_5\SFML-2.5.1\src\SFML\Audio\all: phony AVCs_5\SFML-2.5.1\lib\sfml-audio-s.lib
 
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML/Graphics
+# Folder: C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML/Graphics
 
 build AVCs_5\SFML-2.5.1\src\SFML\Graphics\all: phony AVCs_5\SFML-2.5.1\lib\sfml-graphics-s.lib
 
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML/Main
+# Folder: C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML/Main
 
 build AVCs_5\SFML-2.5.1\src\SFML\Main\all: phony AVCs_5\SFML-2.5.1\lib\sfml-main.lib
 
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML/Network
+# Folder: C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML/Network
 
 build AVCs_5\SFML-2.5.1\src\SFML\Network\all: phony AVCs_5\SFML-2.5.1\lib\sfml-network-s.lib
 
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML/System
+# Folder: C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML/System
 
 build AVCs_5\SFML-2.5.1\src\SFML\System\all: phony AVCs_5\SFML-2.5.1\lib\sfml-system-s.lib
 
 # =============================================================================
 
 #############################################
-# Folder: C:/Users/drick/source/repos/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML/Window
+# Folder: C:/Users/drick/source/repos/drick0230/AVCs/src/AVCs_5/out/build/x64-Release/AVCs_5/SFML-2.5.1/src/SFML/Window
 
 build AVCs_5\SFML-2.5.1\src\SFML\Window\all: phony AVCs_5\SFML-2.5.1\lib\sfml-window-s.lib
 
