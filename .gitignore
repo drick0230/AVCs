@@ -4,4 +4,4 @@
 /src/SFML*
 .vscode
 build
-libraries/SFML
+lib/SFML
