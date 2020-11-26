@@ -8,4 +8,4 @@
 #Pour que l'exécutable fonctionne ajouter la dépendance suivante:  
 - Ajouter la librairie openal dans le répertoire de l'exécutable  
 	Pour windows, se trouve dans le répertoire src/SFML/2.5.1/bin  
-	Pour Linux, installer simplemant la librairy, celle-ci n'Est pas requise dans le répertoire de l'axécutable  
+	Pour Linux, installer simplemant la librairy, celle-ci n'est pas requise dans le répertoire de l'axécutable  
