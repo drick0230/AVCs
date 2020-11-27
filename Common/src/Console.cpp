@@ -1,16 +1,14 @@
 #include "Console.h"
 
 // Constructors
-Console::Console() : hOut(), hIn(){
+Console::Console() : hOut(), hIn() {
 	// Screen Initialization
-	xSize = 120;
-	ySize = 40;
+	//screen.buffer = new char[(unsigned int)(screen.size.x * screen.size.y)];
+	//screen.size.x = 120;
+	//screen.size.y = 40;
 
 	if (!InitializeConsole())
 		std::cout << "Failed to initialize Console as Virtual Terminal Sequences";
-	//screen = new wchar_t[xSize * ySize];
-	//hConsoleHandle = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, 0, NULL, CONSOLE_TEXTMODE_BUFFER, NULL);
-	//bytesWritted = 0;
 }
 
 // Destructors
@@ -18,9 +16,38 @@ Console::~Console() {
 
 }
 
-// Functions
-void Console::Update(){
+// Private Functions
+#pragma region PrivateRealConsoleFunction
+void Console::ConsoleGoTo(short _x, short _y) { 
+	printf_s("%c[%d;%dH", '\x1B', _y+1, _x+1);
+	//std::cout << '\x1B' << "[" << _y + 1 << ';' << _x + 1 << 'H';
+}
 
+void Console::ConsoleGoTo(short _x, short _y, std::string &_outs) {
+	char _tString[50];
+	sprintf_s(_tString, "%c[%d;%dH", '\x1B', _y, _x);
+	_outs.append(_tString);
+}
+
+void Console::ConsoleEraseChar(unsigned int _n) { 
+	printf_s( "%c[%dX", '\x1B', _n);
+}
+
+void Console::ConsoleDeleteLine(unsigned int _n) { std::cout << '\x1B' << "[" << _n << 'M'; }
+
+void Console::ConsoleSetFontColor(UINT8 _r, UINT8 _g, UINT8 _b) { std::cout << '\x1B' << "[38;2;" << (short)_r << ';' << (short)_g << ';' << (short)_b << 'm'; }
+
+void Console::ConsoleSetScreenColor(UINT8 _r, UINT8 _g, UINT8 _b) { std::cout << '\x1B' << "]4;0;rgb:" << std::hex << (short)_r << '/' << std::hex << (short)_g << '/' << std::hex << (short)_b << '\x1B'; }
+#pragma endregion
+
+
+
+// Public Function
+void Console::Update() {
+	ConsoleGoTo(0, 0);
+	//for (unsigned int _i = 0; _i < screen.size.x * screen.size.y; _i++) {
+	//	std::cout << screen.buffer[_i];
+	//}
 }
 
 bool Console::InitializeConsole()
@@ -73,23 +100,6 @@ bool Console::InitializeConsole()
 	return true;
 }
 
-void Console::TestVirtualTerminal() {
-	// Try some Set Graphics Rendition (SGR) terminal escape sequences
-	wprintf(L"\x1b[31mThis text has a red foreground using SGR.31.\r\n");
-	wprintf(L"\x1b[1mThis text has a bright (bold) red foreground using SGR.1 to affect the previous color setting.\r\n");
-	wprintf(L"\x1b[mThis text has returned to default colors using SGR.0 implicitly.\r\n");
-	wprintf(L"\x1b[34;46mThis text shows the foreground and background change at the same time.\r\n");
-	wprintf(L"\x1b[0mThis text has returned to default colors using SGR.0 explicitly.\r\n");
-	wprintf(L"\x1b[31;32;33;34;35;36;101;102;103;104;105;106;107mThis text attempts to apply many colors in the same command. Note the colors are applied from left to right so only the right-most option of foreground cyan (SGR.36) and background bright white (SGR.107) is effective.\r\n");
-	wprintf(L"\x1b[39mThis text has restored the foreground color only.\r\n");
-	wprintf(L"\x1b[49mThis text has restored the background color only.\r\n");
-}
-
-void Console::GoTo(unsigned int _x, unsigned int _y) {
-	//wprintf(L"\x1B");
-	std::cout << '\x1B' << "[" << _x+1 << ';' << _y+1 << "Htest 1;5";
-}
-
 // Read the next input (Blocking)
 void Console::Read() {
 	ReadConsoleInput(hIn, inputs, 128, &nbInputs);
@@ -101,4 +111,10 @@ void Console::Read() {
 				std::cout << "Key Released\n";
 		}
 	}
+}
+
+std::string Console::ToHex(char _c) {
+	char _hex[3];
+	sprintf_s(_hex, "%x", _c);
+	return _hex;
 }

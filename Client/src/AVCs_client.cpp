@@ -45,13 +45,8 @@ int main()
 }
 
 void ConsoleIO(bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* isRecording, VOIP* voip) {
-
-	// Audio Recording
-	//sf::SoundBufferRecorder recorder;
-	//const sf::SoundBuffer& buffer = recorder.getBuffer();
-	//sf::Sound sound;
-
 	// Command-Line
+	Console console;
 	const unsigned short maxCommandChar = 50;
 
 	char command[maxCommandChar];
@@ -60,6 +55,9 @@ void ConsoleIO(bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* 
 	}
 
 	std::vector<std::string> splitCommand;
+
+	MainMenu(console);
+	//std::cout << std::hex << (short)(unsigned char)255;
 
 	// main Loop
 	while (true)
@@ -130,4 +128,40 @@ T myParse(std::string _string) {
 	}
 
 	return _return;
+}
+
+
+void MainMenu(Console& _console) {
+	_console.ConsoleGoTo(0, 0);
+	//std::cout << '\x1B' << "[38;2;255;255;255m";
+	_console.ConsoleSetFontColor(255, 255, 255);
+	//std::cout << '\x1B' << "]4;0;rgb:" << std::hex << (short)0 << "/3d/3d" << '\x1B';
+	//_console.ConsoleGoTo(82, 25);
+	_console.ConsoleSetScreenColor(30,  30, 30);
+	//_console.ConsoleDeleteLine(3);
+
+	// Top Line
+	for (unsigned char _i = 0; _i < 83; _i++)
+		printf_s("%c", (char)219);
+
+	std::string _commands = "";
+	// Side Border
+	for (int _i = 1; _i < 25; _i++) {
+		_console.ConsoleGoTo(0, _i);
+		printf_s("%c", (char)219);
+		_console.ConsoleEraseChar(82);
+		_console.ConsoleGoTo(81, _i);
+		printf_s("%c", (char)219);
+	}
+	//std::cout << _commands;
+
+	// Mid Line
+	_console.ConsoleGoTo(0, 22);
+	for (unsigned char _i = 0; _i < 82; _i++)
+		printf_s("%c", (char)219);
+
+	// Bot Line
+	_console.ConsoleGoTo(0, 24);
+	for (unsigned char _i = 0; _i < 82; _i++)
+		printf_s("%c", (char)219);
 }

@@ -20,14 +20,22 @@
 #include <iostream>
 #endif
 
+struct Vector2_uint {
+    unsigned int x;
+    unsigned int y;
+};
+
+struct Screen {
+    Vector2_uint size;
+    char* buffer;
+};
 
 class Console {
 private:
 
 public:
     // Variables
-    // Screen
-    unsigned int xSize, ySize;
+
     //wchar_t* screen;
     HANDLE hOut;
     HANDLE hIn;
@@ -44,9 +52,19 @@ public:
 	// Functions
     void Update();
 
-    bool InitializeConsole();
-    void TestVirtualTerminal();
+    #pragma region PrivateRealConsoleFunction
+        void ConsoleGoTo(short, short);
+        void ConsoleGoTo(short, short, std::string &);
+        void ConsoleEraseChar(unsigned int _n = 1);
+        void ConsoleDeleteLine(unsigned int _n = 1);
 
-    void GoTo(unsigned int, unsigned int);
+        void ConsoleSetFontColor(unsigned char, unsigned char, unsigned char);
+        void ConsoleSetScreenColor(unsigned char _r, unsigned char _g, unsigned char _b);
+    #pragma endregion
+
+    bool InitializeConsole();
+
     void Read();
+
+    std::string ToHex(char);
 };

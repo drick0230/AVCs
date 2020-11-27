@@ -7,10 +7,14 @@
 #include <thread>			// std::this_thread::sleep_for
 #include <chrono>			// std::chrono::seconds
 #include "VOIP.h"
+#include "Console.h"
 
 void ConsoleIO(bool*, bool*, bool*, bool*, VOIP*);
 
 template <class T>
 T myParse(std::string);
+
+// Interface
+void MainMenu(Console& _console);
 
 // TODO: Référencez ici les en-têtes supplémentaires nécessaires à votre programme.
