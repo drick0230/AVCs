@@ -151,7 +151,7 @@ void VOIP::Send() {
 unsigned short VOIP::GetLastElement(sf::IpAddress* _ipAdress) {
 	// Get the last element of the Array of sf::IpAdress
 	unsigned short _lastElement = 0;
-	while (_ipAdress[_lastElement] != '\0')
+	while (_ipAdress[_lastElement] != sf::IpAddress("\0"))
 		_lastElement++;
 
 	return _lastElement;
