@@ -17,6 +17,6 @@ set (SFML_USE_STATIC_LIBS TRUE)
 set (BUILD_SHARED_LIBS FALSE)
 
 # Incluez les sous-projets.
-add_subdirectory ("lib/SFML")
-add_subdirectory ("Client")
-add_subdirectory ("Server")
+add_subdirectory ("${SFML_DIR}")
+add_subdirectory ("${CLIENT_DIR}")
+add_subdirectory ("${SERVER_DIR}")
