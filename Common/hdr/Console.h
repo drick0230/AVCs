@@ -14,11 +14,16 @@
 			_WIN32          Defined on Windows
 */
 
+#include <cstdio>
+#include <iostream>
+
+#include "GeneralDefs.h"
+
 #if _WIN32
 #include <Windows.h>
-#include <stdio.h>
-#include <iostream>
 #endif
+
+#ifdef _WIN32
 
 struct Vector2_uint {
 	unsigned int x;
@@ -34,9 +39,11 @@ struct Text {
 class Console {
 private:
 	// Variables
+#ifdef _WIN32
 	HANDLE hOut;
 	HANDLE hIn;
 	INPUT_RECORD inRecord[30];
+#endif
 public:
 	// Variables
 	Vector2_uint pos;
@@ -78,3 +85,5 @@ public:
 	void Show();
 	void Hide();
 };
+
+#endif

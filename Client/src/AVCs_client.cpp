@@ -44,9 +44,10 @@
 // 	return 0;
 // }
 
+#ifdef _WIN32
+
 int main()
 {
-<<<<<<< HEAD
 	// Network
 	std::string ipAdress;
 	bool isConnected = false;
@@ -96,9 +97,6 @@ int main()
 
 
 	return 0;
-=======
-	testConvert();
->>>>>>> 77987dfe321b2c0cf18f42e811e6b8c9fa8dd189
 }
 
 void ConsoleIO(Console &console, bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* isRecording, VOIP* voip) {
@@ -162,6 +160,14 @@ void ConsoleIO(Console &console, bool* isConnected, bool* voiceEnable, bool* spe
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
+
+#else
+int main()
+{
+	return 0;
+}
+
+#endif
 
 template <class T>
 T myParse(std::string _string) {
