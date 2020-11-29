@@ -2,6 +2,50 @@
 //
 #include "AVCs_client.h"
 
+// int main()
+// {
+// 	// Network
+// 	std::string ipAdress;
+// 	bool isConnected = false;
+// 	bool voiceEnable = false;
+// 	bool speakerEnable = false;
+// 	bool isRecording = false;
+
+// 	// Obtention de l'IP et du Port
+// 	std::cout << "Votre adresse IP : \n";
+// 	std::cin >> ipAdress;
+
+// 	VOIP voip(ipAdress, sf::Socket::AnyPort); // Binding sur le port en UDP
+// 	std::cout << "Votre Port est <" << voip.socket.getLocalPort() << ">\n";
+
+// 	// MultiThreading
+// 	std::thread threadConsoleIO(ConsoleIO, &isConnected, &voiceEnable, &speakerEnable, &isRecording, &voip);
+// 	while (true) {
+// 		if (isConnected) {
+// 			if (voiceEnable)
+// 			{
+// 				voip.Send();
+// 			}
+
+// 			if (speakerEnable) {
+// 				voip.Receive();
+// 				voip.TreatAudio();
+// 				std::this_thread::sleep_for(std::chrono::milliseconds(200));
+// 			}
+// 			//voip.Update();
+// 		}
+// 		else
+// 		{
+// 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+// 		}
+// 	}
+
+
+// 	return 0;
+// }
+
+#ifdef _WIN32
+
 int main()
 {
 	// Network
@@ -116,6 +160,14 @@ void ConsoleIO(Console &console, bool* isConnected, bool* voiceEnable, bool* spe
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }
+
+#else
+int main()
+{
+	return 0;
+}
+
+#endif
 
 template <class T>
 T myParse(std::string _string) {

@@ -8,13 +8,14 @@
 #include <chrono>			// std::chrono::seconds
 #include "VOIP.h"
 #include "Console.h"
+#include "AsciiImage.h"
 
+#ifdef _WIN32
 void ConsoleIO(Console& console, bool*, bool*, bool*, bool*, VOIP*);
+// Interface
+void MainMenu(Console& _console);
+#endif
 
 template <class T>
 T myParse(std::string);
-
-// Interface
-void MainMenu(Console& _console);
-
 // TODO: Référencez ici les en-têtes supplémentaires nécessaires à votre programme.

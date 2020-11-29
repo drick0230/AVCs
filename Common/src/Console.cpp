@@ -1,7 +1,10 @@
 #include "Console.h"
 
+#ifdef _WIN32
+
 // Constructors
-Console::Console(Vector2_uint _pos, Vector2_uint _size, Text _inText, Text _outText) : hOut(), hIn() {
+Console::Console(Vector2_uint _pos, Vector2_uint _size, Text _inText, Text _outText) : hOut(), hIn()
+{
 	pos = _pos;
 	size = _size;
 
@@ -24,26 +27,26 @@ Console::~Console() {
 
 // Private Functions
 #pragma region PrivateRealConsoleFunction
-void Console::GoTo(short _x, short _y) { printf_s("%c[%d;%dH", '\x1B', _y + 1, _x + 1); }
+void Console::GoTo(short _x, short _y) { printf("%c[%d;%dH", '\x1B', _y + 1, _x + 1); }
 void Console::Move(short _x, short _y) {
 	if (_x > 0) 
-		printf_s("%c[%dC", '\x1B', _x); // Move Frontward by _x
+		printf("%c[%dC", '\x1B', _x); // Move Frontward by _x
 	else if (_x < 0)
-		printf_s("%c[%dD", '\x1B', _x); // Move Backward by _x
+		printf("%c[%dD", '\x1B', _x); // Move Backward by _x
 
 	if (_y > 0)
-		printf_s("%c[%dA", '\x1B', _y); // Move Up by _y
+		printf("%c[%dA", '\x1B', _y); // Move Up by _y
 	else if (_y < 0)
-		printf_s("%c[%dB", '\x1B', _y); // Move Down by _y
+		printf("%c[%dB", '\x1B', _y); // Move Down by _y
 }
 
-void Console::EraseChar(unsigned int _n) { printf_s("%c[%dX", '\x1B', _n); }
+void Console::EraseChar(unsigned int _n) { printf("%c[%dX", '\x1B', _n); }
 
-void Console::DeleteLine(unsigned int _n) { printf_s("%c[%dM", '\x1B', _n); }
+void Console::DeleteLine(unsigned int _n) { printf("%c[%dM", '\x1B', _n); }
 
-void Console::SetFontColor(unsigned char _r, unsigned char _g, unsigned char _b) { printf_s("%c[38;2;%d;%d;%dm", '\x1B', _r, _g, _b); }
+void Console::SetFontColor(unsigned char _r, unsigned char _g, unsigned char _b) { printf("%c[38;2;%d;%d;%dm", '\x1B', _r, _g, _b); }
 
-void Console::SetScreenColor(unsigned char _r, unsigned char _g, unsigned char _b) { printf_s("%c]4;0;rgb:%x/%x/%x%c", '\x1B', _r, _g, _b, '\x1B'); }
+void Console::SetScreenColor(unsigned char _r, unsigned char _g, unsigned char _b) { printf("%c]4;0;rgb:%x/%x/%x%c", '\x1B', _r, _g, _b, '\x1B'); }
 #pragma endregion
 
 
@@ -119,7 +122,7 @@ bool Console::Read() {
 			if (inRecord[_i].Event.KeyEvent.bKeyDown)
 			{
 				char _input = inRecord[_i].Event.KeyEvent.uChar.AsciiChar;
-				// Si le caractère est imprimable
+				// Si le caractï¿½re est imprimable
 				if (_input >= (char)32 && _input <= (char)126) {
 					// L'inclure dans le text
 					inText.content.push_back(inRecord[_i].Event.KeyEvent.uChar.AsciiChar);
@@ -137,24 +140,24 @@ bool Console::Read() {
 
 // Return inText[_index] and remove it from the string
 char Console::GetInText(size_t _index) {
-	char _return = inText.content[_index]; // Stocker la valeur à retourner
-	inText.content.erase(_index, (size_t)_index+1); // Effacer du string la valeur à retourner
+	char _return = inText.content[_index]; // Stocker la valeur ï¿½ retourner
+	inText.content.erase(_index, (size_t)_index+1); // Effacer du string la valeur ï¿½ retourner
 	return _return;
 }
 char Console::GetInKeys(size_t _index) {
-	char _return = inKeys[_index]; // Stocker la valeur à retourner
-	inKeys.erase(_index, (size_t)_index + 1); // Effacer du string la valeur à retourner
+	char _return = inKeys[_index]; // Stocker la valeur ï¿½ retourner
+	inKeys.erase(_index, (size_t)_index + 1); // Effacer du string la valeur ï¿½ retourner
 	return _return;
 }
 
-// Met à jour l'affichage du texte entrant sur la console
+// Met ï¿½ jour l'affichage du texte entrant sur la console
 void Console::UpdateInText() {
 	GoTo(inText.pos.x, inText.pos.y);
 	EraseChar(inText.size.x);
 	std::cout << inText.content;
 }
 
-// Met à jour l'affichage du texte sortant sur la console
+// Met ï¿½ jour l'affichage du texte sortant sur la console
 void Console::UpdateOutText() {
 	GoTo(outText.pos.x, outText.pos.y);
 	EraseChar(outText.size.x);
@@ -170,28 +173,28 @@ void Console::Show() {
 
 	// Top Line
 	for (unsigned char _i = 0; _i < size.x; _i++)
-		printf_s("%c", (char)219);
+		printf("%c", (char)219);
 
 	std::string _commands = "";
 	// Side Border
 	for (int _i = 1; _i < size.y; _i++) {
 		GoTo(pos.x, pos.y + _i);
-		printf_s("%c", (char)219);
+		printf("%c", (char)219);
 		EraseChar(size.x);
 		GoTo(pos.x + size.x - 1, pos.y + _i);
-		printf_s("%c", (char)219);
+		printf("%c", (char)219);
 	}
 	//std::cout << _commands;
 
 	// Mid Line
 	GoTo(pos.x, pos.y + size.y - inText.size.y - 1);
 	for (unsigned char _i = 0; _i < size.x - 1; _i++)
-		printf_s("%c", (char)219);
+		printf("%c", (char)219);
 
 	// Bot Line
 	GoTo(pos.x, pos.y + size.y);
 	for (unsigned char _i = 0; _i < size.x; _i++)
-		printf_s("%c", (char)219);
+		printf("%c", (char)219);
 }
 
 // Cache la console
@@ -216,3 +219,5 @@ void Console::Hide() {
 	GoTo(pos.x, pos.y + size.y);
 	EraseChar(size.x);
 }
+
+#endif
