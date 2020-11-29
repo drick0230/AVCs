@@ -8,6 +8,7 @@
 #include <chrono>			// std::chrono::seconds
 #include "VOIP.h"
 #include "Console.h"
+#include "AsciiImage.h"
 
 void ConsoleIO(Console& console, bool*, bool*, bool*, bool*, VOIP*);
 
