@@ -1,11 +1,18 @@
 #include "Console.h"
 
 // Constructors
-Console::Console() : hOut(), hIn() {
-	// Screen Initialization
-	//screen.buffer = new char[(unsigned int)(screen.size.x * screen.size.y)];
-	//screen.size.x = 120;
-	//screen.size.y = 40;
+Console::Console(unsigned int _sizeX, unsigned int _sizeY, unsigned int _inTextPosX, unsigned int _inTextPosY, unsigned int _inTextSizeX, unsigned int _inTextSizeY, unsigned int _outTextPosX, unsigned int _outTextPosY, unsigned int _outTextSizeX, unsigned int _outTextSizeY) : hOut(), hIn() {
+	inText.pos = { _inTextPosX , _inTextPosY };
+	inText.size = { _inTextSizeX , _inTextSizeY };
+	inText.content = "";
+	inKeys = "";
+
+	outText.pos = { _outTextPosX , _outTextPosY };
+	outText.size = { _outTextSizeX , _outTextSizeY };
+	outText.content = "";
+
+	for (unsigned char _i = 0; _i < 30; _i++)
+		inRecord[_i] = INPUT_RECORD();
 
 	if (!InitializeConsole())
 		std::cout << "Failed to initialize Console as Virtual Terminal Sequences";
@@ -18,33 +25,33 @@ Console::~Console() {
 
 // Private Functions
 #pragma region PrivateRealConsoleFunction
-void Console::ConsoleGoTo(short _x, short _y) { 
-	printf_s("%c[%d;%dH", '\x1B', _y+1, _x+1);
-	//std::cout << '\x1B' << "[" << _y + 1 << ';' << _x + 1 << 'H';
+void Console::GoTo(short _x, short _y) { printf_s("%c[%d;%dH", '\x1B', _y + 1, _x + 1); }
+void Console::Move(short _x, short _y) {
+	if (_x > 0) 
+		printf_s("%c[%dC", '\x1B', _x); // Move Frontward by _x
+	else if (_x < 0)
+		printf_s("%c[%dD", '\x1B', _x); // Move Backward by _x
+
+	if (_y > 0)
+		printf_s("%c[%dA", '\x1B', _y); // Move Up by _y
+	else if (_y < 0)
+		printf_s("%c[%dB", '\x1B', _y); // Move Down by _y
 }
 
-void Console::ConsoleGoTo(short _x, short _y, std::string &_outs) {
-	char _tString[50];
-	sprintf_s(_tString, "%c[%d;%dH", '\x1B', _y, _x);
-	_outs.append(_tString);
-}
+void Console::EraseChar(unsigned int _n) { printf_s("%c[%dX", '\x1B', _n); }
 
-void Console::ConsoleEraseChar(unsigned int _n) { 
-	printf_s( "%c[%dX", '\x1B', _n);
-}
+void Console::DeleteLine(unsigned int _n) { printf_s("%c[%dM", '\x1B', _n); }
 
-void Console::ConsoleDeleteLine(unsigned int _n) { std::cout << '\x1B' << "[" << _n << 'M'; }
+void Console::SetFontColor(unsigned char _r, unsigned char _g, unsigned char _b) { printf_s("%c[38;2;%d;%d;%dm", '\x1B', _r, _g, _b); }
 
-void Console::ConsoleSetFontColor(UINT8 _r, UINT8 _g, UINT8 _b) { std::cout << '\x1B' << "[38;2;" << (short)_r << ';' << (short)_g << ';' << (short)_b << 'm'; }
-
-void Console::ConsoleSetScreenColor(UINT8 _r, UINT8 _g, UINT8 _b) { std::cout << '\x1B' << "]4;0;rgb:" << std::hex << (short)_r << '/' << std::hex << (short)_g << '/' << std::hex << (short)_b << '\x1B'; }
+void Console::SetScreenColor(unsigned char _r, unsigned char _g, unsigned char _b) { printf_s("%c]4;0;rgb:%x/%x/%x%c", '\x1B', _r, _g, _b, '\x1B'); }
 #pragma endregion
 
 
 
 // Public Function
 void Console::Update() {
-	ConsoleGoTo(0, 0);
+	GoTo(0, 0);
 	//for (unsigned int _i = 0; _i < screen.size.x * screen.size.y; _i++) {
 	//	std::cout << screen.buffer[_i];
 	//}
@@ -100,21 +107,43 @@ bool Console::InitializeConsole()
 	return true;
 }
 
-// Read the next input (Blocking)
-void Console::Read() {
-	ReadConsoleInput(hIn, inputs, 128, &nbInputs);
-	for (unsigned int i = 0; i < nbInputs; i++) {
-		if (inputs[i].EventType == KEY_EVENT) {
-			if (inputs[i].Event.KeyEvent.bKeyDown)
-				std::cout << "Key Pressed\n";
-			else
-				std::cout << "Key Released\n";
-		}
-	}
+// Read the next inputs (Non Blocking)
+bool Console::Read() {
+	unsigned long _nbEventAvailale = 0;
+	unsigned long _nbEventRead = 0;
+
+	GetNumberOfConsoleInputEvents(hIn, &_nbEventAvailale);
+	ReadConsoleInput(hIn, inRecord, _nbEventAvailale, &_nbEventRead);
+
+	for (unsigned int _i = 0; _i < _nbEventRead; _i++)
+		if (inRecord[_i].EventType == KEY_EVENT)
+			if (inRecord[_i].Event.KeyEvent.bKeyDown)
+			{
+				char _input = inRecord[_i].Event.KeyEvent.uChar.AsciiChar;
+				// Si le caractère est imprimable
+				if (_input >= (char)32 && _input <= (char)126) {
+					// L'inclure dans le text
+					inText.content.push_back(inRecord[_i].Event.KeyEvent.uChar.AsciiChar);
+				}
+				else {
+					// L'inclure dans les touches de clavier
+					inKeys.push_back(inRecord[_i].Event.KeyEvent.uChar.AsciiChar);
+				}
+			}
+
+	if (_nbEventRead != 0)
+		return true;
+	return false;
 }
 
-std::string Console::ToHex(char _c) {
-	char _hex[3];
-	sprintf_s(_hex, "%x", _c);
-	return _hex;
+// Return inText[_index] and remove it from the string
+char Console::GetInText(size_t _index) {
+	char _return = inText.content[_index]; // Stocker la valeur à retourner
+	inText.content.erase(_index, (size_t)_index+1); // Effacer du string la valeur à retourner
+	return _return;
+}
+char Console::GetInKeys(size_t _index) {
+	char _return = inKeys[_index]; // Stocker la valeur à retourner
+	inKeys.erase(_index, (size_t)_index + 1); // Effacer du string la valeur à retourner
+	return _return;
 }

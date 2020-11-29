@@ -9,7 +9,7 @@
 #include "VOIP.h"
 #include "Console.h"
 
-void ConsoleIO(bool*, bool*, bool*, bool*, VOIP*);
+void ConsoleIO(Console& console, bool*, bool*, bool*, bool*, VOIP*);
 
 template <class T>
 T myParse(std::string);
