@@ -46,6 +46,7 @@
 
 int main()
 {
+<<<<<<< HEAD
 	// Network
 	std::string ipAdress;
 	bool isConnected = false;
@@ -95,6 +96,9 @@ int main()
 
 
 	return 0;
+=======
+	testConvert();
+>>>>>>> 77987dfe321b2c0cf18f42e811e6b8c9fa8dd189
 }
 
 void ConsoleIO(Console &console, bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* isRecording, VOIP* voip) {
