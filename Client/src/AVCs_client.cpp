@@ -12,7 +12,7 @@ int main()
 	bool isRecording = false;
 
 	// Console
-	Console console(83, 24, 1, 23, 80, 1, 1, 1, 80, 20);
+	Console console({ 1, 1 }, { 83, 24 }, { { 1, 23 }, { 80, 1 }, "" }, { { 1, 1 }, { 80, 20 }, "" });
 
 
 	// Obtention de l'IP et du Port
@@ -25,7 +25,9 @@ int main()
 	// MultiThreading
 	std::thread threadConsoleIO();
 
-	MainMenu(console);
+	//MainMenu(console);
+	console.Show();
+	console.Hide();
 
 	while (true) {
 		ConsoleIO(console, &isConnected, &voiceEnable, &speakerEnable, &isRecording, &voip);
@@ -107,16 +109,9 @@ void ConsoleIO(Console &console, bool* isConnected, bool* voiceEnable, bool* spe
 				else if (_inKey == (char)127 && console.inText.content.size() > 0) { // Touche Effacer
 					// Effacer le dernier caractère du texte
 					console.inText.content.pop_back();
-
-					// Effacer le dernier caractère dans la console
-					console.GoTo(1, 23);
-					console.Move(console.inText.content.size(), 0);
-					console.EraseChar();
 				}
 			}
-
-			console.GoTo(1, 23);
-			std::cout << console.inText.content;
+			console.UpdateInText();
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
@@ -142,36 +137,4 @@ T myParse(std::string _string) {
 	}
 
 	return _return;
-}
-
-
-void MainMenu(Console& _console) {
-	_console.GoTo(0, 0);
-	_console.SetFontColor(255, 255, 255);
-	_console.SetScreenColor(20, 20, 20);
-
-	// Top Line
-	for (unsigned char _i = 0; _i < 83; _i++)
-		printf_s("%c", (char)219);
-
-	std::string _commands = "";
-	// Side Border
-	for (int _i = 1; _i < 25; _i++) {
-		_console.GoTo(0, _i);
-		printf_s("%c", (char)219);
-		_console.EraseChar(82);
-		_console.GoTo(81, _i);
-		printf_s("%c", (char)219);
-	}
-	//std::cout << _commands;
-
-	// Mid Line
-	_console.GoTo(0, 22);
-	for (unsigned char _i = 0; _i < 82; _i++)
-		printf_s("%c", (char)219);
-
-	// Bot Line
-	_console.GoTo(0, 24);
-	for (unsigned char _i = 0; _i < 82; _i++)
-		printf_s("%c", (char)219);
 }

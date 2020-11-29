@@ -39,13 +39,16 @@ private:
 	INPUT_RECORD inRecord[30];
 public:
 	// Variables
+	Vector2_uint pos;
+	Vector2_uint size;
+
 	Text inText;
 	Text outText;
 	std::string inKeys;
 
 
 	// Constructors
-	Console(unsigned int _sizeX = 0, unsigned int _sizeY = 0, unsigned int _inTextPosX = 0, unsigned int _inTextPosY = 0, unsigned int _inTextSizeX = 0, unsigned int _inTextSizeY = 0, unsigned int _outTextPosX = 0, unsigned int _outTextPosY = 0, unsigned int _outTextSizeX = 0, unsigned int _outTextSizeY = 0);
+	Console(Vector2_uint _pos = { 0, 0 }, Vector2_uint _size = { 0, 0 }, Text _inText = { {0,0}, {0,0}, "" }, Text _outText = { {0,0}, {0,0}, "" });
 
 	// Destructors
 	~Console();
@@ -71,4 +74,7 @@ public:
 
 	void UpdateInText();
 	void UpdateOutText();
+
+	void Show();
+	void Hide();
 };

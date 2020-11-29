@@ -1,15 +1,14 @@
 #include "Console.h"
 
 // Constructors
-Console::Console(unsigned int _sizeX, unsigned int _sizeY, unsigned int _inTextPosX, unsigned int _inTextPosY, unsigned int _inTextSizeX, unsigned int _inTextSizeY, unsigned int _outTextPosX, unsigned int _outTextPosY, unsigned int _outTextSizeX, unsigned int _outTextSizeY) : hOut(), hIn() {
-	inText.pos = { _inTextPosX , _inTextPosY };
-	inText.size = { _inTextSizeX , _inTextSizeY };
-	inText.content = "";
+Console::Console(Vector2_uint _pos, Vector2_uint _size, Text _inText, Text _outText) : hOut(), hIn() {
+	pos = _pos;
+	size = _size;
+
+	inText = _inText;
 	inKeys = "";
 
-	outText.pos = { _outTextPosX , _outTextPosY };
-	outText.size = { _outTextSizeX , _outTextSizeY };
-	outText.content = "";
+	outText = _outText;
 
 	for (unsigned char _i = 0; _i < 30; _i++)
 		inRecord[_i] = INPUT_RECORD();
@@ -146,4 +145,74 @@ char Console::GetInKeys(size_t _index) {
 	char _return = inKeys[_index]; // Stocker la valeur à retourner
 	inKeys.erase(_index, (size_t)_index + 1); // Effacer du string la valeur à retourner
 	return _return;
+}
+
+// Met à jour l'affichage du texte entrant sur la console
+void Console::UpdateInText() {
+	GoTo(inText.pos.x, inText.pos.y);
+	EraseChar(inText.size.x);
+	std::cout << inText.content;
+}
+
+// Met à jour l'affichage du texte sortant sur la console
+void Console::UpdateOutText() {
+	GoTo(outText.pos.x, outText.pos.y);
+	EraseChar(outText.size.x);
+	std::cout << outText.content;
+}
+
+// Affiche la console
+void Console::Show() {
+
+	SetFontColor(255, 255, 255);
+	SetScreenColor(20, 20, 20);
+	GoTo(pos.x, pos.y);
+
+	// Top Line
+	for (unsigned char _i = 0; _i < size.x; _i++)
+		printf_s("%c", (char)219);
+
+	std::string _commands = "";
+	// Side Border
+	for (int _i = 1; _i < size.y; _i++) {
+		GoTo(pos.x, pos.y + _i);
+		printf_s("%c", (char)219);
+		EraseChar(size.x);
+		GoTo(pos.x + size.x - 1, pos.y + _i);
+		printf_s("%c", (char)219);
+	}
+	//std::cout << _commands;
+
+	// Mid Line
+	GoTo(pos.x, pos.y + size.y - inText.size.y - 1);
+	for (unsigned char _i = 0; _i < size.x - 1; _i++)
+		printf_s("%c", (char)219);
+
+	// Bot Line
+	GoTo(pos.x, pos.y + size.y);
+	for (unsigned char _i = 0; _i < size.x; _i++)
+		printf_s("%c", (char)219);
+}
+
+// Cache la console
+void Console::Hide() {
+	GoTo(pos.x, pos.y);
+
+	// Erase Top Line
+	EraseChar(size.x);
+
+	std::string _commands = "";
+	// Erase Side Border
+	for (int _i = 1; _i < size.y; _i++) {
+		GoTo(pos.x, pos.y + _i);
+		EraseChar(size.x);
+	}
+
+	// Erase Mid Line
+	GoTo(pos.x, pos.y + size.y - inText.size.y - 1);
+	EraseChar(size.x - 1);
+
+	// Bot Line
+	GoTo(pos.x, pos.y + size.y);
+	EraseChar(size.x);
 }
