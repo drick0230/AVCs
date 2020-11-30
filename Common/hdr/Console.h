@@ -20,15 +20,39 @@
 #include <iostream>
 #endif
 
+// Class Prototype
+class Console;
+
 struct Vector2_uint {
 	unsigned int x;
 	unsigned int y;
 };
 
-struct Text {
-	struct Vector2_uint pos;
-	struct Vector2_uint size;
+struct Vector2_int {
+	int x;
+	int y;
+};
+
+class Text {
+private:
+public:
+	// Variables
+	struct Vector2_int pos;
+	struct Vector2_int size;
 	std::string content;
+
+	Console* console;
+
+	// Constructors
+	Text(Vector2_int _pos = { 0, 0 }, Vector2_int _size = { 0, 0 }, std::string _content = "");
+	Text(Console* _console, Vector2_int _pos = { 0, 0 }, Vector2_int _size = { 0, 0 }, std::string _content = "");
+
+	// Destructors
+	~Text();
+
+	// Functions
+	void Show();
+	void Hide();
 };
 
 class Console {
@@ -39,8 +63,8 @@ private:
 	INPUT_RECORD inRecord[30];
 public:
 	// Variables
-	Vector2_uint pos;
-	Vector2_uint size;
+	Vector2_int pos;
+	Vector2_int size;
 
 	Text inText;
 	Text outText;
@@ -48,7 +72,8 @@ public:
 
 
 	// Constructors
-	Console(Vector2_uint _pos = { 0, 0 }, Vector2_uint _size = { 0, 0 }, Text _inText = { {0,0}, {0,0}, "" }, Text _outText = { {0,0}, {0,0}, "" });
+	Console(Vector2_int _pos = { 0, 0 }, Vector2_int _size = { 0, 0 });
+	Console(Vector2_int _pos, Vector2_int _size, Text _inText, Text _outText = { {0,0}, {0,0}, "" });
 
 	// Destructors
 	~Console();
@@ -71,9 +96,6 @@ public:
 	bool Read();
 	char GetInText(size_t _index);
 	char GetInKeys(size_t _index);
-
-	void UpdateInText();
-	void UpdateOutText();
 
 	void Show();
 	void Hide();

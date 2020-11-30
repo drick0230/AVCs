@@ -12,22 +12,22 @@ int main()
 	bool isRecording = false;
 
 	// Console
-	Console console({ 1, 1 }, { 83, 24 }, { { 1, 23 }, { 80, 1 }, "" }, { { 1, 1 }, { 80, 20 }, "" });
-
+	Console console(Vector2_int{ 1, 1 }, Vector2_int{ 40, 15 });
+	console.inText.size.y = 2;
+	console.inText.pos.y -= 1;
 
 	// Obtention de l'IP et du Port
 	std::cout << "Votre adresse IP : \n";
 	std::cin >> ipAdress;
 
+	// Peak sur le processeur [!]
 	VOIP voip(ipAdress, sf::Socket::AnyPort); // Binding sur le port en UDP
 	std::cout << "Votre Port est <" << voip.socket.getLocalPort() << ">\n";
-
-	// MultiThreading
-	std::thread threadConsoleIO();
+	// Fin peak sur le processeur
 
 	//MainMenu(console);
 	console.Show();
-	console.Hide();
+	//console.Hide();
 
 	while (true) {
 		ConsoleIO(console, &isConnected, &voiceEnable, &speakerEnable, &isRecording, &voip);
@@ -111,7 +111,7 @@ void ConsoleIO(Console &console, bool* isConnected, bool* voiceEnable, bool* spe
 					console.inText.content.pop_back();
 				}
 			}
-			console.UpdateInText();
+			console.inText.Show();
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}

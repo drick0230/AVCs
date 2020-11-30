@@ -1,7 +1,88 @@
 #include "Console.h"
 
 // Constructors
-Console::Console(Vector2_uint _pos, Vector2_uint _size, Text _inText, Text _outText) : hOut(), hIn() {
+Text::Text(Vector2_int _pos, Vector2_int _size, std::string _content) {
+	pos = _pos;
+	size = _size;
+	content = _content;
+}
+
+
+Text::Text(Console* _console, Vector2_int _pos, Vector2_int _size, std::string _content) {
+	console = _console;
+	pos = _pos;
+	size = _size;
+	content = _content;
+}
+
+// Destructors
+Text::~Text() {
+
+}
+
+// Functions
+
+// Affiche le Text et/ou le met à jour
+void Text::Show() {
+	Hide();
+
+	if (content.size() > size.x * size.y)
+	{
+		// La zone de Text est pleine
+		// Afficher le texte de la fin vers le début
+		for (int _y = 0; _y < size.y; _y++) {
+			console->GoTo(pos.x, pos.y + size.y - _y - 1);
+			std::cout << std::string(content.end() - size.x * (_y + 1), content.end() - size.x * _y); // Afficher les derniers caractères qui entrent dans le Text
+		}
+		console->GoTo(pos.x + size.x, pos.y + size.y - 1); // Mettre le curseur à la fin du texte
+	}
+	else if (content.size() > size.x) {
+		// Le texte prend plus d'une ligne
+		// Afficher le texte du début vers la fin
+		for (unsigned int _y = 0; _y < size.y; _y++) {
+			console->GoTo(pos.x, pos.y + _y);
+			if(size.x * (_y + 1) < content.size())
+				std::cout << std::string(content.begin() + size.x * _y, content.begin() + size.x * (_y + 1)); // Afficher les premiers caractères qui entrent dans le Text
+			else
+				std::cout << std::string(content.begin() + size.x * _y, content.end()); // Afficher les premiers caractères qui entrent dans le Text (En évitant d'être out of bound)
+		}
+	}
+	else {
+		// Le texte tient sur une ligne
+		// Afficher le texte
+		console->GoTo(pos.x, pos.y);
+		std::cout << content;
+	}
+}
+
+// Cache le Text (L'efface)
+void Text::Hide() {
+	for (unsigned int _y = 0; _y < size.y; _y++) {
+		console->GoTo(pos.x, pos.y + _y); // Aller au début de la ligne
+		console->EraseChar(size.x); // Effacer la ligne
+	}
+}
+
+///////CONSOLE/////////
+#pragma region Console
+// Constructors
+Console::Console(Vector2_int _pos, Vector2_int _size) : hOut(), hIn() {
+	pos = _pos;
+	size = _size;
+
+	inText = Text(this, { _pos.x + 1, _pos.y + size.y - 1 }, { size.x - 2, 1 }, "");
+	inKeys = "";
+
+	outText = Text(this, { _pos.x + 1, _pos.y + 1 }, { 1, size.y - 2 }, "");
+
+	for (unsigned char _i = 0; _i < 30; _i++)
+		inRecord[_i] = INPUT_RECORD();
+
+	if (!InitializeConsole())
+		std::cout << "Failed to initialize Console as Virtual Terminal Sequences";
+}
+
+Console::Console(Vector2_int _pos, Vector2_int _size, Text _inText, Text _outText) : hOut(), hIn() {
 	pos = _pos;
 	size = _size;
 
@@ -9,6 +90,7 @@ Console::Console(Vector2_uint _pos, Vector2_uint _size, Text _inText, Text _outT
 	inKeys = "";
 
 	outText = _outText;
+	outText.console = this; // Need because this cant be pass as default argument
 
 	for (unsigned char _i = 0; _i < 30; _i++)
 		inRecord[_i] = INPUT_RECORD();
@@ -26,7 +108,7 @@ Console::~Console() {
 #pragma region PrivateRealConsoleFunction
 void Console::GoTo(short _x, short _y) { printf_s("%c[%d;%dH", '\x1B', _y + 1, _x + 1); }
 void Console::Move(short _x, short _y) {
-	if (_x > 0) 
+	if (_x > 0)
 		printf_s("%c[%dC", '\x1B', _x); // Move Frontward by _x
 	else if (_x < 0)
 		printf_s("%c[%dD", '\x1B', _x); // Move Backward by _x
@@ -138,27 +220,13 @@ bool Console::Read() {
 // Return inText[_index] and remove it from the string
 char Console::GetInText(size_t _index) {
 	char _return = inText.content[_index]; // Stocker la valeur à retourner
-	inText.content.erase(_index, (size_t)_index+1); // Effacer du string la valeur à retourner
+	inText.content.erase(_index, (size_t)_index + 1); // Effacer du string la valeur à retourner
 	return _return;
 }
 char Console::GetInKeys(size_t _index) {
 	char _return = inKeys[_index]; // Stocker la valeur à retourner
 	inKeys.erase(_index, (size_t)_index + 1); // Effacer du string la valeur à retourner
 	return _return;
-}
-
-// Met à jour l'affichage du texte entrant sur la console
-void Console::UpdateInText() {
-	GoTo(inText.pos.x, inText.pos.y);
-	EraseChar(inText.size.x);
-	std::cout << inText.content;
-}
-
-// Met à jour l'affichage du texte sortant sur la console
-void Console::UpdateOutText() {
-	GoTo(outText.pos.x, outText.pos.y);
-	EraseChar(outText.size.x);
-	std::cout << outText.content;
 }
 
 // Affiche la console
@@ -181,7 +249,6 @@ void Console::Show() {
 		GoTo(pos.x + size.x - 1, pos.y + _i);
 		printf_s("%c", (char)219);
 	}
-	//std::cout << _commands;
 
 	// Mid Line
 	GoTo(pos.x, pos.y + size.y - inText.size.y - 1);
@@ -194,7 +261,7 @@ void Console::Show() {
 		printf_s("%c", (char)219);
 }
 
-// Cache la console
+// Cache la console (L'efface)
 void Console::Hide() {
 	GoTo(pos.x, pos.y);
 
@@ -216,3 +283,4 @@ void Console::Hide() {
 	GoTo(pos.x, pos.y + size.y);
 	EraseChar(size.x);
 }
+#pragma endregion
