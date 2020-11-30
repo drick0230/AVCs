@@ -17,7 +17,7 @@ set (SFML_USE_STATIC_LIBS TRUE)
 set (BUILD_SHARED_LIBS FALSE)
 
 # Spécifier qu'on utilise C++17
-set_property (GLOBAL PROPERTY CXX_STANDARD 17)
+set_property (GLOBAL PROPERTY CXX_STANDARD 14)
 set_property (GLOBAL PROPERTY CXX_STANDARD_REQUIRED ON)
 
 # Incluez les sous-projets.
