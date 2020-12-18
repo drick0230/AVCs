@@ -12,13 +12,15 @@ int main()
 	bool isRecording = false;
 
 	// Console
-	Console console(Vector2_int{ 1, 1 }, Vector2_int{ 40, 15 });
-	console.inText.size.y = 2;
-	console.inText.pos.y -= 1;
+	Console::InitializeConsole();
+	//Console console(Vector2_int(1, 1), Vector2_int(40, 15));
+	//console.inText.size.y = 2;
+	//console.inText.pos.y -= 1;*/
 
 	// Obtention de l'IP et du Port
-	std::cout << "Votre adresse IP : \n";
-	std::cin >> ipAdress;
+	//std::cout << "Votre adresse IP : \n";
+	//std::cin >> ipAdress;
+	ipAdress = "localhost";
 
 	// Peak sur le processeur [!]
 	VOIP voip(ipAdress, sf::Socket::AnyPort); // Binding sur le port en UDP
@@ -26,11 +28,17 @@ int main()
 	// Fin peak sur le processeur
 
 	//MainMenu(console);
-	console.Show();
+	//console.Show();
 	//console.Hide();
+	HLine vLine(Vector2_int(1, 1), 4);
+	Rect rect(Vector2_int(1, 1), Vector2_int(4, 4));
+	vLine.Show();
+	vLine.Hide();
+	rect.Show();
+	rect.Hide();
 
 	while (true) {
-		ConsoleIO(console, &isConnected, &voiceEnable, &speakerEnable, &isRecording, &voip);
+		ConsoleIO(&isConnected, &voiceEnable, &speakerEnable, &isRecording, &voip);
 
 		if (isConnected) {
 			if (voiceEnable)
@@ -55,31 +63,32 @@ int main()
 	return 0;
 }
 
-void ConsoleIO(Console &console, bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* isRecording, VOIP* voip) {
+void ConsoleIO(bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* isRecording, VOIP* voip) {
 	// Command-Line
 	std::vector<std::string> splitCommand;
 
 	// main Loop
 	while (true)
 	{
-		if (console.Read())
+		if (Console::Read())
 		{
-			while (console.inKeys.size() > 0) {
-				char _inKey = console.GetInKeys(0);
-				if (_inKey == '\r') { // Touche Enter
+			while (Console::inKeys.size() > 0) {
+				unsigned short _inKey = Console::GetInKeys(0);
+				_inKey = 0;
+				/*if (_inKey == '\r') { // Touche Enter
 					// Split le texte entrant en commandes séparées par des espaces
 					splitCommand.clear();
-					for (unsigned int i = 0; i < console.inText.content.size(); i++) {
+					for (unsigned int i = 0; i < Console::inText.content.size(); i++) {
 						splitCommand.emplace_back();
 
-						while (console.inText.content[i] != ' ' && console.inText.content[i] != '\0') {
-							splitCommand.back().push_back(console.inText.content[i]);
+						while (Console::inText.content[i] != ' ' && Console::inText.content[i] != '\0') {
+							splitCommand.back().push_back(Console::inText.content[i]);
 							i++;
 						}
 					}
-					console.GoTo(1, 23);
-					console.EraseChar(console.inText.content.size());
-					console.inText.content = "";
+					Console::GoTo(1, 23);
+					Console::EraseChar(Console::inText.content.size());
+					Console::inText.content = "";
 
 					// Faire l'action correspondant aux commandes entrées
 					if (splitCommand[0] == "connect") {
@@ -106,12 +115,12 @@ void ConsoleIO(Console &console, bool* isConnected, bool* voiceEnable, bool* spe
 							*speakerEnable = false;
 					}
 				}
-				else if (_inKey == (char)127 && console.inText.content.size() > 0) { // Touche Effacer
+				else if (_inKey == (char)127 && Console::inText.content.size() > 0) { // Touche Effacer
 					// Effacer le dernier caractère du texte
-					console.inText.content.pop_back();
-				}
+					Console::inText.content.pop_back();
+				}*/
 			}
-			console.inText.Show();
+			//Console::inText.Show();
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}

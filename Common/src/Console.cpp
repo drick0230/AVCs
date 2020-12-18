@@ -1,17 +1,16 @@
 #include "Console.h"
 
+Vector2_int::Vector2_int(int _x, int _y) : x(_x), y(_y) {}
+Vector2_uint::Vector2_uint(unsigned int _x, unsigned int _y) : x(_x), y(_y) {}
+
 // Constructors
-Text::Text(Vector2_int _pos, Vector2_int _size, std::string _content) {
-	pos = _pos;
-	size = _size;
+Text::Text(Vector2_int _pos, Vector2_int _size, std::string _content) : pos(_pos), size(_size) {
 	content = _content;
 }
 
 
-Text::Text(Console* _console, Vector2_int _pos, Vector2_int _size, std::string _content) {
+Text::Text(Console* _console, Vector2_int _pos, Vector2_int _size, std::string _content) : pos(_pos), size(_size) {
 	console = _console;
-	pos = _pos;
-	size = _size;
 	content = _content;
 }
 
@@ -65,35 +64,37 @@ void Text::Hide() {
 
 ///////CONSOLE/////////
 #pragma region Console
-// Constructors
-Console::Console(Vector2_int _pos, Vector2_int _size) : hOut(), hIn() {
-	pos = _pos;
-	size = _size;
+// Static Members
+HANDLE Console::hOut;
+HANDLE Console::hIn;
+INPUT_RECORD Console::inRecord[30];
+std::vector<unsigned short> Console::inKeys;
 
+// Constructors
+Console::Console(Vector2_int _pos, Vector2_int _size) /*: hOut(), hIn()*/ : pos(_pos), size(_size) {
 	inText = Text(this, { _pos.x + 1, _pos.y + size.y - 1 }, { size.x - 2, 1 }, "");
-	inKeys = "";
+	//inKeys = "";
+	//inKeys.clear();
 
 	outText = Text(this, { _pos.x + 1, _pos.y + 1 }, { 1, size.y - 2 }, "");
 
-	for (unsigned char _i = 0; _i < 30; _i++)
-		inRecord[_i] = INPUT_RECORD();
+	//for (unsigned char _i = 0; _i < 30; _i++)
+	//	inRecord[_i] = INPUT_RECORD();
 
 	if (!InitializeConsole())
 		std::cout << "Failed to initialize Console as Virtual Terminal Sequences";
 }
 
-Console::Console(Vector2_int _pos, Vector2_int _size, Text _inText, Text _outText) : hOut(), hIn() {
-	pos = _pos;
-	size = _size;
-
+Console::Console(Vector2_int _pos, Vector2_int _size, Text _inText, Text _outText) /*: hOut(), hIn() */ : pos(_pos), size(_size) {
 	inText = _inText;
-	inKeys = "";
+	//inKeys = "";
+	//inKeys.clear();
 
 	outText = _outText;
 	outText.console = this; // Need because this cant be pass as default argument
 
-	for (unsigned char _i = 0; _i < 30; _i++)
-		inRecord[_i] = INPUT_RECORD();
+	//for (unsigned char _i = 0; _i < 30; _i++)
+	//	inRecord[_i] = INPUT_RECORD();
 
 	if (!InitializeConsole())
 		std::cout << "Failed to initialize Console as Virtual Terminal Sequences";
@@ -192,25 +193,71 @@ bool Console::InitializeConsole()
 bool Console::Read() {
 	unsigned long _nbEventAvailale = 0;
 	unsigned long _nbEventRead = 0;
+	unsigned int _nbKeyEvent = 0;
+
+	KEY_EVENT_RECORD _keyEvents[3];
 
 	GetNumberOfConsoleInputEvents(hIn, &_nbEventAvailale);
 	ReadConsoleInput(hIn, inRecord, _nbEventAvailale, &_nbEventRead);
 
 	for (unsigned int _i = 0; _i < _nbEventRead; _i++)
-		if (inRecord[_i].EventType == KEY_EVENT)
+	{
+		if (inRecord[_i].EventType == KEY_EVENT) {
 			if (inRecord[_i].Event.KeyEvent.bKeyDown)
 			{
-				char _input = inRecord[_i].Event.KeyEvent.uChar.AsciiChar;
-				// Si le caractère est imprimable
-				if (_input >= (char)32 && _input <= (char)126) {
-					// L'inclure dans le text
-					inText.content.push_back(inRecord[_i].Event.KeyEvent.uChar.AsciiChar);
-				}
-				else {
-					// L'inclure dans les touches de clavier
-					inKeys.push_back(inRecord[_i].Event.KeyEvent.uChar.AsciiChar);
-				}
+				_keyEvents[_nbKeyEvent] = inRecord[_i].Event.KeyEvent;
+				_nbKeyEvent++;
 			}
+		}
+	}
+
+	switch (_nbKeyEvent)
+	{
+	case 3:
+		if (_keyEvents[0].uChar.AsciiChar == 0x1b) // ESC
+		{
+			if (_keyEvents[1].uChar.AsciiChar == '[') // ESC[
+			{
+				if (_keyEvents[2].uChar.AsciiChar == 'A') // ESC[A
+					inKeys.push_back(KEYS::U_ARROW);
+				if (_keyEvents[2].uChar.AsciiChar == 'B') // ESC[B
+					inKeys.push_back(KEYS::D_ARROW);
+				if (_keyEvents[2].uChar.AsciiChar == 'C') // ESC[C
+					inKeys.push_back(KEYS::R_ARROW);
+				if (_keyEvents[2].uChar.AsciiChar == 'D') // ESC[D
+					inKeys.push_back(KEYS::L_ARROW);
+				if (_keyEvents[2].uChar.AsciiChar == 'H') // ESC[H
+					inKeys.push_back(KEYS::HOME);
+				if (_keyEvents[2].uChar.AsciiChar == 'F') // ESC[F
+					inKeys.push_back(KEYS::END);
+			}
+		}
+		break;
+	case 2:
+
+		break;
+	case 1:
+			inKeys.push_back(_keyEvents[0].uChar.AsciiChar);
+		break;
+	default:
+		break;
+	} 
+
+	//for (unsigned int _i = 0; _i < _nbEventRead; _i++)
+	//	if (inRecord[_i].EventType == KEY_EVENT)
+	//		if (inRecord[_i].Event.KeyEvent.bKeyDown)
+	//		{
+	//			char _input = inRecord[_i].Event.KeyEvent.uChar.AsciiChar;
+	//			// Si le caractère est imprimable
+	//			if (_input >= (char)32 && _input <= (char)126) {
+	//				// L'inclure dans le text
+	//				inText.content.push_back(inRecord[_i].Event.KeyEvent.uChar.AsciiChar);
+	//			}
+	//			else {
+	//				// L'inclure dans les touches de clavier
+	//				inKeys.push_back(inRecord[_i].Event.KeyEvent.uChar.AsciiChar);
+	//			}
+	//		}
 
 	if (_nbEventRead != 0)
 		return true;
@@ -223,9 +270,10 @@ char Console::GetInText(size_t _index) {
 	inText.content.erase(_index, (size_t)_index + 1); // Effacer du string la valeur à retourner
 	return _return;
 }
-char Console::GetInKeys(size_t _index) {
-	char _return = inKeys[_index]; // Stocker la valeur à retourner
-	inKeys.erase(_index, (size_t)_index + 1); // Effacer du string la valeur à retourner
+unsigned short Console::GetInKeys(size_t _index) {
+	unsigned short _return = inKeys[_index]; // Stocker la valeur à retourner
+	inKeys.erase(inKeys.begin() + _index); // Retirer la valeur à retourner
+	//inKeys.erase(_index, (size_t)_index + 1); // Effacer du string la valeur à retourner
 	return _return;
 }
 

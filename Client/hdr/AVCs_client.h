@@ -7,9 +7,9 @@
 #include <thread>			// std::this_thread::sleep_for
 #include <chrono>			// std::chrono::seconds
 #include "VOIP.h"
-#include "Console.h"
+#include "ATHElement.h"
 
-void ConsoleIO(Console& console, bool*, bool*, bool*, bool*, VOIP*);
+void ConsoleIO(bool*, bool*, bool*, bool*, VOIP*);
 
 template <class T>
 T myParse(std::string);
