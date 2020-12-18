@@ -42,26 +42,10 @@ public:
 	Vector2_int(int _x = 0, int _y = 0);
 };
 
-class Text {
-private:
+class Color {
 public:
-	// Variables
-	Vector2_int pos;
-	Vector2_int size;
-	std::string content;
-
-	Console* console;
-
-	// Constructors
-	Text(Vector2_int _pos = Vector2_int(0, 0), Vector2_int _size = Vector2_int(0, 0), std::string _content = "");
-	Text(Console* _console, Vector2_int _pos = Vector2_int(0, 0), Vector2_int _size = Vector2_int(0, 0), std::string _content = "");
-
-	// Destructors
-	~Text();
-
-	// Functions
-	void Show();
-	void Hide();
+	unsigned char r, g, b;
+	Color(unsigned char _r = 0, unsigned char _g = 0, unsigned char _b = 0);
 };
 
 class Console {
@@ -72,26 +56,9 @@ private:
 	static INPUT_RECORD inRecord[30];
 public:
 	// Variables
-
-	Vector2_int pos;
-	Vector2_int size;
-
-	Text inText;
-	Text outText;
 	static std::vector<unsigned short> inKeys;
-	//std::string inKeys;
-
-
-	// Constructors
-	Console(Vector2_int _pos = { 0, 0 }, Vector2_int _size = { 0, 0 });
-	Console(Vector2_int _pos, Vector2_int _size, Text _inText, Text _outText = { {0,0}, {0,0}, "" });
-
-	// Destructors
-	~Console();
 
 	// Functions
-	void Update();
-
 #pragma region PrivateRealConsoleFunction
 	static void GoTo(short, short);
 	static void Move(short, short);
@@ -99,15 +66,18 @@ public:
 	static void DeleteLine(unsigned int _n = 1);
 
 	static void SetFontColor(unsigned char, unsigned char, unsigned char);
+	static void SetFontColor(Color _color);
+	static void DefaultFontColor();
+
+	static void SetBackgroundColor(unsigned char, unsigned char, unsigned char);
+	static void SetBackgroundColor(Color _color);
+	static void DefaultBackgroundColor();
+
 	static void SetScreenColor(unsigned char _r, unsigned char _g, unsigned char _b);
 #pragma endregion
 
 	static bool InitializeConsole();
 
 	static bool Read();
-	char GetInText(size_t _index);
 	static unsigned short GetInKeys(size_t _index);
-
-	void Show();
-	void Hide();
 };

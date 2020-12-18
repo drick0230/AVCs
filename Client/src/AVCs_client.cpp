@@ -13,9 +13,6 @@ int main()
 
 	// Console
 	Console::InitializeConsole();
-	//Console console(Vector2_int(1, 1), Vector2_int(40, 15));
-	//console.inText.size.y = 2;
-	//console.inText.pos.y -= 1;*/
 
 	// Obtention de l'IP et du Port
 	//std::cout << "Votre adresse IP : \n";
@@ -27,15 +24,12 @@ int main()
 	std::cout << "Votre Port est <" << voip.socket.getLocalPort() << ">\n";
 	// Fin peak sur le processeur
 
-	//MainMenu(console);
-	//console.Show();
-	//console.Hide();
-	HLine vLine(Vector2_int(1, 1), 4);
-	Rect rect(Vector2_int(1, 1), Vector2_int(4, 4));
-	vLine.Show();
-	vLine.Hide();
-	rect.Show();
-	rect.Hide();
+	ATH::ATHElement mainMenu(Vector2_int(1,1));
+	ATH::Rect testrect(&mainMenu, Vector2_int(0, 0), Vector2_int(9, 6), Color(125, 125, 125));
+	ATH::SimpleText testText(&testrect, "bonjour\ncomment\nca va", Vector2_int(1, 1), Vector2_int(7, 4), Color(180, 180, 0), Color(125, 125, 125));
+
+	mainMenu.Show();
+	//mainMenu.Hide();
 
 	while (true) {
 		ConsoleIO(&isConnected, &voiceEnable, &speakerEnable, &isRecording, &voip);
