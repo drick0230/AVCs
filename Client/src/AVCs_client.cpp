@@ -67,19 +67,7 @@ void ConsoleIO(bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* 
 		std::cin.getline(command, 30, '\n');
 		if (command[0] != '\0') {
 
-			splitCommand.clear();
-
-			unsigned short i = 0;
-			while (command[i] != '\0') {
-				splitCommand.emplace_back();
-
-				while (command[i] != ' ' && command[i] != '\0') {
-					splitCommand.back().push_back(command[i]);
-					i++;
-				}
-
-				i++;
-			}
+			splitCommand = split(command, ' ', true);
 
 			if (splitCommand[0] == "connect") {
 				voip->Connect(splitCommand[1], myParse<unsigned int>(splitCommand[2]));
@@ -108,26 +96,4 @@ void ConsoleIO(bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* 
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(300));
 	}
-}
-
-template <class T>
-T myParse(std::string _string) {
-	T _return = 0;
-
-	if (_string[0] >= '0' && _string[0] <= '9') {
-		_return = _string[0] - '0';
-
-		unsigned i = 1;
-		while (_string[i] >= '0' && _string[i] <= '9') {
-			_return *= 10;
-			_return += _string[i] - '0';
-			i++;
-		}
-	}
-	else {
-		std::cout << "Error : < T myParse(std::string _string) > invalid string _string";
-		return -1;
-	}
-
-	return _return;
 }

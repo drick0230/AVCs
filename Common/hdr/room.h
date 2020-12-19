@@ -37,6 +37,8 @@ public:
 
 class Room_server : Room
 {
+public:
+	void connect(user new_user);
 
 };
 

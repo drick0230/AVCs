@@ -8,6 +8,7 @@
 #include <chrono>			// std::chrono::seconds
 #include "VOIP.h"
 #include "room.h"
+#include "general.h"
 
 
 // TODO: Référencez ici les en-têtes supplémentaires nécessaires à votre programme.
