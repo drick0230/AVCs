@@ -22,8 +22,8 @@ namespace ATH {
 
 		// Functions
 		void AddChild(ATHElement* _element);
-		virtual void Show(bool _childsShow = true);
-		virtual void Hide();
+		virtual void Show(bool _childsShow = true, bool _applyCommands = true);
+		virtual void Hide(bool _applyCommands = true);
 	};
 
 	class VLine : public ATHElement {
@@ -33,8 +33,8 @@ namespace ATH {
 		VLine(ATHElement* _parent, Vector2_int _pos = Vector2_int(0, 0), int _size = 1, Color _color = Color(255, 255, 255));
 
 		// Functions
-		virtual void Show(bool _childsShow = true);
-		virtual void Hide();
+		virtual void Show(bool _childsShow = true, bool _applyCommands = true);
+		virtual void Hide(bool _applyCommands = true);
 	};
 
 	class HLine : public VLine {
@@ -44,8 +44,8 @@ namespace ATH {
 		HLine(ATHElement* _parent, Vector2_int _pos = Vector2_int(0, 0), int _size = 1, Color _color = Color(255, 255, 255));
 
 		// Functions
-		void Show(bool _childsShow = true);
-		void Hide();
+		void Show(bool _childsShow = true, bool _applyCommands = true);
+		void Hide(bool _applyCommands = true);
 	};
 
 	class OutlinedRect : public ATHElement {
@@ -58,8 +58,8 @@ namespace ATH {
 		OutlinedRect(ATHElement* _parent, Vector2_int _pos = Vector2_int(0, 0), Vector2_int _size = Vector2_int(1, 1), Color _color = Color(255, 255, 255));
 
 		// Functions
-		void Show(bool _childsShow = true);
-		void Hide();
+		void Show(bool _childsShow = true, bool _applyCommands = true);
+		void Hide(bool _applyCommands = true);
 	};
 
 	class FilledRect : public ATHElement {
@@ -69,8 +69,8 @@ namespace ATH {
 		FilledRect(ATHElement* _parent, Vector2_int _pos = Vector2_int(0, 0), Vector2_int _size = Vector2_int(1, 1), Color _color = Color(255, 255, 255));
 
 		// Functions
-		virtual void Show(bool _childsShow = true);
-		virtual void Hide();
+		virtual void Show(bool _childsShow = true, bool _applyCommands = true);
+		virtual void Hide(bool _applyCommands = true);
 	};
 
 	class Rect : public FilledRect {
@@ -82,8 +82,8 @@ namespace ATH {
 		Rect(ATHElement* _parent, Vector2_int _pos = Vector2_int(0, 0), Vector2_int _size = Vector2_int(1, 1), Color _filledColor = Color(255, 255, 255), Color _outlineColor = Color(255, 255, 255));
 
 		// Functions
-		void Show(bool _childsShow = true);
-		void Hide();
+		void Show(bool _childsShow = true, bool _applyCommands = true);
+		void Hide(bool _applyCommands = true);
 	};
 
 	class SimpleText : public FilledRect {
@@ -101,6 +101,6 @@ namespace ATH {
 		bool Write(char _c); // return false if the limit is reach
 		bool Write(std::string _s); // return false if the limit is reach
 
-		void Show(bool _childsShow = true);
+		void Show(bool _childsShow = true, bool _applyCommands = true);
 	};
 }

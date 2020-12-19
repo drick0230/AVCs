@@ -11,35 +11,40 @@ HANDLE Console::hOut;
 HANDLE Console::hIn;
 INPUT_RECORD Console::inRecord[30];
 std::vector<unsigned short> Console::inKeys;
+std::string Console::outCommands("");
+
 
 // Private Functions
 #pragma region PrivateRealConsoleFunction
-void Console::GoTo(short _x, short _y) { printf_s("%c[%d;%dH", '\x1B', _y + 1, _x + 1); }
+void Console::GoTo(short _x, short _y) { Write('\x1B'); Write('['); Write((int)(_y + 1)); Write(";"); Write((int)(_x + 1)); Write('H'); }
 void Console::Move(short _x, short _y) {
-	if (_x > 0)
-		printf_s("%c[%dC", '\x1B', _x); // Move Frontward by _x
-	else if (_x < 0)
-		printf_s("%c[%dD", '\x1B', _x); // Move Backward by _x
-
-	if (_y > 0)
-		printf_s("%c[%dA", '\x1B', _y); // Move Up by _y
-	else if (_y < 0)
-		printf_s("%c[%dB", '\x1B', _y); // Move Down by _y
+	if (_x < 0) {
+		Write('\x1B'); Write('['); Write((int)(_x * -1)); Write("C"); // Move Frontward by _x
+	}
+	else if (_x > 0) {
+		Write('\x1B'); Write('['); Write((int)(_x)); Write("D"); // Move Backward by _x
+	}
+	if (_y < 0) {
+		Write('\x1B'); Write('['); Write((int)(_y * -1)); Write("A"); // Move Up by _y
+	}
+	else if (_y > 0) {
+		Write('\x1B'); Write('['); Write((int)(_y)); Write("B"); // Move Down by _y
+	}
 }
 
-void Console::EraseChar(unsigned int _n) { printf_s("%c[%dX", '\x1B', _n); }
+void Console::EraseChar(unsigned int _n) { Write('\x1B'); Write('['); Write((int)(_n)); Write("X"); }
 
-void Console::DeleteLine(unsigned int _n) { printf_s("%c[%dM", '\x1B', _n); }
+void Console::DeleteLine(unsigned int _n) { Write('\x1B'); Write('['); Write((int)(_n)); Write("M"); }
 
-void Console::SetFontColor(unsigned char _r, unsigned char _g, unsigned char _b) { printf_s("%c[38;2;%d;%d;%dm", '\x1B', _r, _g, _b); }
+void Console::SetFontColor(unsigned char _r, unsigned char _g, unsigned char _b) { Write('\x1B'); Write("[38;2;"); Write(_r); Write(";"); Write(_g); Write(";"); Write(_b); Write('m'); }
 void Console::SetFontColor(Color _color) { SetFontColor(_color.r, _color.g, _color.b); }
-void Console::DefaultFontColor() { printf_s("%c[39m", '\x1B'); }
+void Console::DefaultFontColor() { Write('\x1B'); Write("[39m"); }
 
-void Console::SetBackgroundColor(unsigned char _r, unsigned char _g, unsigned char _b) { printf_s("%c[48;2;%d;%d;%dm", '\x1B', _r, _g, _b); }
+void Console::SetBackgroundColor(unsigned char _r, unsigned char _g, unsigned char _b) { Write('\x1B'); Write("[48;2;"); Write(_r); Write(";"); Write(_g); Write(";"); Write(_b); Write('m'); }
 void Console::SetBackgroundColor(Color _color) { SetBackgroundColor(_color.r, _color.g, _color.b); }
-void Console::DefaultBackgroundColor() { printf_s("%c[49m", '\x1B'); }
+void Console::DefaultBackgroundColor() { Write('\x1B'); Write("[49m"); }
 
-void Console::SetScreenColor(unsigned char _r, unsigned char _g, unsigned char _b) { printf_s("%c]4;0;rgb:%x/%x/%x%c", '\x1B', _r, _g, _b, '\x1B'); }
+void Console::SetScreenColor(unsigned char _r, unsigned char _g, unsigned char _b) { Write('\x1B'); Write("]4;0;rgb:"); Write(_r, 16); Write("/"); Write(_g, 16); Write("/"); Write(_b, 16); Write('\x1B'); }
 #pragma endregion
 
 
@@ -143,11 +148,11 @@ bool Console::Read() {
 
 		break;
 	case 1:
-			inKeys.push_back(_keyEvents[0].uChar.AsciiChar);
+		inKeys.push_back(_keyEvents[0].uChar.AsciiChar);
 		break;
 	default:
 		break;
-	} 
+	}
 
 	//for (unsigned int _i = 0; _i < _nbEventRead; _i++)
 	//	if (inRecord[_i].EventType == KEY_EVENT)
@@ -176,5 +181,20 @@ unsigned short Console::GetInKeys(size_t _index) {
 	inKeys.erase(inKeys.begin() + _index); // Retirer la valeur à retourner
 	//inKeys.erase(_index, (size_t)_index + 1); // Effacer du string la valeur à retourner
 	return _return;
+}
+
+
+void Console::Write(std::string _s) { outCommands.append(_s); }
+void Console::Write(char _c) { outCommands.push_back(_c); }
+void Console::Write(unsigned char _c, int _Radix) { Write((int)_c, _Radix); }
+void Console::Write(int _int, int _Radix) {
+	char _intStr[30];
+	itoa(_int, _intStr, _Radix); // Int to Char_String
+	outCommands.append(std::string(_intStr));
+}
+
+void Console::Write() {
+	std::cout << outCommands;
+	outCommands.clear();
 }
 #pragma endregion

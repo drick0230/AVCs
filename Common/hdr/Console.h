@@ -54,6 +54,8 @@ private:
 	static HANDLE hOut;
 	static HANDLE hIn;
 	static INPUT_RECORD inRecord[30];
+
+	static std::string outCommands; // Commands buffer to output in the console
 public:
 	// Variables
 	static std::vector<unsigned short> inKeys;
@@ -80,4 +82,11 @@ public:
 
 	static bool Read();
 	static unsigned short GetInKeys(size_t _index);
+
+	static void Write(std::string _s);
+	static void Write(char _c);
+	static void Write(unsigned char _c, int _Radix = 10);
+	static void Write(int _int, int _Radix = 10);
+
+	static void Write(); // Apply the commands send to the output of the Console
 };

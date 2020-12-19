@@ -40,98 +40,122 @@ void ATHElement::AddChild(ATHElement* _element) {
 	childs.push_back(_element);
 }
 
-void ATHElement::Show(bool _childsShow) {
+void ATHElement::Show(bool _childsShow, bool _applyCommands) {
 	if (_childsShow)
 		for (unsigned int _i = 0; _i < childs.size(); _i++)
-			childs[_i]->Show();
+			childs[_i]->Show(true, false);
+	if (_applyCommands)
+		Console::Write();
 }
 
-void ATHElement::Hide() {
+void ATHElement::Hide(bool _applyCommands) {
 	for (unsigned int _i = 0; _i < childs.size(); _i++)
-		childs[_i]->Hide();
+		childs[_i]->Hide(false);
+	if (_applyCommands)
+		Console::Write();
 }
 
-void VLine::Show(bool _childsShow) {
+void VLine::Show(bool _childsShow, bool _applyCommands) {
 	Console::SetFontColor(color);
 	for (int _i = 0; _i < size.x; _i++) {
 		Console::GoTo(pos.x, pos.y + _i);
-		printf_s("%c", (char)219);
+		Console::Write((char)219);
 	}
 	ATHElement::Show(_childsShow);
+	if (_applyCommands)
+		Console::Write();
 }
 
-void VLine::Hide() {
+void VLine::Hide(bool _applyCommands) {
 	Console::DefaultBackgroundColor();
 	for (int _i = 0; _i < size.x; _i++) {
 		Console::GoTo(pos.x, pos.y + _i);
-		printf_s("%c", ' ');
+		Console::Write(' ');
 	}
-	ATHElement::Hide();
+	ATHElement::Hide(false);
+	if (_applyCommands)
+		Console::Write();
 }
 
-void HLine::Show(bool _childsShow) {
+void HLine::Show(bool _childsShow, bool _applyCommands) {
 	Console::SetFontColor(color);
 	Console::GoTo(pos.x, pos.y);
 	for (unsigned char _i = 0; _i < size.x; _i++)
-		printf_s("%c", (char)219);
-	ATHElement::Show(_childsShow);
+		Console::Write((char)219);
+	ATHElement::Show(_childsShow, false);
+	if (_applyCommands)
+		Console::Write();
 }
 
-void HLine::Hide() {
+void HLine::Hide(bool _applyCommands) {
 	Console::DefaultBackgroundColor();
 	Console::GoTo(pos.x, pos.y);
 	for (unsigned char _i = 0; _i < size.x; _i++)
-		printf_s("%c", ' ');
-	ATHElement::Hide();
+		Console::Write(' ');
+	ATHElement::Hide(false);
+	if (_applyCommands)
+		Console::Write();
 }
 
-void OutlinedRect::Show(bool _childsShow) {
-	topLine.Show(false);
-	botLine.Show(false);
-	rightLine.Show(false);
-	leftLine.Show(false);
-	ATHElement::Show(_childsShow);
+void OutlinedRect::Show(bool _childsShow, bool _applyCommands) {
+	topLine.Show(false, false);
+	botLine.Show(false, false);
+	rightLine.Show(false, false);
+	leftLine.Show(false, false);
+	ATHElement::Show(_childsShow, false);
+	if (_applyCommands)
+		Console::Write();
 }
 
-void OutlinedRect::Hide() {
-	topLine.Hide();
-	botLine.Hide();
-	rightLine.Hide();
-	leftLine.Hide();
-	ATHElement::Hide();
+void OutlinedRect::Hide(bool _applyCommands) {
+	topLine.Hide(false);
+	botLine.Hide(false);
+	rightLine.Hide(false);
+	leftLine.Hide(false);
+	ATHElement::Hide(false);
+	if (_applyCommands)
+		Console::Write();
 }
 
-void FilledRect::Show(bool _childsShow) {
+void FilledRect::Show(bool _childsShow, bool _applyCommands) {
 	Console::SetFontColor(color);
 	for (unsigned int _y = 0; _y < size.y; _y++) {
 		Console::GoTo(pos.x, pos.y + _y);
 		for (unsigned int _x = 0; _x < size.x; _x++)
-			printf_s("%c", (char)219);
+			Console::Write((char)219);
 	}
-	ATHElement::Show(_childsShow);
+	ATHElement::Show(_childsShow, false);
+	if (_applyCommands)
+		Console::Write();
 }
 
-void FilledRect::Hide() {
+void FilledRect::Hide(bool _applyCommands) {
 	Console::DefaultBackgroundColor();
 	for (unsigned int _y = 0; _y < size.y; _y++) {
 		Console::GoTo(pos.x, pos.y + _y);
 		Console::EraseChar(size.x);
 	}
-	ATHElement::Hide();
+	ATHElement::Hide(false);
+	if (_applyCommands)
+		Console::Write();
 }
 
-void Rect::Show(bool _childsShow) {
-	outline.Show(false);
-	FilledRect::Show(_childsShow);
+void Rect::Show(bool _childsShow, bool _applyCommands) {
+	outline.Show(false, false);
+	FilledRect::Show(_childsShow, false);
+	if (_applyCommands)
+		Console::Write();
 }
 
-void Rect::Hide() {
+void Rect::Hide(bool _applyCommands) {
 	Console::DefaultBackgroundColor();
 	for (unsigned int _y = 0; _y < size.y + 2; _y++) {
 		Console::GoTo(pos.x - 1, pos.y + _y - 1);
 		Console::EraseChar(size.x + 2);
 	}
-	ATHElement::Hide();
+	ATHElement::Hide(false);
+	if (_applyCommands)
+		Console::Write();
 }
 
 bool SimpleText::Write(char _c) {
@@ -164,18 +188,20 @@ bool SimpleText::Write(std::string _s) {
 	return true;
 }
 
-void SimpleText::Show(bool _childsShow) {
-	FilledRect::Show(false);
+void SimpleText::Show(bool _childsShow, bool _applyCommands) {
+	FilledRect::Show(false, false);
 	Console::SetFontColor(fontColor);
 	Console::SetBackgroundColor(color);
 	unsigned int _i = 0;
 	for (unsigned int _y = 0; _y < nbLine; _y++) {
 		Console::GoTo(pos.x, pos.y + _y);
 		while (content[_i] != '\0' && content[_i] != '\n') {
-			printf_s("%c", content[_i]);
+			Console::Write(content[_i]);
 			_i++;
 		}
 		_i++;
 	}
-	ATHElement::Show(_childsShow);
+	ATHElement::Show(_childsShow, false);
+	if (_applyCommands)
+		Console::Write();
 }
