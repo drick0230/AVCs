@@ -7,9 +7,12 @@ Color::Color(unsigned char _r, unsigned char _g, unsigned char _b) : r(_r), g(_g
 ///////CONSOLE/////////
 #pragma region Console
 // Static Members
+#if _WIN32
 HANDLE Console::hOut;
 HANDLE Console::hIn;
 INPUT_RECORD Console::inRecord[30];
+#endif // _WIN32
+
 std::vector<unsigned short> Console::inKeys;
 std::string Console::outCommands("");
 
@@ -44,7 +47,7 @@ void Console::SetBackgroundColor(unsigned char _r, unsigned char _g, unsigned ch
 void Console::SetBackgroundColor(Color _color) { SetBackgroundColor(_color.r, _color.g, _color.b); }
 void Console::DefaultBackgroundColor() { Write('\x1B'); Write("[49m"); }
 
-void Console::SetScreenColor(unsigned char _r, unsigned char _g, unsigned char _b) { Write('\x1B'); Write("]4;0;rgb:"); Write(_r, 16); Write("/"); Write(_g, 16); Write("/"); Write(_b, 16); Write('\x1B'); }
+void Console::SetScreenColor(unsigned char _r, unsigned char _g, unsigned char _b) { Write('\x1B'); Write("]4;0;rgb:"); Write(_r, true); Write("/"); Write(_g, true); Write("/"); Write(_b, true); Write('\x1B'); }
 #pragma endregion
 
 
@@ -52,6 +55,7 @@ void Console::SetScreenColor(unsigned char _r, unsigned char _g, unsigned char _
 // Public Function
 bool Console::InitializeConsole()
 {
+#if _WIN32
 	// Set output mode to handle virtual terminal sequences
 	hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (hOut == INVALID_HANDLE_VALUE)
@@ -96,6 +100,7 @@ bool Console::InitializeConsole()
 		// Failed to set VT input mode, can't do anything here.
 		return false;
 	}
+#endif // _WIN32
 
 	return true;
 }
@@ -106,6 +111,7 @@ bool Console::Read() {
 	unsigned long _nbEventRead = 0;
 	unsigned int _nbKeyEvent = 0;
 
+#if _WIN32
 	KEY_EVENT_RECORD _keyEvents[3];
 
 	GetNumberOfConsoleInputEvents(hIn, &_nbEventAvailale);
@@ -169,6 +175,7 @@ bool Console::Read() {
 	//				inKeys.push_back(inRecord[_i].Event.KeyEvent.uChar.AsciiChar);
 	//			}
 	//		}
+#endif // _WIN32
 
 	if (_nbEventRead != 0)
 		return true;
@@ -186,10 +193,21 @@ unsigned short Console::GetInKeys(size_t _index) {
 
 void Console::Write(std::string _s) { outCommands.append(_s); }
 void Console::Write(char _c) { outCommands.push_back(_c); }
-void Console::Write(unsigned char _c, int _Radix) { Write((int)_c, _Radix); }
-void Console::Write(int _int, int _Radix) {
-	char _intStr[30];
-	itoa(_int, _intStr, _Radix); // Int to Char_String
+void Console::Write(unsigned char _c, bool _hex) { 
+	char _intStr[5];
+	if(_hex)
+		sprintf(_intStr, "%x", _c);
+	else
+		sprintf(_intStr, "%u", _c);
+	outCommands.append(std::string(_intStr));
+}
+void Console::Write(int _int, bool _hex) {
+	char _intStr[10];
+	if (_hex)
+		sprintf(_intStr, "%x", _int);
+	else
+		sprintf(_intStr, "%d", _int);
+	//itoa(_int, _intStr, _Radix); // Int to Char_String
 	outCommands.append(std::string(_intStr));
 }
 

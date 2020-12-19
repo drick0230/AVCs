@@ -8,6 +8,7 @@
 #include <chrono>			// std::chrono::seconds
 #include "VOIP.h"
 #include "ATHElement.h"
+#include "DevicesManager.h"
 
 void ConsoleIO(bool*, bool*, bool*, bool*, VOIP*);
 

@@ -16,13 +16,14 @@
 
 #if _WIN32
 #include <Windows.h>
+#endif
+
 #include <stdio.h>
 #include <iostream>
 #include <vector>
-#endif
 
 namespace KEYS {
-	const enum KEYS { U_ARROW = 256, D_ARROW, L_ARROW, R_ARROW, HOME, END };
+	enum KEYS { U_ARROW = 256, D_ARROW, L_ARROW, R_ARROW, HOME, END };
 }
 
 // Class Prototype
@@ -51,9 +52,11 @@ public:
 class Console {
 private:
 	// Variables
+#if _WIN32
 	static HANDLE hOut;
 	static HANDLE hIn;
 	static INPUT_RECORD inRecord[30];
+#endif
 
 	static std::string outCommands; // Commands buffer to output in the console
 public:
@@ -85,8 +88,8 @@ public:
 
 	static void Write(std::string _s);
 	static void Write(char _c);
-	static void Write(unsigned char _c, int _Radix = 10);
-	static void Write(int _int, int _Radix = 10);
+	static void Write(unsigned char _c, bool _hex = false);
+	static void Write(int _int, bool _hex = false);
 
 	static void Write(); // Apply the commands send to the output of the Console
 };
