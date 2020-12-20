@@ -2,13 +2,49 @@
 //
 #include "AVCs_server.h"
 
+
 int main()
 {
-	string nom = "cette salle à un nom";
-	Room salle1(nom);
-	vector <string> commande = split("allo  comment ca   va", ' ',true);
-	cout << commande.size()<<endl;
-	for (int i = 0; i < commande.size(); i++) cout << commande[i] << endl;
+	vector <Client*> listeClient;
+	unsigned short port;
+	cout << "port: " << endl;
+	cin >> port;
+	//Creation des thread
+	Server server(port);
+
+	//boucle de commande
+	string commande = "";
+	while (commande != "exit")
+	{
+		cout << "commande: " << endl;
+		cin >> commande;
+		if (commande == "print")
+		{
+			server.print();
+		}
+		if (commande == "openClient")
+		{
+			unsigned short port_server;
+			string ipInput;
+			cout << "Ip du server" << endl;
+			cin >> ipInput;
+			cout << "port du server" << endl;
+			cin >> port_server;
+			sf::IpAddress ip(ipInput);
+			listeClient.push_back(new Client(ip, port_server));
+			cout << "idClient = " << listeClient.size() - 1 << endl;
+		}
+		if (commande == "closeClient")
+		{
+			unsigned short id;
+			cout << "idClient" << endl;
+			cin >> id;
+			if (listeClient[id])delete listeClient[id];
+		}
+	}
+	
+	for (int i = 0; i < listeClient.size(); i++)if (listeClient[i])delete listeClient[i];
+	listeClient.clear();
 
 	return 0;
 }

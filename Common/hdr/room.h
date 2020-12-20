@@ -5,6 +5,7 @@
 #include <SFML/Audio.hpp>
 #include <iostream>
 #include <thread>			// std::this_thread::sleep_for
+#include <mutex>
 #include <chrono>			// std::chrono::seconds
 
 using namespace std;
@@ -35,14 +36,12 @@ public:
 
 };
 
-class Room_server : Room
+class Room_server : public Room
 {
-public:
-	void connect(user new_user);
 
 };
 
-class Room_client : Room
+class Room_client : public Room
 {
 
 };

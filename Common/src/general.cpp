@@ -1,5 +1,4 @@
 #include "general.h"
-#include <iostream>
 
 std::vector <std::string> split(std::string chaine, const char separateur, bool separateurMultiple)
 {
@@ -21,7 +20,7 @@ std::vector <std::string> split(std::string chaine, const char separateur, bool 
 			}
 			mot[taille - 1] = '\0';
 			out.push_back(std::string(mot));
-			delete mot;
+			delete[] mot;
 		}
 		if (chaine[j] == '\0') break;
 		i = j + 1;

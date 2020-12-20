@@ -7,8 +7,7 @@
 #include <thread>			// std::this_thread::sleep_for
 #include <chrono>			// std::chrono::seconds
 #include "VOIP.h"
-#include "room.h"
-#include "general.h"
-
+#include "server.h"
+#include "client.h"
 
 // TODO: Référencez ici les en-têtes supplémentaires nécessaires à votre programme.

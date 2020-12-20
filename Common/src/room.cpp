@@ -1,5 +1,7 @@
 #include "room.h"
 
+#pragma region ROOM
+
 Room::Room(string _name) : name(_name) {};
 
 void Room::print()
@@ -87,3 +89,14 @@ void Room::removeUser(string user_pseudo)
 	}
 	if (!find) throw "pseudo inconnu";
 }
+
+#pragma endregion
+
+#pragma region Serveur
+
+#pragma endregion
+
+#pragma region client
+
+
+#pragma endregion
