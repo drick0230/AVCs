@@ -18,14 +18,17 @@ int main()
 	//std::cout << "Votre adresse IP : \n";
 	//std::cin >> ipAdress;
 	ipAdress = "localhost";
-	//DevicesManager devManager;
+	DevicesManager devManager;
+	devManager.EnumerateDevices();
+	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_CAPT, 0) << '\n';
+	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
+	std::wcout << devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
+	while (1);
 	//devManager.ShowDevices();
 
 	// Peak sur le processeur [!]
 	VOIP voip(ipAdress, sf::Socket::AnyPort); // Binding sur le port en UDP
 	std::cout << "Votre Port est <" << voip.socket.getLocalPort() << ">\n";
-	Console::Write("Test\n");
-	Console::Write();
 	// Fin peak sur le processeur
 
 	ATH::ATHElement mainMenu(Vector2_int(1,1));
