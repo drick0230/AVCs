@@ -1,6 +1,7 @@
 #include "server.h"
 
-Server::Server(unsigned short port) : endListener(false), tListener(&Server::fListener,this,port)
+Server::Server(unsigned short port) : endListener(false), endCom(false),
+	tListener(&Server::fListener, this, port), tCom(&Server::fCom,this)
 {
 	
 }
@@ -12,7 +13,11 @@ Server::~Server()
 	endListener = true;
 	listener.close();
 	lListener.unlock();
+	unique_lock<mutex> lCom(mCom);
+	endCom = true;
+	lCom.unlock();
 	if (tListener.joinable())tListener.join();
+	if (tCom.joinable())tCom.join();
 	//Libération de la liste des connection
 	for (int i = 0; i < listeConnection.size(); i++)
 	{
@@ -50,6 +55,117 @@ void Server::fListener(unsigned short port)
 	listener.close();
 }
 
+void Server::fCom()
+{
+	while (true)
+	{
+		unique_lock <mutex> lCom(mCom);
+		if (endCom)break;
+		for (int i=0; i < listeConnection.size(); i++)
+		{
+			if (listeConnection[i]->state > 0)
+			{
+				sf::Packet packet;
+				sf::Socket::Status state (sf::Socket::Status::Partial);
+				listeConnection[i]->socket.setBlocking(false);
+				while (state == sf::Socket::Status::Partial) state = listeConnection[i]->socket.receive(packet);
+				if (state == sf::Socket::Status::Disconnected) listeConnection[i]->state = 0;
+				else if (state == sf::Socket::Status::Error)throw string("probleme connection");
+				else if (state == sf::Socket::Status::Done)analysePacket(packet, i);
+			}
+		}
+		lCom.unlock();
+		this_thread::sleep_for(chrono::milliseconds(100));
+	}
+}
+
+void Server::analysePacket(sf::Packet packet, int id)
+{
+	UINT8 commande;
+	sf::Packet reponse;
+	packet >> commande;
+	switch (commande)
+	{
+	case ServerCommand::createRoom:
+	{
+		
+		string nom;
+		packet >> nom;
+
+		unique_lock <mutex> lRoom(mRoom);
+		bool present = false;
+		for (int i = 0; i < listeRoom.size(); i++)
+		{
+			if (listeRoom[i].getName() == nom)
+			{
+				present = true;
+				break;
+			}
+		}
+		if (present) reponse << false;
+		else {
+			listeRoom.push_back(Room_server(nom));
+			reponse << true;
+		}
+		lRoom.unlock();
+		listeConnection[id]->socket.send(reponse);
+	}	
+		break;
+	case ServerCommand::ExitRoom:
+		reponse << true;
+		listeConnection[id]->socket.send(reponse);
+		break;
+	case ServerCommand::joinRoom:
+	{
+		string roomName;
+		unsigned short Roomid=0;
+		bool presence = false;
+		packet >> roomName;
+
+		user new_user;
+		packet >> new_user.pseudo;
+		new_user.port = listeConnection[id]->socket.getRemotePort();
+		new_user.ip = listeConnection[id]->socket.getRemoteAddress();
+		//recherche de la salle
+		unique_lock <mutex> lRoom(mRoom);
+		for (; Roomid < listeRoom.size(); Roomid++)
+		{
+			if (listeRoom[Roomid].getName() == roomName)
+			{
+				presence = true;
+				break;
+			}
+		}
+		//test replicat
+		bool replicat = false;
+		if(presence) replicat = listeRoom[Roomid].testReplicatAdresse(new_user.ip, new_user.port);
+		//réponse
+		bool proceed = presence && !replicat;
+		if (proceed)reponse << true;
+		else reponse << false;
+		listeConnection[id]->socket.send(reponse);
+		//ajout si possible
+		if (proceed )listeRoom[Roomid].addUser(new_user, &listeConnection[id]->socket);
+		lRoom.unlock();
+	}
+		break;
+	case ServerCommand::print:
+	{
+		string message;
+		packet >> message;
+		cout << message;
+	}
+		reponse << true;
+		listeConnection[id]->socket.send(reponse);
+		break;
+	default:
+		reponse << false;
+		listeConnection[id]->socket.send(reponse);
+		break;
+	}
+	
+}
+
 void Server::print()
 {
 	unique_lock<mutex> lListener(mListener);
@@ -57,5 +173,5 @@ void Server::print()
 	cout << "listeConnection" << endl;
 	for (int i = 0; i < listeConnection.size(); i++)cout << listeConnection[i]->socket.getRemoteAddress() << ":" << listeConnection[i]->socket.getRemotePort() << "   " << listeConnection[i]->state << endl;
 	cout << "listeRoom:" << endl;
-	for (int i = 0; i < listeRoom.size(); i++)listeRoom[i].print();
+	for (int i = 0; i < listeRoom.size(); i++)listeRoom[i].Room_server::printS();
 }

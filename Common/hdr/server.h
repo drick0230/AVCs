@@ -23,16 +23,22 @@ protected:
 	sf::TcpListener listener;
 	//mutex toujours bloquer dans cet ordre
 	mutex mListener;
+	mutex mCom;
 	mutex mRoom;
+
 	//thread
 	thread tListener;
+	thread tCom;
 	//threadFunction
 	void fListener(unsigned short port);
+	void fCom();
 	//fin de thread
 	bool endListener;
+	bool endCom;
 
 public:
 	Server(unsigned short port);
+	void analysePacket(sf::Packet packet, int id);
 	~Server();
 
 	void print();

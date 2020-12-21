@@ -2,25 +2,31 @@
 #include <string>
 #include <vector>
 #include <SFML/Network.hpp>
-#include <SFML/Audio.hpp>
 #include <iostream>
 #include <thread>			// std::this_thread::sleep_for
 #include <mutex>
 #include <chrono>			// std::chrono::seconds
+#include "general.h"
 
 using namespace std;
 
 struct user
 {
-	string			pseudo;
-	sf::IpAddress	ip;
-	unsigned short	port;
+	string			pseudo = "default";
+	sf::IpAddress	ip = sf::IpAddress::Any;
+	unsigned short	port = 0;
+};
+
+struct userSocket
+{
+	sf::TcpSocket* socketPtr;
+	string pseudo;
 };
 
 class Room
 {
 protected:
-	vector <user> userlist;
+	vector <user> listeUser;
 public:
 	string name;
 
@@ -36,12 +42,26 @@ public:
 
 };
 
-class Room_server : public Room
+class Room_server : protected Room
 {
+protected:
+	vector<userSocket> listeSocket;
+public:
+	Room_server(string _name);
 
+	void addUser(user new_user, sf::TcpSocket* socketPtr);
+
+	void printS();
+	string getName() { return name; }
+	bool testReplicatAdresse(sf::IpAddress ip, unsigned short port);
 };
 
 class Room_client : public Room
 {
+protected:
 
+public:
+	string pseudo;
+	Room_client(string _name);
+	void print();
 };

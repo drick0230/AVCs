@@ -14,9 +14,28 @@ class Client
 {
 protected:
 	sf::TcpSocket socket;
+	vector<Room_client> listeRoom;
+
+	//thread
+	thread tServerCom;
+	//mutex
+	mutex mSocket;
+	mutex mRoom;
+	//thead function
+	void fServerCom();
+	//end thread
+	bool endServerCom;
+
+
 public:
 	Client(sf::IpAddress ip, unsigned short port);
 	~Client();
 
-	void ConnectRoom();
+	void analysePacket(sf::Packet packet);
+
+	bool joinRoom(string roomName, string pseudo);
+	bool createRoom(string roomName);
+	bool exitRoom(string roomName);
+
+	void print();
 };

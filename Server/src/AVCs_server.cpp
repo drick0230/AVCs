@@ -41,6 +41,36 @@ int main()
 			cin >> id;
 			if (listeClient[id])delete listeClient[id];
 		}
+		if (commande == "createRoomClient")
+		{
+			unsigned short id;
+			string roomName;
+			cout << "idClient" << endl;
+			cin >> id;
+			cout << "RoomName" << endl;
+			cin >> roomName;
+			listeClient[id]->createRoom(roomName);
+		}
+		if (commande == "joinRoomClient")
+		{
+			unsigned short id;
+			string roomName;
+			string pseudo;
+			cout << "idClient" << endl;
+			cin >> id;
+			cout << "RoomName" << endl;
+			cin >> roomName;
+			cout << "Pseudo" << endl;
+			cin >> pseudo;
+			listeClient[id]->joinRoom(roomName,pseudo);
+		}
+		if (commande == "printClient")
+		{
+			unsigned short id;
+			cout << "idClient" << endl;
+			cin >> id;
+			listeClient[id]->print();
+		}
 	}
 	
 	for (int i = 0; i < listeClient.size(); i++)if (listeClient[i])delete listeClient[i];
