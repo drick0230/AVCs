@@ -1,5 +1,14 @@
 #include "server.h"
 
+short Server::FindRoomId(string name)
+{
+	for (int i = 0; i < listeRoom.size(); i++)
+	{
+		if (listeRoom[i].getName() == name) return i;
+	}
+	return -1;
+}
+
 Server::Server(unsigned short port) : endListener(false), endCom(false),
 	tListener(&Server::fListener, this, port), tCom(&Server::fCom,this)
 {
@@ -88,20 +97,12 @@ void Server::analysePacket(sf::Packet packet, int id)
 	{
 	case ServerCommand::createRoom:
 	{
-		
+
 		string nom;
 		packet >> nom;
 
 		unique_lock <mutex> lRoom(mRoom);
-		bool present = false;
-		for (int i = 0; i < listeRoom.size(); i++)
-		{
-			if (listeRoom[i].getName() == nom)
-			{
-				present = true;
-				break;
-			}
-		}
+		bool present = FindRoomId("nom") >= 0;
 		if (present) reponse << false;
 		else {
 			listeRoom.push_back(Room_server(nom));
@@ -109,11 +110,28 @@ void Server::analysePacket(sf::Packet packet, int id)
 		}
 		lRoom.unlock();
 		listeConnection[id]->socket.send(reponse);
-	}	
-		break;
+	}
+	break;
 	case ServerCommand::ExitRoom:
-		reponse << true;
+	{
+		string room;
+		string pseudo = "";
+		packet >> room;
+		//recher utilisateur
+		unique_lock <mutex> lRoom(mRoom);
+		int roomid = FindRoomId(room);
+		bool presence = roomid >= 0;
+		if (presence)pseudo = listeRoom[roomid].findPseudoWithSocket(&listeConnection[id]->socket);
+		presence = pseudo != "";
+
+		//envoie réponse
+		if (presence) reponse << true;
+		else reponse << false;
 		listeConnection[id]->socket.send(reponse);
+
+		//process
+		if(presence) listeRoom[roomid].removeUser(pseudo);
+	}
 		break;
 	case ServerCommand::joinRoom:
 	{
@@ -128,14 +146,8 @@ void Server::analysePacket(sf::Packet packet, int id)
 		new_user.ip = listeConnection[id]->socket.getRemoteAddress();
 		//recherche de la salle
 		unique_lock <mutex> lRoom(mRoom);
-		for (; Roomid < listeRoom.size(); Roomid++)
-		{
-			if (listeRoom[Roomid].getName() == roomName)
-			{
-				presence = true;
-				break;
-			}
-		}
+		Roomid = FindRoomId(roomName);
+		presence = Roomid >= 0;
 		//test replicat
 		bool replicat = false;
 		if(presence) replicat = listeRoom[Roomid].testReplicatAdresse(new_user.ip, new_user.port);

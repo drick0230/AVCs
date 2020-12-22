@@ -8,7 +8,7 @@ int main()
 	vector <Client*> listeClient;
 	unsigned short port;
 	cout << "port: " << endl;
-	cin >> port;
+	port = 11111;//cin >> port;
 	//Creation des thread
 	Server server(port);
 
@@ -27,9 +27,9 @@ int main()
 			unsigned short port_server;
 			string ipInput;
 			cout << "Ip du server" << endl;
-			cin >> ipInput;
+			ipInput = "24.212.42.80";// cin >> ipInput;
 			cout << "port du server" << endl;
-			cin >> port_server;
+			port_server = 11111;// cin >> port_server;
 			sf::IpAddress ip(ipInput);
 			listeClient.push_back(new Client(ip, port_server));
 			cout << "idClient = " << listeClient.size() - 1 << endl;
@@ -46,7 +46,7 @@ int main()
 			unsigned short id;
 			string roomName;
 			cout << "idClient" << endl;
-			cin >> id;
+			id = 0;//cin >> id;
 			cout << "RoomName" << endl;
 			cin >> roomName;
 			listeClient[id]->createRoom(roomName);
@@ -61,7 +61,7 @@ int main()
 			cout << "RoomName" << endl;
 			cin >> roomName;
 			cout << "Pseudo" << endl;
-			cin >> pseudo;
+			pseudo = "client";//cin >> pseudo;
 			listeClient[id]->joinRoom(roomName,pseudo);
 		}
 		if (commande == "printClient")
@@ -71,9 +71,18 @@ int main()
 			cin >> id;
 			listeClient[id]->print();
 		}
+		if (commande == "exitRoomClient")
+		{
+			unsigned short id;
+			string roomName;
+			cout << "idClient" << endl;
+			cin >> id;
+			cout << "RoomName" << endl;
+			cin >> roomName;
+			listeClient[id]->exitRoom(roomName);
+		}
 	}
 	
-	for (int i = 0; i < listeClient.size(); i++)if (listeClient[i])delete listeClient[i];
 	listeClient.clear();
 
 	return 0;

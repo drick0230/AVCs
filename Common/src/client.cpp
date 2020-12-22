@@ -1,5 +1,14 @@
 #include "client.h"
 
+short Client::FindRoomId(string name)
+{
+	for (int i = 0; i < listeRoom.size(); i++)
+	{
+		if (listeRoom[i].name == name) return i;
+	}
+	return -1;
+}
+
 Client::Client(sf::IpAddress ip, unsigned short port): endServerCom(false), tServerCom(&Client::fServerCom,this)
 {
 	if (socket.connect(ip, port, sf::milliseconds(5000)) == sf::Socket::Status::Error)std::cout << "error" << endl;
@@ -8,13 +17,23 @@ Client::Client(sf::IpAddress ip, unsigned short port): endServerCom(false), tSer
 Client::~Client()
 {
 	//libération du thread
+	vector <string> roomsName;
+	unique_lock<mutex> lRoom(mRoom);
+	for (int i = 0; i < listeRoom.size(); i++) roomsName.push_back(listeRoom[i].name);
+	lRoom.unlock();
+	for (int i = 0; i < roomsName.size(); i++)
+	{
+		exitRoom(roomsName[i]);
+	}
 	unique_lock<mutex> lSocket(mSocket);
-	//libération des salles
 	//fin du thread
 	endServerCom = true;
 	lSocket.unlock();
 	if (tServerCom.joinable())tServerCom.join();
 	//libération de la connection
+
+
+	lSocket.lock();
 	socket.disconnect();
 }
 
@@ -26,14 +45,15 @@ bool Client::joinRoom(string roomName, string pseudo)
 	sf::Packet demande;
 	sf::Packet reponse;
 
-	listeRoom.push_back(Room_client(roomName));
 	demande << ServerCommand::joinRoom << roomName << pseudo;
 
+	socket.setBlocking(true);
 	socket.send(demande);
 	socket.receive(reponse);
 
 	bool retour;
 	reponse >> retour;
+	if(retour)	listeRoom.push_back(Room_client(roomName));
 	return retour;
 
 }
@@ -45,13 +65,12 @@ bool Client::createRoom(string roomName)
 
 	demande << ServerCommand::createRoom << roomName;
 
+	socket.setBlocking(true);
 	socket.send(demande);
 	socket.receive(reponse);
 
 	bool retour;
 	reponse >> retour;
-
-	if (retour) listeRoom.push_back(Room_client(roomName));
 
 	return retour;
 }
@@ -63,8 +82,11 @@ bool Client::exitRoom(string roomName)
 
 	demande << ServerCommand::ExitRoom << roomName;
 
+	socket.setBlocking(true);
 	socket.send(demande);
 	socket.receive(reponse);
+	lSocket.unlock();
+
 
 	bool retour;
 	reponse >> retour;
@@ -110,16 +132,8 @@ void Client::analysePacket(sf::Packet packet)
 		packet >> new_user.port;
 
 		unique_lock <mutex> lRoom(mRoom);
-		unsigned short Roomid = 0;
-		bool presence = false;
-		for (; Roomid < listeRoom.size(); Roomid++)
-		{
-			if (listeRoom[Roomid].name == room)
-			{
-				presence = true;
-				break;
-			}
-		}
+		unsigned short Roomid = FindRoomId(room);
+		bool presence = Roomid >= 0;
 		if (presence)listeRoom[Roomid].addUser(new_user);
 		lRoom.unlock();
 
@@ -147,6 +161,29 @@ void Client::analysePacket(sf::Packet packet)
 		}
 		if (presence)listeRoom[Roomid].pseudo = username;
 		lRoom.unlock();
+		}
+		break;
+	case ClientCommand::removeUser:
+		{
+			string room;
+			string username;
+
+			packet >> room;
+			packet >> username;
+
+			unique_lock <mutex> lRoom(mRoom);
+			int roomId = FindRoomId(room);
+			if (roomId >= 0)
+			{
+				if (listeRoom[roomId].pseudo == username)
+				{
+					listeRoom[roomId] = listeRoom[listeRoom.size() - 1];
+					listeRoom.pop_back();
+				}
+				else listeRoom[roomId].removeUser(username);
+			}
+			lRoom.unlock();
+			
 		}
 		break;
 	}

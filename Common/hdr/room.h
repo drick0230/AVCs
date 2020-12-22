@@ -50,10 +50,13 @@ public:
 	Room_server(string _name);
 
 	void addUser(user new_user, sf::TcpSocket* socketPtr);
+	void removeUser(string user_pseudo);
 
 	void printS();
 	string getName() { return name; }
 	bool testReplicatAdresse(sf::IpAddress ip, unsigned short port);
+
+	string findPseudoWithSocket(sf::TcpSocket* socketPtr);
 };
 
 class Room_client : public Room

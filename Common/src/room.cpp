@@ -140,6 +140,27 @@ bool Room_server::testReplicatAdresse(sf::IpAddress ip, unsigned short port)
 	return false;
 }
 
+string Room_server::findPseudoWithSocket(sf::TcpSocket* socketPtr)
+{
+	for (int i = 0; i < listeSocket.size(); i++)
+	{
+		if (listeSocket[i].socketPtr == socketPtr) return listeSocket[i].pseudo;
+	}
+	return string("");
+}
+
+void Room_server::removeUser(string pseudo_user)
+{
+	for (int i = 0; i < listeSocket.size(); i++)
+	{
+		sf::Packet packet;
+		packet<<ClientCommand::removeUser << name << pseudo_user;
+		listeSocket[i].socketPtr->setBlocking(true);
+		listeSocket[i].socketPtr->send(packet);
+	}
+	Room::removeUser(pseudo_user);
+}
+
 #pragma endregion
 
 #pragma region client

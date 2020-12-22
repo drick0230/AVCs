@@ -26,6 +26,9 @@ protected:
 	//end thread
 	bool endServerCom;
 
+	//méthode utile
+	short FindRoomId(string name);
+
 
 public:
 	Client(sf::IpAddress ip, unsigned short port);

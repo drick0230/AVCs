@@ -19,5 +19,6 @@ enum ServerCommand : UINT8
 enum ClientCommand : UINT8
 {
 	addUser = 0,
-	username = 1
+	username = 1,
+	removeUser = 2
 };

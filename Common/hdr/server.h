@@ -36,6 +36,9 @@ protected:
 	bool endListener;
 	bool endCom;
 
+	//méthode utile
+	short FindRoomId(string name);
+
 public:
 	Server(unsigned short port);
 	void analysePacket(sf::Packet packet, int id);
