@@ -4,6 +4,11 @@
 
 int main()
 {
+	// Media Session
+	PROPVARIANT _propVar;
+	PropVariantInit(&_propVar);
+	_propVar.vt = VT_EMPTY;
+
 	// Network
 	std::string ipAdress;
 	bool isConnected = false;
@@ -21,9 +26,13 @@ int main()
 	DevicesManager devManager;
 	devManager.EnumerateDevices();
 	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_CAPT, 0) << '\n';
-	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
+	//std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
 	std::wcout << devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
 	while (1);
+	//devManager.SelectSource(DevicesTypes::AUD_CAPT);
+	//devManager.SaveAudioCaptureDatas();
+	//devManager.PlayAudioCaptureDatas();
+	//devManager._mediaSession->Start(&GUID_NULL, &_propVar);
 	//devManager.ShowDevices();
 
 	// Peak sur le processeur [!]
@@ -60,6 +69,7 @@ int main()
 		}
 	}
 
+	PropVariantClear(&_propVar);
 
 	return 0;
 }
