@@ -26,8 +26,11 @@ int main()
 	DevicesManager devManager;
 	devManager.EnumerateDevices();
 	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_CAPT, 0) << '\n';
-	//std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
+	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
 	std::wcout << devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
+	devManager.mediaSession.SetActiveDevice(devManager.audioCaptureDevices[0]);
+	devManager.mediaSession.SetActiveDevice(devManager.audioRenderDevices[0]);
+	devManager.mediaSession.PlayAudioCaptureDatas();
 	while (1);
 	//devManager.SelectSource(DevicesTypes::AUD_CAPT);
 	//devManager.SaveAudioCaptureDatas();

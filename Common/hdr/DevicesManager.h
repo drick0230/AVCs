@@ -26,19 +26,32 @@ namespace DevicesTypes {
 class Device {
 protected:
 public:
-	unsigned int deviceType;
+	unsigned int deviceType = 0;
 	virtual std::wstring GetName(HRESULT* hr = NULL) = 0;
 };
 
+// Childs of Device
 class CaptureDevice : public Device {
 protected:
+	IMFActivate* activate; // Pointer to an IMFActivate of an Audio Capture Device
 	CaptureDevice(const unsigned int _devicesType, IMFActivate* _activate);
 public:
 	~CaptureDevice();
-	IMFActivate* activate; // Pointer of an IMFActivate of an Audio Capture Device
 	std::wstring GetName(HRESULT* hr = NULL);
+	void* Activate(REFIID riid, HRESULT* hr = NULL);
 };
 
+class RenderDevice : public Device {
+protected:
+	IMMDevice* device; // Pointer to an IMMDevice of an Audio Render Device
+	RenderDevice(const unsigned int _devicesType, IMMDevice *_device);
+public:
+	~RenderDevice();
+	std::wstring GetName(HRESULT* hr = NULL);
+	std::wstring GetId(HRESULT* hr = NULL);
+};
+
+// Childs of CaptureDevice
 class AudioCaptureDevice : public CaptureDevice {
 private:
 
@@ -52,8 +65,18 @@ private:
 public:
 	VideoCaptureDevice(IMFActivate* _activate = NULL);
 };
-#pragma endregion
 
+// Childs of RenderDevice
+class AudioRenderDevice : public RenderDevice {
+private:
+
+public:
+	AudioRenderDevice(IMMDevice* _device = NULL);
+};
+#pragma endregion // Device
+
+//Audio API
+#pragma region AudioAPI
 class WASAPI {
 private:
 	IAudioClient* audioClient;
@@ -63,26 +86,36 @@ public:
 	void PlayAudioCaptureDatas();
 };
 
+class MediaSession {
+private:
+	IMFMediaSession *mediaSession; // Control the audio (Play/Pause/Stop)
+	IMFMediaSource *audioCaptureDevice;
+	IMFActivate* audioRenderDevice;
+public:
+	MediaSession(AudioCaptureDevice &_audioCaptureDevice, AudioRenderDevice &_audioRenderDevice, HRESULT* hr = NULL);
+	MediaSession(HRESULT* hr = NULL);
+	~MediaSession();
+	void Initialize(HRESULT* hr = NULL);
+
+	void SetActiveDevice(AudioCaptureDevice& _audioCaptureDevice, HRESULT* hr = NULL);
+	void SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESULT* hr = NULL);
+
+	void PlayAudioCaptureDatas(HRESULT* hr = NULL);
+};
+#pragma endregion //AudioAPI
+
+
 class DevicesManager {
 private:
 	// Windows API
 #if _WIN32
 	// Private Windows API Variables
-	IMMDeviceCollection* audioRenderDevices;   // Audio device collection. (Kinda like an array of Audio Render Devices)
-
-	IMFAttributes* pConfig; // Attribute store to store the founded devices
-	IMFMediaSource* audioCaptureDatas; // Datas of the selected audio capture device
-	IMFSourceReader* audioRenderDatas; // Handles datas from source (capture devices) to the Audio Render Device
-	IMFMediaSink* audioRenderListener;             // Streaming audio renderer (SAR)
-
 	WASAPI wasapi;
-
-	//IMFMediaSink* audioRenderListener;             // Streaming audio renderer (SAR)
 
 	HRESULT hr;
 	// Private Windows API Functions
-	std::wstring GetIMFActivateName(const unsigned int _devicesType, const unsigned int _deviceID, IMFActivate** _devices); // Return the name of a IMFActivate (audio/video capture device)
 	void EnumerateCaptureDevices(const unsigned int _devicesType);
+	void EnumerateAudioRenderDevices(const unsigned int _devicesType);
 #endif //_WIN32
 	// Private Variables
 	unsigned int nbAudioCaptureDevices;
@@ -95,11 +128,12 @@ private:
 	void SelectAudioCaptureSource(const unsigned int _deviceID); // Select the audio capture device datas as source for the audio output device
 public:
 	std::vector<AudioCaptureDevice> audioCaptureDevices;
+	std::vector<AudioRenderDevice> audioRenderDevices;
 	std::vector<VideoCaptureDevice> videoCaptureDevices;
 
-	// Variables
-	IMFMediaSession* _mediaSession; // Control the audio (Play/Pause/Stop)
+	MediaSession mediaSession;
 
+	// Variables
 	// Constructors
 	DevicesManager();
 	// Destructors
