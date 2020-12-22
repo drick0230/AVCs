@@ -31,16 +31,11 @@ int main()
 	devManager.mediaSession.SetActiveDevice(devManager.audioCaptureDevices[0]);
 	devManager.mediaSession.SetActiveDevice(devManager.audioRenderDevices[0]);
 	devManager.mediaSession.PlayAudioCaptureDatas();
-	while (1);
-	//devManager.SelectSource(DevicesTypes::AUD_CAPT);
-	//devManager.SaveAudioCaptureDatas();
-	//devManager.PlayAudioCaptureDatas();
-	//devManager._mediaSession->Start(&GUID_NULL, &_propVar);
-	//devManager.ShowDevices();
+	while (1) Sleep(1000);
 
 	// Peak sur le processeur [!]
-	VOIP voip(ipAdress, sf::Socket::AnyPort); // Binding sur le port en UDP
-	std::cout << "Votre Port est <" << voip.socket.getLocalPort() << ">\n";
+	//VOIP voip(ipAdress, sf::Socket::AnyPort); // Binding sur le port en UDP
+	//std::cout << "Votre Port est <" << voip.socket.getLocalPort() << ">\n";
 	// Fin peak sur le processeur
 
 	ATH::ATHElement mainMenu(Vector2_int(1,1));
@@ -49,7 +44,7 @@ int main()
 
 	mainMenu.Show();
 	//mainMenu.Hide();
-
+	/*
 	while (true) {
 		ConsoleIO(&isConnected, &voiceEnable, &speakerEnable, &isRecording, &voip);
 
@@ -70,13 +65,13 @@ int main()
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 		}
-	}
+	}*/
 
 	PropVariantClear(&_propVar);
 
 	return 0;
 }
-
+/*
 void ConsoleIO(bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* isRecording, VOIP* voip) {
 	// Command-Line
 	std::vector<std::string> splitCommand;
@@ -132,13 +127,13 @@ void ConsoleIO(bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* 
 				else if (_inKey == (char)127 && Console::inText.content.size() > 0) { // Touche Effacer
 					// Effacer le dernier caractère du texte
 					Console::inText.content.pop_back();
-				}*/
+				}*//*
 			}
 			//Console::inText.Show();
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
-}
+}*/
 
 template <class T>
 T myParse(std::string _string) {

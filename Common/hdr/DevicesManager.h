@@ -25,49 +25,40 @@ namespace DevicesTypes {
 
 class Device {
 protected:
+	IMMDevice* device; // Pointer to an IMMDevice of a Device
+	IMFActivate* activate; // Pointer to an IMFActivate of a Device (Not for Audio Render Device)
+
+	Device(const unsigned int _deviceType, IMFActivate* _activate);
+	Device(const unsigned int _deviceType, IMMDevice* _device);
 public:
 	unsigned int deviceType = 0;
-	virtual std::wstring GetName(HRESULT* hr = NULL) = 0;
-};
+	~Device();
 
-// Childs of Device
-class CaptureDevice : public Device {
-protected:
-	IMFActivate* activate; // Pointer to an IMFActivate of an Audio Capture Device
-	CaptureDevice(const unsigned int _devicesType, IMFActivate* _activate);
-public:
-	~CaptureDevice();
-	std::wstring GetName(HRESULT* hr = NULL);
+	virtual std::wstring GetName(HRESULT* hr = NULL);
+	std::wstring GetId(HRESULT* hr = NULL);
+
 	void* Activate(REFIID riid, HRESULT* hr = NULL);
 };
 
-class RenderDevice : public Device {
-protected:
-	IMMDevice* device; // Pointer to an IMMDevice of an Audio Render Device
-	RenderDevice(const unsigned int _devicesType, IMMDevice *_device);
-public:
-	~RenderDevice();
-	std::wstring GetName(HRESULT* hr = NULL);
-	std::wstring GetId(HRESULT* hr = NULL);
-};
-
-// Childs of CaptureDevice
-class AudioCaptureDevice : public CaptureDevice {
+// Childs of Device
+class AudioCaptureDevice : public Device {
 private:
 
 public:
 	AudioCaptureDevice(IMFActivate* _activate = NULL);
+	AudioCaptureDevice(IMMDevice* _device = NULL);
 };
 
-class VideoCaptureDevice : public CaptureDevice {
+class VideoCaptureDevice : public Device {
 private:
 
 public:
 	VideoCaptureDevice(IMFActivate* _activate = NULL);
+	VideoCaptureDevice(IMMDevice* _device = NULL);
 };
 
 // Childs of RenderDevice
-class AudioRenderDevice : public RenderDevice {
+class AudioRenderDevice : public Device {
 private:
 
 public:
@@ -114,8 +105,8 @@ private:
 
 	HRESULT hr;
 	// Private Windows API Functions
-	void EnumerateCaptureDevices(const unsigned int _devicesType);
-	void EnumerateAudioRenderDevices(const unsigned int _devicesType);
+	void EnumerateIMFActivates(const unsigned int _devicesType);
+	void EnumerateIMMDevices(const unsigned int _devicesType);
 #endif //_WIN32
 	// Private Variables
 	unsigned int nbAudioCaptureDevices;
@@ -123,31 +114,26 @@ private:
 	unsigned int nbVideoCaptureDevices;
 
 	// Private Functions
-	std::wstring GetAudioRenderDevicesName(const unsigned int _deviceID); // Return the name of the audio render device
+	//std::wstring GetAudioRenderDevicesName(const unsigned int _deviceID); // Return the name of the audio render device
 
 	void SelectAudioCaptureSource(const unsigned int _deviceID); // Select the audio capture device datas as source for the audio output device
 public:
+	// Public Variables
 	std::vector<AudioCaptureDevice> audioCaptureDevices;
 	std::vector<AudioRenderDevice> audioRenderDevices;
 	std::vector<VideoCaptureDevice> videoCaptureDevices;
 
 	MediaSession mediaSession;
 
-	// Variables
 	// Constructors
 	DevicesManager();
 	// Destructors
 	~DevicesManager();
 
-	// Functions
+	// Public Functions
 	void InitializeDevicesManager();
 	void EnumerateDevices(const unsigned int _devicesType = DevicesTypes::ALL);
 	std::wstring GetDevicesName(const unsigned int _devicesType, const unsigned int _deviceID = 0); // Return the name of the device
-
-	void PlayAudioCaptureDatasMediaFoundation();
-
-	void SaveAudioCaptureDatas();
-	void SelectSource(const unsigned int _devicesType, const unsigned int _deviceID = 0); // Select the capture device datas as source for an output device
 
 	void ClearDevices(const unsigned int _devicesType = DevicesTypes::ALL);
 };
