@@ -82,7 +82,7 @@ std::wstring Device::GetName(HRESULT* hr) {
 	else {
 		throw "This Device's IMFActivate and IMMDevice are NULL. Missing something at the construction?";
 	}
-	
+
 	if (!SUCCEEDED(*hr)) throw* hr;
 	if (_localHr) delete hr;
 
@@ -108,7 +108,7 @@ void* Device::Activate(REFIID _riid, HRESULT* hr) {
 std::wstring Device::GetId(HRESULT* hr) {
 	std::wstring _returnDeviceID;
 
-	if(device != NULL){
+	if (device != NULL) {
 		LPWSTR _deviceID = NULL;
 
 		bool _localHr = false;
@@ -147,7 +147,175 @@ WASAPI::~WASAPI() {
 
 }
 
-MediaSession::MediaSession(HRESULT* hr) : mediaSession(NULL), audioCaptureDevice(NULL), audioRenderDevice(NULL) {}
+#pragma region SourceReader_SinkWritter
+
+SourceReader_SinkWritter::SourceReader_SinkWritter(HRESULT* hr) :
+	audioCaptureSource(NULL), audioCaptureDatas(NULL), audioRenderSink(NULL), audioRenderDatas(NULL) {}
+
+SourceReader_SinkWritter::~SourceReader_SinkWritter() {
+	SafeRelease(&audioCaptureSource);
+	SafeRelease(&audioCaptureDatas);
+
+	SafeRelease(&audioRenderSink);
+	SafeRelease(&audioRenderDatas);
+}
+
+void SourceReader_SinkWritter::SetActiveDevice(AudioCaptureDevice& _audioCaptureDevice, HRESULT* hr) {
+	IMFAttributes* pConfig; // Store the search criteria for the devices
+
+	bool _localHr = false;
+	if (hr == NULL) {
+		hr = new HRESULT(S_OK);
+		_localHr = true;
+	}
+
+	// Create the MediaSource from the IMMDevice
+	if (SUCCEEDED(*hr)) *hr = MFCreateAttributes(&pConfig, 2); // Create an attribute store to hold the Audio Capture Device ID
+	if (SUCCEEDED(*hr)) *hr = pConfig->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID); 	// Request audio capture devices
+	if (SUCCEEDED(*hr)) *hr = pConfig->SetString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_ENDPOINT_ID, _audioCaptureDevice.GetId(hr).c_str()); 	// Request audio capture devices by ID
+	if (SUCCEEDED(*hr)) *hr = MFCreateDeviceSource(pConfig, &audioCaptureSource);
+
+	// Create the SourceReader from the MediaSource
+	if (SUCCEEDED(*hr)) *hr = MFCreateSourceReaderFromMediaSource(audioCaptureSource, NULL, &audioCaptureDatas);
+
+	// Enumerate MediaType of the SourceReader
+	DWORD dwMediaTypeIndex = 0;
+	GUID _subTypeGUID;
+
+	while (SUCCEEDED(*hr))
+	{
+		IMFMediaType* pType = NULL;
+		*hr = audioCaptureDatas->GetNativeMediaType(0, dwMediaTypeIndex, &pType);
+		if (SUCCEEDED(*hr))
+		{
+			// Examine the media type. (Not shown.)
+			pType->GetGUID(MF_MT_SUBTYPE, &_subTypeGUID);
+			if (_subTypeGUID == MFAudioFormat_PCM) {
+				// Format = PCM
+			}
+			else if (_subTypeGUID == MFAudioFormat_Float) {
+				// Format = IEEE Float
+			}
+			pType->Release();
+		}
+		else if (MF_E_NO_MORE_TYPES) {
+			*hr = S_OK;
+			break;
+		}
+		++dwMediaTypeIndex;
+	}
+
+	SafeRelease(&pConfig);
+
+	if (!SUCCEEDED(*hr)) throw* hr;
+	if (_localHr) delete hr;
+}
+
+void SourceReader_SinkWritter::SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESULT* hr) {
+	IMFAttributes* pConfig; // Store the search criteria for the devices
+
+	bool _localHr = false;
+	if (hr == NULL) {
+		hr = new HRESULT(S_OK);
+		_localHr = true;
+	}
+
+	// Create the MediaSink from the IMMDevice
+	if (SUCCEEDED(*hr)) *hr = MFCreateAttributes(&pConfig, 1); // Create an attribute store to hold the Audio Capture Device ID
+	if (SUCCEEDED(*hr)) *hr = pConfig->SetString(MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ID, _audioRenderDevice.GetId(hr).c_str()); 	// Request audio capture devices
+	if (SUCCEEDED(*hr)) *hr = MFCreateAudioRenderer(pConfig, &audioRenderSink);
+
+	// Create the SinkWritter from the MediaSink
+	if (SUCCEEDED(*hr)) *hr = MFCreateSinkWriterFromMediaSink(audioRenderSink, NULL, &audioRenderDatas);
+
+	SafeRelease(&pConfig);
+
+	if (!SUCCEEDED(*hr)) throw* hr;
+	if (_localHr) delete hr;
+}
+
+
+void SourceReader_SinkWritter::PlayAudioCaptureDatas(HRESULT* hr) {
+	IMFMediaType* _mediaType = NULL;
+
+	IMFSample* pSample = NULL;
+	size_t  cSamples = 0;
+
+
+	bool _localHr = false;
+	if (hr == NULL) {
+		hr = new HRESULT(S_OK);
+		_localHr = true;
+	}
+
+	// Set the SinkWritter's Input MediaType to the MediaType of the capture device's MediaSource
+	if (SUCCEEDED(*hr)) *hr = audioCaptureDatas->GetCurrentMediaType(0, &_mediaType); // Get the MediaType
+	if (SUCCEEDED(*hr)) *hr = audioRenderDatas->SetInputMediaType(0, _mediaType, NULL);
+
+	if (SUCCEEDED(*hr)) *hr = audioRenderDatas->BeginWriting(); // The SinkWriter is ready to receive and write datas
+
+
+	// Get information from the Media Source of the Audio Capture Device
+	bool quit = false;
+	while (!quit && cSamples < 500) {
+		DWORD streamIndex = 0, streamStatus = 0;
+		LONGLONG llTimeStamp = 0;
+
+		if (SUCCEEDED(*hr)) *hr = audioCaptureDatas->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &streamIndex, &streamStatus, &llTimeStamp, &pSample);
+		if (FAILED(hr))
+		{
+			break;
+		}
+
+		wprintf(L"Stream %d (%I64d)\n", streamIndex, llTimeStamp);
+		if (streamStatus & MF_SOURCE_READERF_ENDOFSTREAM)
+		{
+			wprintf(L"\tEnd of stream\n");
+			quit = true;
+		}
+		if (streamStatus & MF_SOURCE_READERF_NEWSTREAM)
+		{
+			wprintf(L"\tNew stream\n");
+		}
+		if (streamStatus & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
+		{
+			wprintf(L"\tNative type changed\n");
+		}
+		if (streamStatus & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
+		{
+			wprintf(L"\tCurrent type changed\n");
+		}
+		if (streamStatus & MF_SOURCE_READERF_STREAMTICK)
+		{
+			wprintf(L"\tStream tick\n");
+			//audioRenderDatas->SendStreamTick();
+		}
+
+		if (streamStatus & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
+		{
+			// The format changed. Reconfigure the decoder.
+			throw "Format Changed";
+			break;
+		}
+
+		if (pSample) {
+			++cSamples; // Count how many sample are process (Not NULL)
+			audioRenderDatas->WriteSample(0, pSample);
+		}
+		SafeRelease(&pSample);
+	}
+	audioRenderDatas->Finalize();
+
+	SafeRelease(&_mediaType);
+
+	if (!SUCCEEDED(*hr)) throw* hr;
+	if (_localHr) delete hr;
+}
+#pragma endregion //SourceReader_SinkWritter
+
+
+MediaSession::MediaSession(HRESULT* hr) :
+	mediaSession(NULL), audioCaptureSource(NULL), audioRenderSource(NULL) {}
 
 MediaSession::MediaSession(AudioCaptureDevice& _audioCaptureDevice, AudioRenderDevice& _audioRenderDevice, HRESULT* hr) : MediaSession(hr) {
 	bool _localHr = false;
@@ -167,11 +335,12 @@ MediaSession::MediaSession(AudioCaptureDevice& _audioCaptureDevice, AudioRenderD
 
 MediaSession::~MediaSession() {
 	mediaSession->Close(); // Close Media Session
-	audioCaptureDevice->Shutdown(); // Shut down IMFMediaSource
+	audioCaptureSource->Shutdown(); // Shut down IMFMediaSource
 	mediaSession->Shutdown(); // Shut down Media Session
 
-	SafeRelease(&audioCaptureDevice);
-	SafeRelease(&audioRenderDevice);
+	SafeRelease(&audioCaptureSource);
+
+	SafeRelease(&audioRenderSource);
 }
 
 void MediaSession::Initialize(HRESULT* hr) {
@@ -196,17 +365,20 @@ void MediaSession::SetActiveDevice(AudioCaptureDevice& _audioCaptureDevice, HRES
 		_localHr = true;
 	}
 
+	// Create the MediaSource from the IMMDevice
 	if (SUCCEEDED(*hr)) *hr = MFCreateAttributes(&pConfig, 2); // Create an attribute store to hold the Audio Capture Device ID
 	if (SUCCEEDED(*hr)) *hr = pConfig->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID); 	// Request audio capture devices
 	if (SUCCEEDED(*hr)) *hr = pConfig->SetString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_ENDPOINT_ID, _audioCaptureDevice.GetId(hr).c_str()); 	// Request audio capture devices by ID
-	if (SUCCEEDED(*hr)) *hr = MFCreateDeviceSource(pConfig, &audioCaptureDevice);
-	//_audioCaptureDevice.Activate(__uuidof(IMFMediaSource), hr); //AudioCaptureDevice -> IMFMediaSource
-	//Device(_audioCaptureDevice).~Device();
+	if (SUCCEEDED(*hr)) *hr = MFCreateDeviceSource(pConfig, &audioCaptureSource);
+
+	SafeRelease(&pConfig);
 
 	if (!SUCCEEDED(*hr)) throw* hr;
 	if (_localHr) delete hr;
 }
 void MediaSession::SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESULT* hr) {
+	IMFAttributes* pConfig; // Store the search criteria for the devices
+
 	bool _localHr = false;
 	if (hr == NULL) {
 		hr = new HRESULT(S_OK);
@@ -214,8 +386,10 @@ void MediaSession::SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESUL
 	}
 
 	//AudioRenderDevice -> IMFActivate of an IMFMediaSink (SAR)
-	if (SUCCEEDED(*hr)) *hr = MFCreateAudioRendererActivate(&audioRenderDevice);
-	if (SUCCEEDED(*hr)) *hr = audioRenderDevice->SetString(MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ID, _audioRenderDevice.GetId(hr).c_str());
+	if (SUCCEEDED(*hr)) *hr = MFCreateAudioRendererActivate(&audioRenderSource);
+	if (SUCCEEDED(*hr)) *hr = audioRenderSource->SetString(MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ID, _audioRenderDevice.GetId(hr).c_str());
+
+	SafeRelease(&pConfig);
 
 	if (!SUCCEEDED(*hr)) throw* hr;
 	if (_localHr) delete hr;
@@ -244,7 +418,7 @@ void MediaSession::PlayAudioCaptureDatas(HRESULT* hr) {
 	}
 
 	// Get information from the Media Source of the Audio Capture Device
-	if (SUCCEEDED(*hr)) *hr = audioCaptureDevice->CreatePresentationDescriptor(&_presDesc);  // Get/Create presentation descriptor of the MediaSource of the Audio Capture Device
+	if (SUCCEEDED(*hr)) *hr = audioCaptureSource->CreatePresentationDescriptor(&_presDesc);  // Get/Create presentation descriptor of the MediaSource of the Audio Capture Device
 	if (SUCCEEDED(*hr)) *hr = _presDesc->GetStreamDescriptorByIndex(0, &_streamDescSelected, &_streamDesc);  // Get/Create presentation descriptor of the MediaSource of the Audio Capture Device
 
 
@@ -252,7 +426,7 @@ void MediaSession::PlayAudioCaptureDatas(HRESULT* hr) {
 
 	// Topology : Create Source Node
 	if (SUCCEEDED(*hr)) *hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &_sourceNode); // Create the Source Node
-	if (SUCCEEDED(*hr)) *hr = _sourceNode->SetUnknown(MF_TOPONODE_SOURCE, audioCaptureDevice); // Set the MediaSource of the source node
+	if (SUCCEEDED(*hr)) *hr = _sourceNode->SetUnknown(MF_TOPONODE_SOURCE, audioCaptureSource); // Set the MediaSource of the source node
 	if (SUCCEEDED(*hr)) *hr = _sourceNode->SetUnknown(MF_TOPONODE_PRESENTATION_DESCRIPTOR, _presDesc); // Set the presentation descriptor of the source node
 	if (SUCCEEDED(*hr)) *hr = _sourceNode->SetUnknown(MF_TOPONODE_STREAM_DESCRIPTOR, _streamDesc); // Set the stream descriptor of the source node
 
@@ -260,7 +434,7 @@ void MediaSession::PlayAudioCaptureDatas(HRESULT* hr) {
 
 	 // Topology : Create Output Node
 	if (SUCCEEDED(*hr)) *hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &_outNode); // Create the Output Node
-	if (SUCCEEDED(*hr)) *hr = _outNode->SetObject(audioRenderDevice); // Set the object pointer (Audio Render Device)
+	if (SUCCEEDED(*hr)) *hr = _outNode->SetObject(audioRenderSource); // Set the object pointer (Audio Render Device)
 	if (SUCCEEDED(*hr)) *hr = _outNode->SetUINT32(MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, FALSE); // Recomended
 	if (SUCCEEDED(*hr)) *hr = pTopology->AddNode(_outNode);
 
@@ -299,6 +473,7 @@ DevicesManager::DevicesManager() :
 	nbAudioCaptureDevices(0),
 	nbAudioRenderDevices(0),
 	nbVideoCaptureDevices(0),
+	sr_sw(),
 	mediaSession() {
 	if (SUCCEEDED(hr)) hr = MFStartup(MF_VERSION);	// Initialize Media Foundation
 	if (SUCCEEDED(hr)) mediaSession.Initialize(&hr); 	// Initialize Media Session

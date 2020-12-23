@@ -5,7 +5,6 @@
 
 #include "Console.h"
 
-#if _WIN32
 #include <mfapi.h> // Media Foundation function
 #include <mfidl.h> // IMFMediaSource
 #include <mfreadwrite.h> // IMFSourceReader
@@ -14,7 +13,11 @@
 // Core Audio API
 #include <audioclient.h> // WASAPI
 #include <initguid.h> // include this for DEFINE_GUID to create definition, not declaration
-#endif //_WIN32
+
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_PCM, WAVE_FORMAT_PCM);
+DEFINE_MEDIATYPE_GUID(MFAudioFormat_Float, WAVE_FORMAT_IEEE_FLOAT);
+DEFINE_GUID(MF_MT_SUBTYPE, 0xf7e34c9a, 0x42e8, 0x4714, 0xb7, 0x4b, 0xcb, 0x29, 0xd7, 0x2c, 0x35, 0xe5);
+#define MF_E_NO_MORE_TYPES 0xc00d36b9
 
 // Class Prototype
 // Device
@@ -77,11 +80,28 @@ public:
 	void PlayAudioCaptureDatas();
 };
 
+class SourceReader_SinkWritter {
+	IMFMediaSource* audioCaptureSource;
+	IMFSourceReader* audioCaptureDatas;
+
+	IMFMediaSink* audioRenderSink;
+	IMFSinkWriter* audioRenderDatas;
+public:
+	SourceReader_SinkWritter(HRESULT* hr = NULL);
+	~SourceReader_SinkWritter();
+
+	void SetActiveDevice(AudioCaptureDevice& _audioCaptureDevice, HRESULT* hr = NULL);
+	void SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESULT* hr = NULL);
+
+	void PlayAudioCaptureDatas(HRESULT* hr = NULL);
+};
+
 class MediaSession {
 private:
 	IMFMediaSession *mediaSession; // Control the audio (Play/Pause/Stop)
-	IMFMediaSource *audioCaptureDevice;
-	IMFActivate* audioRenderDevice;
+	IMFMediaSource *audioCaptureSource;
+
+	IMFActivate* audioRenderSource;
 public:
 	MediaSession(AudioCaptureDevice &_audioCaptureDevice, AudioRenderDevice &_audioRenderDevice, HRESULT* hr = NULL);
 	MediaSession(HRESULT* hr = NULL);
@@ -123,6 +143,7 @@ public:
 	std::vector<AudioRenderDevice> audioRenderDevices;
 	std::vector<VideoCaptureDevice> videoCaptureDevices;
 
+	SourceReader_SinkWritter sr_sw;
 	MediaSession mediaSession;
 
 	// Constructors

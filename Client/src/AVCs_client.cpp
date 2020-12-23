@@ -28,9 +28,16 @@ int main()
 	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_CAPT, 0) << '\n';
 	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
 	std::wcout << devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
-	devManager.mediaSession.SetActiveDevice(devManager.audioCaptureDevices[0]);
-	devManager.mediaSession.SetActiveDevice(devManager.audioRenderDevices[0]);
-	devManager.mediaSession.PlayAudioCaptureDatas();
+
+	//// MediaSession example
+	//devManager.mediaSession.SetActiveDevice(devManager.audioCaptureDevices[0]);
+	//devManager.mediaSession.SetActiveDevice(devManager.audioRenderDevices[0]);
+	//devManager.mediaSession.PlayAudioCaptureDatas();
+
+	// SourceReader_SinkWritter example
+	devManager.sr_sw.SetActiveDevice(devManager.audioCaptureDevices[0]);
+	devManager.sr_sw.SetActiveDevice(devManager.audioRenderDevices[0]);
+	devManager.sr_sw.PlayAudioCaptureDatas();
 	while (1) Sleep(1000);
 
 	// Peak sur le processeur [!]
