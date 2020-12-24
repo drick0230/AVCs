@@ -110,7 +110,7 @@ void Room_server::addUser(user new_user, sf::TcpSocket* socketPtr)
 	string pseudo = listeUser[listeUser.size() - 1].pseudo;
 
 	sf::Packet usernamePacket;
-	usernamePacket << ClientCommand::username << name << pseudo;
+	usernamePacket << ClientCommand::username << name << pseudo<<new_user.ip.toInteger()<<new_user.port;
 	socketPtr->send(usernamePacket);
 
 	userSocket newSocket;
@@ -164,10 +164,67 @@ void Room_server::removeUser(string pseudo_user)
 #pragma endregion
 
 #pragma region client
-Room_client::Room_client(string _name) : pseudo(""),Room(_name) {}
+Room_client::Room_client(string _name) :socket(),hasIdentity(false),endReception(false), pseudo(""),Room(_name),tReception(&Room_client::fReception,this) {}
 void Room_client::print()
 {
 	cout << "username: " << pseudo << endl;
 	Room::print();
+}
+
+void Room_client::send(sf::Packet packet)
+{
+	unique_lock<mutex> lsocket(msocket);
+	socket.setBlocking(true);
+	for (int i = 0; i < listeUser.size(); i++)
+	{
+		if (listeUser[i].pseudo != pseudo)
+		{
+			socket.send(packet, listeUser[i].ip, listeUser[i].port);
+		}
+	}
+}
+
+void Room_client::fReception()
+{
+	while (true)
+	{
+		unique_lock<mutex> lsocket(msocket);
+		if (endReception)break;
+		if (hasIdentity) {
+			socket.setBlocking(false);
+
+			for (int i = 0; i < listeUser.size(); i++)
+			{
+				sf::Socket::Status state(sf::Socket::Status::Partial);
+				sf::Packet packet;
+				while (state == sf::Socket::Status::Partial) state = socket.receive(packet, listeUser[i].ip, listeUser[i].port);
+				if (state == sf::Socket::Status::Done)
+				{
+					string message;
+					packet >> message;
+					cout << pseudo << "<-" << listeUser[i].pseudo << " : " << message << endl;
+				}
+			}
+
+			lsocket.unlock();
+		}
+		this_thread::sleep_for(chrono::milliseconds(100));
+	}
+}
+
+Room_client::~Room_client()
+{
+	//Libération des thread
+	unique_lock<mutex> lSocket(msocket);
+	endReception = true;
+	lSocket.unlock();
+	if (tReception.joinable())tReception.join();
+}
+
+void Room_client::setIdentity(user identity)
+{
+	//unique_lock<mutex> lSocket(msocket);
+	socket.setBlocking(true);
+	hasIdentity = true;
 }
 #pragma endregion

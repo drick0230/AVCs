@@ -4,7 +4,7 @@ short Client::FindRoomId(string name)
 {
 	for (int i = 0; i < listeRoom.size(); i++)
 	{
-		if (listeRoom[i].name == name) return i;
+		if (listeRoom[i]->name == name) return i;
 	}
 	return -1;
 }
@@ -19,7 +19,7 @@ Client::~Client()
 	//libération du thread
 	vector <string> roomsName;
 	unique_lock<mutex> lRoom(mRoom);
-	for (int i = 0; i < listeRoom.size(); i++) roomsName.push_back(listeRoom[i].name);
+	for (int i = 0; i < listeRoom.size(); i++) roomsName.push_back(listeRoom[i]->name);
 	lRoom.unlock();
 	for (int i = 0; i < roomsName.size(); i++)
 	{
@@ -35,6 +35,13 @@ Client::~Client()
 
 	lSocket.lock();
 	socket.disconnect();
+
+	//destruction des salles restante
+	for (int i = 0; i < listeRoom.size(); i++)
+	{
+		delete listeRoom[i];
+	}
+	listeRoom.clear();
 }
 
 bool Client::joinRoom(string roomName, string pseudo)
@@ -53,7 +60,7 @@ bool Client::joinRoom(string roomName, string pseudo)
 
 	bool retour;
 	reponse >> retour;
-	if(retour)	listeRoom.push_back(Room_client(roomName));
+	if(retour)	listeRoom.push_back(new Room_client(roomName));
 	return retour;
 
 }
@@ -132,9 +139,9 @@ void Client::analysePacket(sf::Packet packet)
 		packet >> new_user.port;
 
 		unique_lock <mutex> lRoom(mRoom);
-		unsigned short Roomid = FindRoomId(room);
+		short Roomid = FindRoomId(room);
 		bool presence = Roomid >= 0;
-		if (presence)listeRoom[Roomid].addUser(new_user);
+		if (presence)listeRoom[Roomid]->addUser(new_user);
 		lRoom.unlock();
 
 		}
@@ -143,23 +150,32 @@ void Client::analysePacket(sf::Packet packet)
 	case ClientCommand::username :
 		{
 		string room;
-		string username;
+		user identity;
+		sf::Uint32 ipInt;
 
 		packet >> room;
-		packet >> username;
+		packet >> identity.pseudo;
+		packet >> ipInt;
+		packet >> identity.port;
+
+
+		identity.ip = sf::IpAddress(ipInt);
 
 		unique_lock <mutex> lRoom(mRoom);
 		unsigned short Roomid = 0;
 		bool presence = false;
 		for (; Roomid < listeRoom.size(); Roomid++)
 		{
-			if (listeRoom[Roomid].name == room)
+			if (listeRoom[Roomid]->name == room)
 			{
 				presence = true;
 				break;
 			}
 		}
-		if (presence)listeRoom[Roomid].pseudo = username;
+		if (presence)
+		{
+			listeRoom[Roomid]->setIdentity(identity);
+		}
 		lRoom.unlock();
 		}
 		break;
@@ -172,15 +188,16 @@ void Client::analysePacket(sf::Packet packet)
 			packet >> username;
 
 			unique_lock <mutex> lRoom(mRoom);
-			int roomId = FindRoomId(room);
+			short roomId = FindRoomId(room);
 			if (roomId >= 0)
 			{
-				if (listeRoom[roomId].pseudo == username)
+				if (listeRoom[roomId]->getPseudo() == username)
 				{
-					listeRoom[roomId] = listeRoom[listeRoom.size() - 1];
+					listeRoom[roomId] = listeRoom[listeRoom.size()-1];
+					delete listeRoom[listeRoom.size() - 1];
 					listeRoom.pop_back();
 				}
-				else listeRoom[roomId].removeUser(username);
+				else listeRoom[roomId]->removeUser(username);
 			}
 			lRoom.unlock();
 			
@@ -193,6 +210,12 @@ void Client::print()
 {
 	for (int i = 0; i < listeRoom.size(); i++)
 	{
-		listeRoom[i].print();
+		listeRoom[i]->print();
 	}
+}
+
+void Client::send(string room, sf::Packet packet)
+{
+	short id = FindRoomId(room);
+	listeRoom[id]->send(packet);
 }

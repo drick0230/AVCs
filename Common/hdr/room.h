@@ -19,7 +19,7 @@ struct user
 
 struct userSocket
 {
-	sf::TcpSocket* socketPtr;
+	sf::TcpSocket* socketPtr = NULL;
 	string pseudo;
 };
 
@@ -62,9 +62,22 @@ public:
 class Room_client : public Room
 {
 protected:
-
-public:
 	string pseudo;
+	bool hasIdentity;
+
+	mutex msocket;
+	thread tReception;
+	void fReception();
+	bool endReception;
+
+	sf::UdpSocket socket;
+public:
+
 	Room_client(string _name);
+	~Room_client();
 	void print();
+	void send(sf::Packet);
+
+	void setIdentity(user identity);
+	string getPseudo() { return pseudo; }
 };

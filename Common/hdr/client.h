@@ -14,7 +14,7 @@ class Client
 {
 protected:
 	sf::TcpSocket socket;
-	vector<Room_client> listeRoom;
+	vector<Room_client*> listeRoom;
 
 	//thread
 	thread tServerCom;
@@ -41,4 +41,5 @@ public:
 	bool exitRoom(string roomName);
 
 	void print();
+	void send(string room, sf::Packet packet);
 };

@@ -81,6 +81,22 @@ int main()
 			cin >> roomName;
 			listeClient[id]->exitRoom(roomName);
 		}
+		if (commande == "sendClient")
+		{
+			unsigned short id;
+			string roomName;
+			string message;
+			cout << "idClient" << endl;
+			cin >> id;
+			cout << "RoomName" << endl;
+			cin >> roomName;
+			cout << "message" << endl;
+			cin >> message;
+			sf::Packet packet;
+			packet << message;
+
+			listeClient[id]->send(roomName, packet);
+		}
 	}
 	
 	listeClient.clear();
