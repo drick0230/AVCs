@@ -15,10 +15,12 @@
 */
 
 #if _WIN32
-#include <Windows.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <wtypes.h>
 #endif
 
-#include <stdio.h>
 #include <iostream>
 #include <vector>
 

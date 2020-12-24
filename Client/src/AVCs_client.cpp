@@ -23,6 +23,18 @@ int main()
 	//std::cout << "Votre adresse IP : \n";
 	//std::cin >> ipAdress;
 	ipAdress = "localhost";
+	// Network Test
+	Network::Initialize();
+	if (!Network::tcp.Host(22))
+		throw "Hosting problem";
+
+	std::thread serverThread(server);
+	std::thread clientThread(client);
+	serverThread.detach();
+	clientThread.detach();
+	while (1) Sleep(1000);
+
+	// Device Manager Test
 	DevicesManager devManager;
 	devManager.EnumerateDevices();
 	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_CAPT, 0) << '\n';
@@ -45,7 +57,7 @@ int main()
 	//std::cout << "Votre Port est <" << voip.socket.getLocalPort() << ">\n";
 	// Fin peak sur le processeur
 
-	ATH::ATHElement mainMenu(Vector2_int(1,1));
+	ATH::ATHElement mainMenu(Vector2_int(1, 1));
 	ATH::Rect testrect(&mainMenu, Vector2_int(0, 0), Vector2_int(9, 6), Color(125, 125, 125));
 	ATH::SimpleText testText(&testrect, "bonjour\ncomment\nca va", Vector2_int(1, 1), Vector2_int(7, 4), Color(180, 180, 0), Color(125, 125, 125));
 
@@ -78,6 +90,26 @@ int main()
 
 	return 0;
 }
+
+
+void server() {
+	Network::tcp.WaitClientConnection();
+	Network::tcp.WaitReceive(0);
+	Network::tcp.Send(0, "Test Message 2!");
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+}
+
+void client() {
+	if (Network::tcp.Connect("127.0.0.1", "22"))
+	{
+		std::cout << "U are connected!\n";
+		Network::tcp.Send("Test Message!");
+		Network::tcp.WaitReceive();
+	}
+	else
+		throw "Hosting problem";
+}
+
 /*
 void ConsoleIO(bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* isRecording, VOIP* voip) {
 	// Command-Line

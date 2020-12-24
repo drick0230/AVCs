@@ -262,7 +262,7 @@ void SourceReader_SinkWritter::PlayAudioCaptureDatas(HRESULT* hr) {
 		LONGLONG llTimeStamp = 0;
 
 		if (SUCCEEDED(*hr)) *hr = audioCaptureDatas->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &streamIndex, &streamStatus, &llTimeStamp, &pSample);
-		if (FAILED(hr))
+		if (FAILED(*hr))
 		{
 			break;
 		}
