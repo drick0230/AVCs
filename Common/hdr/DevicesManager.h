@@ -34,7 +34,7 @@ protected:
 	Device(const unsigned int _deviceType, IMFActivate* _activate);
 	Device(const unsigned int _deviceType, IMMDevice* _device);
 public:
-	unsigned int deviceType = 0;
+	unsigned int deviceType;
 	~Device();
 
 	virtual std::wstring GetName(HRESULT* hr = NULL);

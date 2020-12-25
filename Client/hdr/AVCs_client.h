@@ -15,7 +15,10 @@
 
 template <class T>
 T myParse(std::string);
-void server();
-void client();
+void serverTCP();
+void clientTCP();
+
+void serverUDP();
+void clientUDP();
 
 // TODO: Référencez ici les en-têtes supplémentaires nécessaires à votre programme.

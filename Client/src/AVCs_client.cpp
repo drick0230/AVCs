@@ -1,6 +1,7 @@
 ﻿// AVCs_5.cpp : définit le point d'entrée de l'application.
 //
 #include "AVCs_client.h"
+#define tcpActive false
 
 int main()
 {
@@ -25,13 +26,33 @@ int main()
 	ipAdress = "localhost";
 	// Network Test
 	Network::Initialize();
-	if (!Network::tcp.Host(22))
-		throw "Hosting problem";
+	Network::Add(ProtocoleTypes::BOTH);
+	Network::Add(ProtocoleTypes::UDP);
 
-	std::thread serverThread(server);
-	std::thread clientThread(client);
-	serverThread.detach();
-	clientThread.detach();
+	// TCP Test
+	if (tcpActive) {
+		if (!Network::tcp[0].Host(22))
+			throw "Hosting problem";
+
+		std::thread serverThread(serverTCP);
+		std::thread clientThread(clientTCP);
+		serverThread.detach();
+		clientThread.detach();
+	}
+	// UDP test
+	else {
+		if (!Network::udp[0].Bind("127.0.0.1", 22))
+			throw "Hosting problem";
+		if (!Network::udp[1].Bind("127.0.0.1", 23))
+			throw "Hosting problem";
+
+		std::thread serverThread(serverUDP);
+		std::thread clientThread(clientUDP);
+		serverThread.detach();
+		clientThread.detach();
+	}
+
+
 	while (1) Sleep(1000);
 
 	// Device Manager Test
@@ -92,19 +113,41 @@ int main()
 }
 
 
-void server() {
-	Network::tcp.WaitClientConnection();
-	Network::tcp.WaitReceive(0);
-	Network::tcp.Send(0, "Test Message 2!");
+void serverTCP() {
+	Network::tcp[0].WaitClientConnection();
+	Network::tcp[0].WaitReceive(0);
+	std::cout << "Someone is connected\n";
+	Network::tcp[0].Send(0, "Test Message 2!");
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 }
 
-void client() {
-	if (Network::tcp.Connect("127.0.0.1", "22"))
+void clientTCP() {
+	if (Network::tcp[0].Connect("127.0.0.1", 22))
 	{
 		std::cout << "U are connected!\n";
-		Network::tcp.Send("Test Message!");
-		Network::tcp.WaitReceive();
+		Network::tcp[0].Send("Test Message!");
+		Network::tcp[0].WaitReceive();
+	}
+	else
+		throw "Hosting problem";
+}
+
+void serverUDP() {
+	//Network::udp.WaitClientConnection();
+	Network::udp[0].WaitReceive(0);
+	std::cout << "Someone is connected\n";
+	Network::udp[0].WaitReceive(0);
+	Network::udp[0].Send(0, "Test Message 2!");
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+}
+
+void clientUDP() {
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	if (Network::udp[1].Connect("127.0.0.1", 22))
+	{
+		std::cout << "U are connected!\n";
+		Network::udp[1].Send(0, "Test Message!");
+		Network::udp[1].WaitReceive();
 	}
 	else
 		throw "Hosting problem";
