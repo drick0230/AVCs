@@ -2,132 +2,104 @@
 //
 #include "AVCs_server.h"
 
+
 int main()
 {
-	// Network
-	std::string ipAdress;
-	bool isConnected = false;
-	bool voiceEnable = false;
-	bool speakerEnable = false;
-	bool isRecording = false;
+	vector <Client*> listeClient;
+	unsigned short port;
+	cout << "port: " << endl;
+	port = 11111;//cin >> port;
+	//Creation des thread
+	Server server(port);
 
-	// Obtention de l'IP et du Port
-	std::cout << "Votre adresse IP : \n";
-	std::cin >> ipAdress;
-
-	VOIP voip(ipAdress, sf::Socket::AnyPort); // Binding sur le port en UDP
-	std::cout << "Votre Port est <" << voip.socket.getLocalPort() << ">\n";
-
-	// MultiThreading
-	std::thread threadConsoleIO(ConsoleIO, &isConnected, &voiceEnable, &speakerEnable, &isRecording, &voip);
-	while (true) {
-		if (isConnected) {
-			if (voiceEnable)
-			{
-				voip.Send();
-			}
-
-			if (speakerEnable) {
-				voip.Receive();
-				voip.TreatAudio();
-				std::this_thread::sleep_for(std::chrono::milliseconds(200));
-			}
-			//voip.Update();
-		}
-		else
+	//boucle de commande
+	string commande = "";
+	while (commande != "exit")
+	{
+		cout << "commande: " << endl;
+		cin >> commande;
+		if (commande == "print")
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+			server.print();
+		}
+		if (commande == "openClient")
+		{
+			unsigned short port_server;
+			string ipInput;
+			cout << "Ip du server" << endl;
+			ipInput = "24.212.42.80";// cin >> ipInput;
+			cout << "port du server" << endl;
+			port_server = 11111;// cin >> port_server;
+			sf::IpAddress ip(ipInput);
+			listeClient.push_back(new Client(ip, port_server));
+			cout << "idClient = " << listeClient.size() - 1 << endl;
+		}
+		if (commande == "closeClient")
+		{
+			unsigned short id;
+			cout << "idClient" << endl;
+			cin >> id;
+			if (listeClient[id])delete listeClient[id];
+		}
+		if (commande == "createRoomClient")
+		{
+			unsigned short id;
+			string roomName;
+			cout << "idClient" << endl;
+			id = 0;//cin >> id;
+			cout << "RoomName" << endl;
+			cin >> roomName;
+			listeClient[id]->createRoom(roomName);
+		}
+		if (commande == "joinRoomClient")
+		{
+			unsigned short id;
+			string roomName;
+			string pseudo;
+			cout << "idClient" << endl;
+			cin >> id;
+			cout << "RoomName" << endl;
+			cin >> roomName;
+			cout << "Pseudo" << endl;
+			pseudo = "client";//cin >> pseudo;
+			listeClient[id]->joinRoom(roomName,pseudo);
+		}
+		if (commande == "printClient")
+		{
+			unsigned short id;
+			cout << "idClient" << endl;
+			cin >> id;
+			listeClient[id]->print();
+		}
+		if (commande == "exitRoomClient")
+		{
+			unsigned short id;
+			string roomName;
+			cout << "idClient" << endl;
+			cin >> id;
+			cout << "RoomName" << endl;
+			cin >> roomName;
+			listeClient[id]->exitRoom(roomName);
+		}
+		if (commande == "sendClient")
+		{
+			unsigned short id;
+			string roomName;
+			string message;
+			cout << "idClient" << endl;
+			cin >> id;
+			cout << "RoomName" << endl;
+			cin >> roomName;
+			cout << "message" << endl;
+			cin >> message;
+			sf::Packet packet;
+			packet << message;
+
+			listeClient[id]->send(roomName, packet);
 		}
 	}
-
+	
+	listeClient.clear();
 
 	return 0;
-}
-
-void ConsoleIO(bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* isRecording, VOIP* voip) {
-
-	// Audio Recording
-	//sf::SoundBufferRecorder recorder;
-	//const sf::SoundBuffer& buffer = recorder.getBuffer();
-	//sf::Sound sound;
-
-	// Command-Line
-	const unsigned short maxCommandChar = 50;
-
-	char command[maxCommandChar];
-	for (unsigned short i = 0; i < maxCommandChar; i++) {
-		command[i] = '\0';
-	}
-
-	std::vector<std::string> splitCommand;
-
-	// main Loop
-	while (true)
-	{
-		std::cin.getline(command, 30, '\n');
-		if (command[0] != '\0') {
-
-			splitCommand.clear();
-
-			unsigned short i = 0;
-			while (command[i] != '\0') {
-				splitCommand.emplace_back();
-
-				while (command[i] != ' ' && command[i] != '\0') {
-					splitCommand.back().push_back(command[i]);
-					i++;
-				}
-
-				i++;
-			}
-
-			if (splitCommand[0] == "connect") {
-				voip->Connect(splitCommand[1], myParse<unsigned int>(splitCommand[2]));
-				*isConnected = true;
-			}
-			else if (splitCommand[0] == "send") {
-				voip->Send();
-			}
-			else if (splitCommand[0] == "receive") {
-				voip->Receive();
-				voip->TreatAudio();
-			}
-			else if (splitCommand[0] == "enable") {
-				if (splitCommand[1] == "voice")
-					*voiceEnable = true;
-				else if (splitCommand[1] == "speaker")
-					*speakerEnable = true;
-			}
-			else if (splitCommand[0] == "disable") {
-				if (splitCommand[1] == "voice")
-					*voiceEnable = false;
-				else if (splitCommand[1] == "speaker")
-					*speakerEnable = false;
-			}
-		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(300));
-	}
-}
-
-template <class T>
-T myParse(std::string _string) {
-	T _return = 0;
-
-	if (_string[0] >= '0' && _string[0] <= '9') {
-		_return = _string[0] - '0';
-
-		unsigned i = 1;
-		while (_string[i] >= '0' && _string[i] <= '9') {
-			_return *= 10;
-			_return += _string[i] - '0';
-			i++;
-		}
-	}
-	else {
-		std::cout << "Error : < T myParse(std::string _string) > invalid string _string";
-		return -1;
-	}
-
-	return _return;
 }

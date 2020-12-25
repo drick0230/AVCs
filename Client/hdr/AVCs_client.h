@@ -6,15 +6,17 @@
 //#include <SFML/Audio.hpp>
 #include <thread>			// std::this_thread::sleep_for
 #include <chrono>			// std::chrono::seconds
+
 //#include "VOIP.h"
 #include "ATHElement.h"
 #include "DevicesManager.h"
 #include "Network.h"
+#include "general.h"
+
 
 //void ConsoleIO(bool*, bool*, bool*, bool*, VOIP*);
 
-template <class T>
-T myParse(std::string);
+
 void serverTCP();
 void clientTCP();
 

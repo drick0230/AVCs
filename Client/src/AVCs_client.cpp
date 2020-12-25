@@ -216,25 +216,3 @@ void ConsoleIO(bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* 
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 }*/
-
-template <class T>
-T myParse(std::string _string) {
-	T _return = 0;
-
-	if (_string[0] >= '0' && _string[0] <= '9') {
-		_return = _string[0] - '0';
-
-		unsigned i = 1;
-		while (_string[i] >= '0' && _string[i] <= '9') {
-			_return *= 10;
-			_return += _string[i] - '0';
-			i++;
-		}
-	}
-	else {
-		std::cout << "Error : < T myParse(std::string _string) > invalid string _string";
-		return -1;
-	}
-
-	return _return;
-}
