@@ -9,7 +9,7 @@ void Room::print()
 	cout << name << endl;
 	for (int i = 0; i < listeUser.size(); i++)
 	{
-		cout << listeUser[i].pseudo << '\t' << listeUser[i].ip << ':' << listeUser[i].port << endl;
+		cout << listeUser[i].pseudo << '\t' << listeUser[i].id << endl;
 	}
 }
 
@@ -21,20 +21,19 @@ void Room::addUser(user new_user)
 		{
 			throw string("replicat pseudo");
 		}
-		if (new_user.ip == listeUser[i].ip && new_user.port == listeUser[i].port)
+		if (new_user.id == listeUser[i].id)
 		{
-			throw string("replicat adresse  " + new_user.ip.toString() + ":" + to_string(new_user.port));
+			throw string("replicat adresse  " + new_user.id);
 		}
 	}
 	listeUser.push_back(new_user);
 }
 
-void Room::addUser(string user_pseudo, sf::IpAddress user_Ip, unsigned short user_port)
+void Room::addUser(string user_pseudo, unsigned int _id)
 {
 	user new_user;
 	new_user.pseudo = user_pseudo;
-	new_user.ip = user_Ip;
-	new_user.port = user_port;
+	new_user.id = _id;
 	Room::addUser(new_user);
 }
 
@@ -46,7 +45,7 @@ bool Room::addUserAdaptative(user new_user)
 	while (!finish)
 	{
 		finish = true;
-		try { addUser(userTry); }
+		try { Room::addUser(userTry); }
 		catch (string msg)
 		{
 			if (msg == "replicat pseudo")
@@ -65,23 +64,22 @@ bool Room::addUserAdaptative(user new_user)
 	return true;
 }
 
-bool Room::addUserAdaptative(string user_pseudo, sf::IpAddress user_Ip, unsigned short user_port)
+bool Room::addUserAdaptative(string user_pseudo, unsigned int _id)
 {
 	user new_user;
 	new_user.pseudo = user_pseudo;
-	new_user.ip = user_Ip;
-	new_user.port = user_port;
+	new_user.id = _id;
 	return Room::addUserAdaptative(new_user);
 }
 
 void Room::removeUser(string user_pseudo)
 {
 	bool find = false;
-	for (unsigned short i = 0, j=listeUser.size() ; i < j; i++)
+	for (unsigned short i = 0, j = listeUser.size(); i < j; i++)
 	{
 		if (listeUser[i].pseudo == user_pseudo)
 		{
-			listeUser[i] = listeUser[j-1];
+			listeUser[i] = listeUser[j - 1];
 			listeUser.pop_back();
 			find = true;
 			break;
@@ -93,70 +91,66 @@ void Room::removeUser(string user_pseudo)
 #pragma endregion
 
 #pragma region Serveur
-Room_server::Room_server(string _name) :Room(_name){}
-void Room_server::addUser(user new_user, sf::TcpSocket* socketPtr)
+Room_server::Room_server(string _name) :Room(_name), pTCP(NULL) {}
+void Room_server::addUser(user new_user)
 {
 	//envoie des user existant
 	for (int i = 0; i < listeUser.size(); i++)
 	{
-		socketPtr->setBlocking(true);
-		sf::Packet packet;
-		packet << ClientCommand::addUser << name << listeUser[i].pseudo << listeUser[i].ip.toInteger() << listeUser[i].port;
-		socketPtr->send(packet);
+		unsigned short _userPort;
+		std::string _userIpAddress = pTCP->GetClientInfo(_userPort, listeUser[i].id);
+
+		Packet packet;
+		packet << ClientCommand::addUser << name << listeUser[i].pseudo << _userIpAddress << _userPort;
+		pTCP->Send(new_user.id, packet);
 	}
 
 	//ajout du nouvel utilisateur
-	if(!addUserAdaptative(new_user)) throw string("probleme ajout user");
+	if (!addUserAdaptative(new_user)) throw string("probleme ajout user");
 	string pseudo = listeUser[listeUser.size() - 1].pseudo;
+	unsigned short _newUserPort;
+	std::string _newUserIpAddress = pTCP->GetClientInfo(_newUserPort, new_user.id);
 
-	sf::Packet usernamePacket;
-	usernamePacket << ClientCommand::username << name << pseudo<<new_user.ip.toInteger()<<new_user.port;
-	socketPtr->send(usernamePacket);
-
-	userSocket newSocket;
-	newSocket.pseudo = pseudo;
-	newSocket.socketPtr = socketPtr;
-	listeSocket.push_back(newSocket);
+	Packet usernamePacket;
+	usernamePacket << ClientCommand::username << name << pseudo << _newUserIpAddress << _newUserPort;
+	pTCP->Send(new_user.id, usernamePacket);
 
 	//envoie du nouvel utilisateur
+	Packet addUserPacket;
+	addUserPacket << ClientCommand::addUser << name << pseudo << _newUserIpAddress << _newUserPort;
 	for (int i = 0; i < listeUser.size(); i++)
 	{
-		listeSocket[i].socketPtr->setBlocking(true);
-		sf::Packet packet;
-		packet << ClientCommand::addUser << name << pseudo << new_user.ip.toInteger() << new_user.port;
-		listeSocket[i].socketPtr->send(packet);
+		pTCP->Send(listeUser[i].id, addUserPacket);
 	}
-
 }
 
 void Room_server::printS() { Room::print(); }
 
-bool Room_server::testReplicatAdresse(sf::IpAddress ip, unsigned short port)
+bool Room_server::testReplicatAdresse(unsigned int _id)
 {
 	for (int i = 0; i < listeUser.size(); i++)
 	{
-		if (listeUser[i].ip == ip && listeUser[i].port == port)return true;
+		if (listeUser[i].id == _id)return true;
 	}
 	return false;
 }
 
-string Room_server::findPseudoWithSocket(sf::TcpSocket* socketPtr)
+string Room_server::findPseudoWithSocket(unsigned int _id)
 {
-	for (int i = 0; i < listeSocket.size(); i++)
+	for (int i = 0; i < listeUser.size(); i++)
 	{
-		if (listeSocket[i].socketPtr == socketPtr) return listeSocket[i].pseudo;
+		if (listeUser[i].id == _id) return listeUser[i].pseudo;
 	}
 	return string("");
 }
 
 void Room_server::removeUser(string pseudo_user)
 {
-	for (int i = 0; i < listeSocket.size(); i++)
+	for (int i = 0; i < listeUser.size(); i++)
 	{
-		sf::Packet packet;
-		packet<<ClientCommand::removeUser << name << pseudo_user;
-		listeSocket[i].socketPtr->setBlocking(true);
-		listeSocket[i].socketPtr->send(packet);
+		Packet packet;
+		packet << ClientCommand::removeUser << name << pseudo_user;
+		pTCP->Send(listeUser[i].id, packet);
 	}
 	Room::removeUser(pseudo_user);
 }
@@ -164,22 +158,21 @@ void Room_server::removeUser(string pseudo_user)
 #pragma endregion
 
 #pragma region client
-Room_client::Room_client(string _name) :socket(),hasIdentity(false),endReception(false), pseudo(""),Room(_name),tReception(&Room_client::fReception,this) {}
+Room_client::Room_client(string _name) : udp(), tListen(), hasIdentity(false), endReception(false), pseudo(""), Room(_name), tReception(&Room_client::fReception, this) {}
 void Room_client::print()
 {
 	cout << "username: " << pseudo << endl;
 	Room::print();
 }
 
-void Room_client::send(sf::Packet packet)
+void Room_client::send(Packet _packet)
 {
 	unique_lock<mutex> lsocket(msocket);
-	socket.setBlocking(true);
 	for (int i = 0; i < listeUser.size(); i++)
 	{
 		if (listeUser[i].pseudo != pseudo)
 		{
-			socket.send(packet, listeUser[i].ip, listeUser[i].port);
+			udp.Send(listeUser[i].id, _packet);
 		}
 	}
 }
@@ -188,27 +181,14 @@ void Room_client::fReception()
 {
 	while (true)
 	{
-		unique_lock<mutex> lsocket(msocket);
-		if (endReception)break;
-		if (hasIdentity) {
-			socket.setBlocking(false);
+		Packet _packet;
+		unsigned int _clientID = udp.WaitReceive(_packet);
 
-			for (int i = 0; i < listeUser.size(); i++)
-			{
-				sf::Socket::Status state(sf::Socket::Status::Partial);
-				sf::Packet packet;
-				while (state == sf::Socket::Status::Partial) state = socket.receive(packet, listeUser[i].ip, listeUser[i].port);
-				if (state == sf::Socket::Status::Done)
-				{
-					string message;
-					packet >> message;
-					cout << pseudo << "<-" << listeUser[i].pseudo << " : " << message << endl;
-				}
-			}
+		std::string _recvMsg = "";
 
-			lsocket.unlock();
-		}
-		this_thread::sleep_for(chrono::milliseconds(100));
+		_packet >> _recvMsg;
+		std::cout << "U received a msg :\n"
+			      << _recvMsg << '\n';
 	}
 }
 
@@ -221,10 +201,14 @@ Room_client::~Room_client()
 	if (tReception.joinable())tReception.join();
 }
 
-void Room_client::setIdentity(user identity)
+void Room_client::setIdentity(std::string _ipAddress, unsigned short _port)
 {
-	//unique_lock<mutex> lSocket(msocket);
-	socket.setBlocking(true);
+	if (udp.Bind(_ipAddress, _port))
+	{
+		tListen = std::thread(&Room_client::fReception, this);
+		tListen.detach();
+	}
+	else throw "Bind ERROR";
 	hasIdentity = true;
 }
 #pragma endregion

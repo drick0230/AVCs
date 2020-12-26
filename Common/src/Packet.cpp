@@ -1,5 +1,3 @@
-#include "socket.h"
-
 #include "Packet.h"
 
 size_t Packet::MAXSIZE = 512;
@@ -11,6 +9,13 @@ Packet::Packet(size_t beginCapacity) :_capacity(beginCapacity), _size(0), _curso
 	_data = new char[_capacity];
 	for (size_t i = 0; i < _capacity; i++)_data[i] = 0;
 }
+
+Packet::Packet(const Packet& base) :_capacity(base._capacity), _size(base._size), _cursor(base._cursor)
+{
+	_data = new char[_capacity];
+	for (size_t i = 0; i < _capacity; i++)_data[i] = base._data[i];
+}
+
 
 Packet::~Packet()
 {
@@ -28,8 +33,10 @@ void Packet::setCapacity(size_t newCapacity)
 	{
 		new_data[i] = _data[i];
 	}
-	delete[] _data;
+	delete[_capacity] _data;
 	_data = new_data;
+	new_data = nullptr;
+	_capacity = newCapacity;
 }
 
 void Packet::move(size_t position)
@@ -51,5 +58,20 @@ void Packet::add(char* newData, size_t dataSize)
 		_cursor++;
 	}
 }
+
+Packet& Packet::operator = (const Packet& _b) {
+	delete[] _data;
+	_data = new char[_capacity];
+
+	_capacity = _b._capacity;
+	_size = _b._size;
+	_cursor = _b._cursor;
+
+	for (size_t i = 0; i < _capacity; i++)
+		_data[i] = _b._data[i];
+	return *this;
+}
+
+
 
 #pragma endregion

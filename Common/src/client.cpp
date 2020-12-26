@@ -9,9 +9,12 @@ short Client::FindRoomId(string name)
 	return -1;
 }
 
-Client::Client(sf::IpAddress ip, unsigned short port): endServerCom(false), tServerCom(&Client::fServerCom,this)
+Client::Client(std::string _ipAddress, unsigned short _port) : endServerCom(false), tcp()
 {
-	if (socket.connect(ip, port, sf::milliseconds(5000)) == sf::Socket::Status::Error)std::cout << "error" << endl;
+	tcp.Connect(_ipAddress, _port);
+	tServerCom = std::thread(&Client::fServerCom, this);
+	tServerCom.detach();
+	//if (socket.connect(ip, port, sf::milliseconds(5000)) == sf::Socket::Status::Error)std::cout << "error" << endl;
 }
 
 Client::~Client()
@@ -34,7 +37,7 @@ Client::~Client()
 
 
 	lSocket.lock();
-	socket.disconnect();
+	//socket.disconnect();
 
 	//destruction des salles restante
 	for (int i = 0; i < listeRoom.size(); i++)
@@ -49,54 +52,54 @@ bool Client::joinRoom(string roomName, string pseudo)
 	unique_lock<mutex> lSocket(mSocket);
 	unique_lock<mutex> lRoom(mRoom);
 
-	sf::Packet demande;
-	sf::Packet reponse;
+	Packet demande;
+	Packet reponse;
 
 	demande << ServerCommand::joinRoom << roomName << pseudo;
 
-	socket.setBlocking(true);
-	socket.send(demande);
-	socket.receive(reponse);
+	//socket.setBlocking(true);
+	tcp.Send(demande);
+	//socket.send(demande);
+	//tcp.WaitReceive(reponse);
+	//socket.receive(reponse);
 
-	bool retour;
-	reponse >> retour;
-	if(retour)	listeRoom.push_back(new Room_client(roomName));
+	bool retour = true;
+	//reponse >> retour;
+	if (retour)	listeRoom.push_back(new Room_client(roomName));
 	return retour;
 
 }
 bool Client::createRoom(string roomName)
 {
 	unique_lock<mutex> lSocket(mSocket);
-	sf::Packet demande;
-	sf::Packet reponse;
+	Packet demande;
+	Packet reponse;
 
 	demande << ServerCommand::createRoom << roomName;
 
-	socket.setBlocking(true);
-	socket.send(demande);
-	socket.receive(reponse);
+	tcp.Send(demande);
+	//tcp.WaitReceive(reponse);
 
-	bool retour;
-	reponse >> retour;
+	bool retour = true;
+	//reponse >> retour;
 
 	return retour;
 }
 bool Client::exitRoom(string roomName)
 {
 	unique_lock<mutex> lSocket(mSocket);
-	sf::Packet demande;
-	sf::Packet reponse;
+	Packet demande;
+	Packet reponse;
 
 	demande << ServerCommand::ExitRoom << roomName;
 
-	socket.setBlocking(true);
-	socket.send(demande);
-	socket.receive(reponse);
+	tcp.Send(demande);
+	//tcp.WaitReceive(reponse);
 	lSocket.unlock();
 
 
-	bool retour;
-	reponse >> retour;
+	bool retour = true;
+	//reponse >> retour;
 	return retour;
 }
 
@@ -104,105 +107,90 @@ void Client::fServerCom()
 {
 	while (true)
 	{
-		unique_lock <mutex> lServerCom(mSocket);
-		if (endServerCom)break;
-			
-		sf::Packet packet;
-		sf::Socket::Status state ( sf::Socket::Status::Partial);
-		socket.setBlocking(false);
-		while (state == sf::Socket::Status::Partial) state = socket.receive(packet);
-		if (state == sf::Socket::Status::Error)throw string("probleme connection");
-		else if (state == sf::Socket::Status::Done)analysePacket(packet);
-
-		lServerCom.unlock();
-		this_thread::sleep_for(chrono::milliseconds(100));
+		Packet _recvPacket;
+		tcp.WaitReceive(_recvPacket);
+		analysePacket(_recvPacket);
 	}
 }
 
-void Client::analysePacket(sf::Packet packet)
+void Client::analysePacket(Packet _packet)
 {
 	UINT8 commande;
-	sf::Packet reponse;
-	packet >> commande;
+	Packet reponse;
+	_packet >> commande;
 	switch (commande)
 	{
-	case ClientCommand::addUser :
-		{
+	case ClientCommand::addUser:
+	{
 		string room;
 		user new_user;
-		UINT32 intIp;
+		std::string _userIpAddress;
+		unsigned short _userPort;
 
-		packet >> room;
-		packet >> new_user.pseudo;
-		packet >> intIp;
-		new_user.ip = sf::IpAddress(intIp);
-		packet >> new_user.port;
+		_packet >> room;
+		_packet >> new_user.pseudo;
+		_packet >> _userIpAddress;
+		_packet >> _userPort;
+
 
 		unique_lock <mutex> lRoom(mRoom);
 		short Roomid = FindRoomId(room);
 		bool presence = Roomid >= 0;
-		if (presence)listeRoom[Roomid]->addUser(new_user);
+		if (presence) {
+			new_user.id = listeRoom[Roomid]->udp.Connect(_userIpAddress, _userPort);
+			listeRoom[Roomid]->addUser(new_user);
+		}
 		lRoom.unlock();
 
-		}
-		break;
+	}
+	break;
 
-	case ClientCommand::username :
-		{
+	case ClientCommand::username:
+	{
 		string room;
 		user identity;
-		sf::Uint32 ipInt;
+		std::string _userIpAddress;
+		unsigned short _userPort;
 
-		packet >> room;
-		packet >> identity.pseudo;
-		packet >> ipInt;
-		packet >> identity.port;
-
-
-		identity.ip = sf::IpAddress(ipInt);
+		_packet >> room;
+		_packet >> identity.pseudo;
+		_packet >> _userIpAddress;
+		_packet >> _userPort;
 
 		unique_lock <mutex> lRoom(mRoom);
-		unsigned short Roomid = 0;
-		bool presence = false;
-		for (; Roomid < listeRoom.size(); Roomid++)
-		{
-			if (listeRoom[Roomid]->name == room)
-			{
-				presence = true;
-				break;
-			}
-		}
+		unsigned short Roomid = FindRoomId(room);
+		bool presence = (Roomid >= 0);
 		if (presence)
 		{
-			listeRoom[Roomid]->setIdentity(identity);
+			listeRoom[Roomid]->setIdentity(_userIpAddress, _userPort);
 		}
 		lRoom.unlock();
-		}
-		break;
+	}
+	break;
 	case ClientCommand::removeUser:
+	{
+		string room;
+		string username;
+
+		_packet >> room;
+		_packet >> username;
+
+		unique_lock <mutex> lRoom(mRoom);
+		short roomId = FindRoomId(room);
+		if (roomId >= 0)
 		{
-			string room;
-			string username;
-
-			packet >> room;
-			packet >> username;
-
-			unique_lock <mutex> lRoom(mRoom);
-			short roomId = FindRoomId(room);
-			if (roomId >= 0)
+			if (listeRoom[roomId]->getPseudo() == username)
 			{
-				if (listeRoom[roomId]->getPseudo() == username)
-				{
-					listeRoom[roomId] = listeRoom[listeRoom.size()-1];
-					delete listeRoom[listeRoom.size() - 1];
-					listeRoom.pop_back();
-				}
-				else listeRoom[roomId]->removeUser(username);
+				listeRoom[roomId] = listeRoom[listeRoom.size() - 1];
+				delete listeRoom[listeRoom.size() - 1];
+				listeRoom.pop_back();
 			}
-			lRoom.unlock();
-			
+			else listeRoom[roomId]->removeUser(username);
 		}
-		break;
+		lRoom.unlock();
+
+	}
+	break;
 	}
 }
 
@@ -214,7 +202,7 @@ void Client::print()
 	}
 }
 
-void Client::send(string room, sf::Packet packet)
+void Client::send(string room, Packet packet)
 {
 	short id = FindRoomId(room);
 	listeRoom[id]->send(packet);

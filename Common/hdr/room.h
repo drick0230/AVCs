@@ -1,27 +1,28 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <SFML/Network.hpp>
 #include <iostream>
 #include <thread>			// std::this_thread::sleep_for
 #include <mutex>
 #include <chrono>			// std::chrono::seconds
 #include "general.h"
+#include "Network.h"
 
 using namespace std;
 
 struct user
 {
 	string			pseudo = "default";
-	sf::IpAddress	ip = sf::IpAddress::Any;
-	unsigned short	port = 0;
+	unsigned int id;
+	//sf::IpAddress	ip = sf::IpAddress::Any;
+	//unsigned short	port = 0;
 };
 
-struct userSocket
-{
-	sf::TcpSocket* socketPtr = NULL;
-	string pseudo;
-};
+//struct userSocket
+//{
+//	//sf::TcpSocket* socketPtr = NULL;
+//	string pseudo;
+//};
 
 class Room
 {
@@ -32,31 +33,32 @@ public:
 
 	Room(string _name);
 	void print();
-	void addUser(user new_user);
-	void addUser(string user_pseudo, sf::IpAddress user_Ip, unsigned short user_port);
+	virtual void addUser(user new_user);
+	void addUser(string user_pseudo, unsigned int _id);
 
 	bool addUserAdaptative(user new_user);
-	bool addUserAdaptative(string user_pseudo, sf::IpAddress user_Ip, unsigned short user_port);
+	bool addUserAdaptative(string user_pseudo, unsigned int _id);
 
 	void removeUser(string user_pseudo);
 
 };
 
-class Room_server : protected Room
+class Room_server : public Room
 {
 protected:
-	vector<userSocket> listeSocket;
 public:
+	TCP* pTCP;
+
 	Room_server(string _name);
 
-	void addUser(user new_user, sf::TcpSocket* socketPtr);
+	void addUser(user new_user);
 	void removeUser(string user_pseudo);
 
 	void printS();
 	string getName() { return name; }
-	bool testReplicatAdresse(sf::IpAddress ip, unsigned short port);
+	bool testReplicatAdresse(unsigned int _id);
 
-	string findPseudoWithSocket(sf::TcpSocket* socketPtr);
+	string findPseudoWithSocket(unsigned int _id);
 };
 
 class Room_client : public Room
@@ -70,14 +72,16 @@ protected:
 	void fReception();
 	bool endReception;
 
-	sf::UdpSocket socket;
+	std::thread tListen;
+	//sf::UdpSocket socket;
 public:
+	UDP udp;
 
 	Room_client(string _name);
 	~Room_client();
 	void print();
-	void send(sf::Packet);
+	void send(Packet);
 
-	void setIdentity(user identity);
+	void setIdentity(std::string _ipAddress, unsigned short _port);
 	string getPseudo() { return pseudo; }
 };

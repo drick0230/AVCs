@@ -2,11 +2,8 @@
 // ou les fichiers Include spécifiques aux projets.
 
 #pragma once
-
-#include <SFML/Audio.hpp>
 #include <thread>			// std::this_thread::sleep_for
 #include <chrono>			// std::chrono::seconds
-#include "VOIP.h"
 #include "server.h"
 #include "client.h"
 

@@ -23,6 +23,10 @@ file (GLOB G_COMMON_HDR "${COMMON_SRC_DIR}/*.h")
 
 # add_executable (AVCs_client "${SRC_DIR}/*.cpp" "${HDR_DIR}/*.h" "${COMMON_SRC_DIR}/*.cpp" "${COMMON_HDR_DIR}/*.h")
 add_executable ("${PROJECT_NAME}" "${G_COMMON_SRC}" "${G_COMMON_HDR}" "${G_SRC}" "${G_HDR}")
-target_link_libraries ("${PROJECT_NAME}" sfml-audio sfml-network sfml-system)
+IF (WIN32)
+	target_link_libraries ("${PROJECT_NAME}" Mf.lib Mfplat.lib Ole32.lib Mfreadwrite.lib Ws2_32.lib) # Ole32.lib Mfreadwrite.lib
+ELSE()
+	target_link_libraries ("${PROJECT_NAME}" )
+ENDIF()
 
 # TODO: Ajoutez des tests et installez des cibles si nécessaire.

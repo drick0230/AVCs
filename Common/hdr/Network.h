@@ -1,5 +1,4 @@
 #pragma once
-// Network API
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 
@@ -7,13 +6,18 @@
 #include <iostream>
 #include <vector>
 
+#include "Packet.h"
+#include "general.h"
+
 namespace ProtocoleTypes {
 	enum PROTOCOLE_TYPES { TCP, UDP, BOTH };
 }
 
-// Class Prototype
+#pragma region Protocole
 class Protocole {
 protected:
+	int hr;
+
 	struct addrinfo clientInfo;
 	struct addrinfo serverInfo;
 
@@ -23,21 +27,29 @@ protected:
 	virtual int udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _recvBufferLength) { return -2; };
 	virtual int udpTcpSend(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength) { return -2; };
 	virtual int udpTcpSend(sockaddr_in _sendToAddr, char* _bufferToSend, const int _bufferToSendLength) { return -2; };
+
+	void Send(SOCKET _clientSocket, std::string _ipAddress, unsigned short _port, char* _bufferToSend, const int _bufferToSendLength);
 public:
 	unsigned int protocoleType;
 
 	~Protocole();
-	SOCKET connectSocket;
-	SOCKET hostSocket;
+	SOCKET mySocket;
 
-	virtual bool Connect(std::string _ipAddress, unsigned short _port, bool _openPort = false) { return false; };
+	virtual unsigned int Connect(std::string _ipAddress, unsigned short _port) { return false; };
 
-	virtual void WaitClientConnection() { std::cerr << "Only for TCP protocole\n"; throw  "Only for TCP protocole\n"; };
-	unsigned int WaitReceive(unsigned int _clientID = -1);
+	virtual unsigned int WaitClientConnection() { std::cerr << "Only for TCP protocole\n"; throw  "Only for TCP protocole\n"; return -2; };
+
+	// TCP : Receive packets from a specific Client
+	// UDP : Receive packets from everyone. Return the ID of the sender.
+	unsigned int WaitReceive(Packet& _recvPacket, unsigned int _clientID = -1);
 
 	void Send(std::string _str);
 	void Send(unsigned int _clientID, std::string _str);
+	void Send(Packet& _packetToSend);
+	void Send(unsigned int _clientID, Packet& _packetToSend);
 	void Send(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength);
+
+	virtual std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID) { return "ERROR"; };
 };
 
 class TCP : public Protocole {
@@ -51,32 +63,35 @@ private:
 public:
 	TCP();
 
-	bool Host(unsigned short _port, bool _openPort = false);
-	bool Host(std::string _port, bool _openPort = false);
+	bool Host(unsigned short _port);
+	bool Host(std::string _port);
 
-	void WaitClientConnection();
-	bool Connect(std::string _ipAddress, unsigned short _port, bool _openPort = false);
+	unsigned int WaitClientConnection();
+	unsigned int Connect(std::string _ipAddress, unsigned short _port);
+
+	std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID);
 };
 
 class UDP : public Protocole {
 private:
-	//std::vector<sockaddr_in> clientsAddress;
-	//std::vector<int> clientsAddressSize;
 	struct sockaddr_in serverAddr;
 
 	std::vector<sockaddr_in> addressBook;
 	std::vector<int> addressLengthBook;
 
 	int udpTcpSend(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength);
-	int udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _recvBufferLength);
 	int udpTcpSend(sockaddr_in _sendToAddr, char* _bufferToSend, const int _bufferToSendLength);
+
+	int udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _recvBufferLength);
 public:
 	UDP();
 
 	bool Bind(std::string _ipAddress, unsigned short _port);
-	bool Connect(std::string _ipAddress, unsigned short _port, bool _openPort = false);
-};
+	unsigned int Connect(std::string _ipAddress, unsigned short _port);
 
+	std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID);
+};
+#pragma endregion
 
 class Network {
 private:
@@ -99,7 +114,7 @@ public:
 	static void Initialize();
 	static void Destruct();
 
-	static void Add(const unsigned int _protocoleType);
+	static void Add(const unsigned int _protocoleType, const unsigned char _nbToAdd = 1);
 
 	static bool Compare(sockaddr_in _a, sockaddr_in _b);
 	static sockaddr_in CreateSockaddr_in(unsigned short _family, std::string _ipAddress, unsigned short _port);

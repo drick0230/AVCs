@@ -26,8 +26,7 @@ int main()
 	ipAdress = "localhost";
 	// Network Test
 	Network::Initialize();
-	Network::Add(ProtocoleTypes::BOTH);
-	Network::Add(ProtocoleTypes::UDP);
+	Network::Add(ProtocoleTypes::BOTH, 2);
 
 	// TCP Test
 	if (tcpActive) {
@@ -122,11 +121,11 @@ void serverTCP() {
 }
 
 void clientTCP() {
-	if (Network::tcp[0].Connect("127.0.0.1", 22))
+	if (Network::tcp[1].Connect("127.0.0.1", 22))
 	{
 		std::cout << "U are connected!\n";
-		Network::tcp[0].Send("Test Message!");
-		Network::tcp[0].WaitReceive();
+		Network::tcp[1].Send("Test Message!");
+		Network::tcp[1].WaitReceive();
 	}
 	else
 		throw "Hosting problem";
