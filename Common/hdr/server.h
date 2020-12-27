@@ -34,7 +34,12 @@ protected:
 	short FindRoomId(string name);
 
 public:
-	Server(unsigned short port);
+	std::string myAddress;
+	unsigned short myPort;
+
+	std::string localNetworkIP;
+
+	Server(std::string _localNetworkIP, unsigned short port);
 	void analysePacket(Packet& _packet, unsigned int _clientId);
 	~Server();
 

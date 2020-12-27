@@ -3,154 +3,152 @@
 #include "AVCs_client.h"
 #define tcpActive false
 
+std::string GetNextCommand();
+
+namespace Main {
+	std::string myIP = "24.212.42.80";
+	//std::string myLocalIP = "192.168.1.141";
+	unsigned long myLocalIP = INADDR_ANY;
+
+	unsigned short myPort;
+}
+
 int main()
 {
-	// Media Session
-	PROPVARIANT _propVar;
-	PropVariantInit(&_propVar);
-	_propVar.vt = VT_EMPTY;
-
-	// Network
-	std::string ipAdress;
-	bool isConnected = false;
-	bool voiceEnable = false;
-	bool speakerEnable = false;
-	bool isRecording = false;
-
-	// Console
+	Network::Initialize();
+	Network::Add(ProtocoleTypes::UDP, 2);
 	Console::InitializeConsole();
 
-	// Obtention de l'IP et du Port
-	//std::cout << "Votre adresse IP : \n";
-	//std::cin >> ipAdress;
-	ipAdress = "localhost";
-	// Network Test
-	Network::Initialize();
-	Network::Add(ProtocoleTypes::BOTH, 2);
+	Console::Write("\nVotre port :\n");
+	Console::Write();
+	Main::myPort = myParse<unsigned short>(GetNextCommand());
 
-	// TCP Test
-	if (tcpActive) {
-		if (!Network::tcp[0].Host(22))
-			throw "Hosting problem";
+	Network::udp[0].Bind(Main::myLocalIP, Main::myPort);
+	std::thread tserverUDP(&serverUDP);
+	tserverUDP.detach();
 
-		std::thread serverThread(serverTCP);
-		std::thread clientThread(clientTCP);
-		serverThread.detach();
-		clientThread.detach();
-	}
-	// UDP test
-	else {
-		if (!Network::udp[0].Bind("127.0.0.1", 22))
-			throw "Hosting problem";
-		if (!Network::udp[1].Bind("127.0.0.1", 23))
-			throw "Hosting problem";
+	std::thread tclientUDP(&clientUDP);
+	tclientUDP.detach();
 
-		std::thread serverThread(serverUDP);
-		std::thread clientThread(clientUDP);
-		serverThread.detach();
-		clientThread.detach();
-	}
+	while (GetNextCommand() != "quit");
 
-
-	while (1) Sleep(1000);
-
-	// Device Manager Test
-	DevicesManager devManager;
-	devManager.EnumerateDevices();
-	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_CAPT, 0) << '\n';
-	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
-	std::wcout << devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
-
-	//// MediaSession example
-	//devManager.mediaSession.SetActiveDevice(devManager.audioCaptureDevices[0]);
-	//devManager.mediaSession.SetActiveDevice(devManager.audioRenderDevices[0]);
-	//devManager.mediaSession.PlayAudioCaptureDatas();
-
-	// SourceReader_SinkWritter example
-	devManager.sr_sw.SetActiveDevice(devManager.audioCaptureDevices[0]);
-	devManager.sr_sw.SetActiveDevice(devManager.audioRenderDevices[0]);
-	devManager.sr_sw.PlayAudioCaptureDatas();
-	while (1) Sleep(1000);
-
-	// Peak sur le processeur [!]
-	//VOIP voip(ipAdress, sf::Socket::AnyPort); // Binding sur le port en UDP
-	//std::cout << "Votre Port est <" << voip.socket.getLocalPort() << ">\n";
-	// Fin peak sur le processeur
-
-	ATH::ATHElement mainMenu(Vector2_int(1, 1));
-	ATH::Rect testrect(&mainMenu, Vector2_int(0, 0), Vector2_int(9, 6), Color(125, 125, 125));
-	ATH::SimpleText testText(&testrect, "bonjour\ncomment\nca va", Vector2_int(1, 1), Vector2_int(7, 4), Color(180, 180, 0), Color(125, 125, 125));
-
-	mainMenu.Show();
-	//mainMenu.Hide();
-	/*
-	while (true) {
-		ConsoleIO(&isConnected, &voiceEnable, &speakerEnable, &isRecording, &voip);
-
-		if (isConnected) {
-			if (voiceEnable)
-			{
-				voip.Send();
-			}
-
-			if (speakerEnable) {
-				voip.Receive();
-				voip.TreatAudio();
-				std::this_thread::sleep_for(std::chrono::milliseconds(200));
-			}
-			//voip.Update();
-		}
-		else
-		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-		}
-	}*/
-
-	PropVariantClear(&_propVar);
 
 	return 0;
 }
 
+std::string GetNextCommand() {
+	std::string consoleIn;
 
-void serverTCP() {
-	Network::tcp[0].WaitClientConnection();
-	Network::tcp[0].WaitReceive(0);
-	std::cout << "Someone is connected\n";
-	Network::tcp[0].Send(0, "Test Message 2!");
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-}
-
-void clientTCP() {
-	if (Network::tcp[1].Connect("127.0.0.1", 22))
-	{
-		std::cout << "U are connected!\n";
-		Network::tcp[1].Send("Test Message!");
-		Network::tcp[1].WaitReceive();
+	bool _quit = false;
+	while (!_quit) {
+		if (Console::Read())
+		{
+			for (unsigned int _i = 0; _i < Console::inKeys.size(); _i++) {
+				if (Console::inKeys[_i] == '\r')
+				{
+					_quit = true;
+					Console::inKeys.erase(Console::inKeys.begin(), Console::inKeys.begin() + _i);
+					break;
+				}
+				else if (Console::inKeys[_i] == KEYS::DEL) {
+					if (consoleIn.length() > 0) {
+						Console::Move(-1, 0);
+						Console::EraseChar();
+						Console::Write();
+						consoleIn.pop_back();
+					}
+				}
+				else {
+					consoleIn.push_back((char)Console::inKeys[_i]);
+					Console::Write((char)Console::inKeys[_i]);
+					Console::Write();
+				}
+			}
+			Console::inKeys.clear();
+		}
 	}
-	else
-		throw "Hosting problem";
+
+	return consoleIn;
 }
 
 void serverUDP() {
-	//Network::udp.WaitClientConnection();
-	Network::udp[0].WaitReceive(0);
-	std::cout << "Someone is connected\n";
-	Network::udp[0].WaitReceive(0);
-	Network::udp[0].Send(0, "Test Message 2!");
+	Packet _packet;
+	Packet _packet2;
+
+	std::string _str;
+
+	Network::udp[0].WaitReceive(_packet);
+	_packet.move(0);
+	_packet >> _str;
+
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+	_packet2.move(0);
+	_packet2 << std::string("test1");
+	Network::udp[0].Send(0, _packet2);
+
+	Console::Write(_str);
+	Console::Write();
 }
 
 void clientUDP() {
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	if (Network::udp[1].Connect("127.0.0.1", 22))
-	{
-		std::cout << "U are connected!\n";
-		Network::udp[1].Send(0, "Test Message!");
-		Network::udp[1].WaitReceive();
-	}
-	else
-		throw "Hosting problem";
+	Packet _packet;
+	std::string _str;
+
+	Network::udp[1].Bind(Main::myLocalIP, Main::myPort + 1);
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(4000));
+
+	Network::udp[1].Connect(Main::myIP, Main::myPort);
+
+	Network::udp[1].WaitReceive(_packet);
+	_packet.move(0);
+	_packet >> _str;
+
+	Console::Write(_str);
+	Console::Write();
 }
+
+//
+//void serverTCP() {
+//	Network::tcp[0].WaitClientConnection();
+//	Network::tcp[0].WaitReceive(0);
+//	std::cout << "Someone is connected\n";
+//	Network::tcp[0].Send(0, "Test Message 2!");
+//	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+//}
+//
+//void clientTCP() {
+//	if (Network::tcp[1].Connect("127.0.0.1", 22))
+//	{
+//		std::cout << "U are connected!\n";
+//		Network::tcp[1].Send("Test Message!");
+//		Network::tcp[1].WaitReceive();
+//	}
+//	else
+//		throw "Hosting problem";
+//}
+//
+//void serverUDP() {
+//	//Network::udp.WaitClientConnection();
+//	Network::udp[0].WaitReceive(0);
+//	std::cout << "Someone is connected\n";
+//	Network::udp[0].WaitReceive(0);
+//	Network::udp[0].Send(0, "Test Message 2!");
+//	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+//}
+//
+//void clientUDP() {
+//	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+//	if (Network::udp[1].Connect("127.0.0.1", 22))
+//	{
+//		std::cout << "U are connected!\n";
+//		Network::udp[1].Send(0, "Test Message!");
+//		Network::udp[1].WaitReceive();
+//	}
+//	else
+//		throw "Hosting problem";
+//}
 
 /*
 void ConsoleIO(bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* isRecording, VOIP* voip) {

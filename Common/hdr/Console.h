@@ -25,7 +25,7 @@
 #include <vector>
 
 namespace KEYS {
-	enum KEYS { U_ARROW = 256, D_ARROW, L_ARROW, R_ARROW, HOME, END };
+	enum KEYS { DEL = 127, U_ARROW = 256, D_ARROW, L_ARROW, R_ARROW, HOME, END,  };
 }
 
 // Class Prototype

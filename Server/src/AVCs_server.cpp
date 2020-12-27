@@ -5,6 +5,8 @@
 
 int main()
 {
+	Network::Initialize();
+
 	Packet pcq;
 	std::string str1 = "str1";
 	std::string str2 = "str2";
@@ -18,18 +20,22 @@ int main()
 	pcq >> stro1;
 	pcq >> stro2;
 
+	//Packet testPacket;
+	//unsigned int clientID = -1;
+	//UDP udpTest;
+	//udpTest.Bind("192.168.1.141", 50733);
+	//udpTest.WaitReceive(testPacket, clientID);
 
 
 
 
 
-	Network::Initialize();
 	vector <Client*> listeClient;
 	unsigned short port;
 	cout << "port: " << endl;
 	port = 11111;//cin >> port;
 	//Creation des thread
-	Server server(port);
+	Server server("192.168.1.1", port);
 
 	//boucle de commande
 	string commande = "";
@@ -80,7 +86,7 @@ int main()
 			cin >> roomName;
 			cout << "Pseudo" << endl;
 			pseudo = "client";//cin >> pseudo;
-			listeClient[id]->joinRoom(roomName,pseudo);
+			listeClient[id]->joinRoom(roomName, pseudo);
 		}
 		if (commande == "printClient")
 		{
@@ -116,7 +122,7 @@ int main()
 			listeClient[id]->send(roomName, packet);
 		}
 	}
-	
+
 	listeClient.clear();
 
 	return 0;

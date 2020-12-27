@@ -9,7 +9,7 @@ short Server::FindRoomId(string name)
 	return -1;
 }
 
-Server::Server(unsigned short port) : tcp() {
+Server::Server(std::string _localNetworkIP, unsigned short port) : tcp(), localNetworkIP(_localNetworkIP){
 	tcp.Host(port);
 
 	tListener = std::thread(&Server::fListener, this);
@@ -59,7 +59,7 @@ void Server::analysePacket(Packet& _packet, unsigned int _clientId)
 		bool present = FindRoomId("nom") >= 0;
 		if (present) reponse << false;
 		else {
-			listeRoom.push_back(Room_server(nom));
+			listeRoom.push_back(Room_server(nom, this));
 			listeRoom.back().pTCP = &tcp;
 			reponse << true;
 		}
@@ -123,6 +123,12 @@ void Server::analysePacket(Packet& _packet, unsigned int _clientId)
 	}
 	reponse << true;
 	//tcp.Send(_clientId, reponse);
+	break;
+	case ServerCommand::serverInfo:
+	{
+		_packet >> myAddress;
+		_packet >> myPort;
+	}
 	break;
 	default:
 		reponse << false;

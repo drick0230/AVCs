@@ -32,7 +32,8 @@ enum ServerCommand : unsigned char
 	createRoom = 0,
 	joinRoom = 1,
 	ExitRoom = 2,
-	print = 3
+	print = 3,
+	serverInfo = 4,
 };
 
 enum ClientCommand : unsigned char

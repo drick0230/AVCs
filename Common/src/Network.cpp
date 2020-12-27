@@ -6,7 +6,7 @@ int Network::hr;
 std::vector<TCP> Network::tcp;
 std::vector <UDP> Network::udp;
 
-Protocole::Protocole(int _family, int _sockType, int _protocol) : mySocket(INVALID_SOCKET), hr(0) {
+Protocole::Protocole(int _family, int _sockType, int _protocol) : mySocket(INVALID_SOCKET) {
 	ZeroMemory(&clientInfo, sizeof(clientInfo));
 	clientInfo.ai_family = _family;
 	clientInfo.ai_socktype = _sockType;
@@ -69,6 +69,8 @@ void Protocole::Send(Packet& _packetToSend) { Send(-1, _packetToSend); }
 void Protocole::Send(unsigned int _clientID, Packet& _packetToSend) { Send(_clientID, _packetToSend.data(), _packetToSend.size()); }
 
 void Protocole::Send(unsigned int _clientID, char* _bufferToSend, int _bufferToSendLength) {
+	int hr = 0;
+
 	int _nbSendBytes = 0;
 
 	_nbSendBytes = udpTcpSend(_clientID, _bufferToSend, _bufferToSendLength);
@@ -92,6 +94,8 @@ void Protocole::Send(SOCKET _clientSocket, std::string _ipAddress, unsigned shor
 #pragma region TCP
 bool TCP::Host(unsigned short _port) { return Host(std::to_string(_port)); }
 bool TCP::Host(std::string _port) {
+	int hr = 0;
+
 	struct addrinfo* _result = NULL;
 
 	if (hr == 0) hr = getaddrinfo(NULL, _port.c_str(), &serverInfo, &_result); 	// Resolve the server address and port
@@ -122,6 +126,8 @@ bool TCP::Host(std::string _port) {
 }
 
 unsigned int TCP::Connect(std::string _ipAddress, unsigned short _port) {
+	int hr = 0;
+
 	struct addrinfo* _serverInfo = NULL;
 
 	if (hr == 0) hr = getaddrinfo(_ipAddress.c_str(), std::to_string(_port).c_str(), &clientInfo, &_serverInfo); 	// Resolve the server address and port
@@ -164,12 +170,14 @@ void TCP::tcpListen() {
 
 unsigned int TCP::WaitClientConnection() {
 	unsigned int _returnClientID = 0;
+	struct sockaddr_in _senderAddr; // Store sender informations
+	int _senderAddrSize = sizeof(_senderAddr);
 
 	_returnClientID = clientsSocket.size();
 	clientsSocket.emplace_back(INVALID_SOCKET);
 
 	// Accept a client socket
-	clientsSocket.back() = accept(mySocket, NULL, NULL);
+	clientsSocket.back() = accept(mySocket, (sockaddr*)&_senderAddr, &_senderAddrSize);
 	if (clientsSocket.back() == INVALID_SOCKET) {
 		printf("accept failed: %d\n", WSAGetLastError());
 		throw(clientsSocket.back());
@@ -198,31 +206,47 @@ int TCP::udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _re
 }
 
 std::string TCP::GetClientInfo(unsigned short& _returnPort, unsigned int _clientID) {
+	int hr = 0;
+
 	sockaddr_in _clientAddr;
 	int _clientAddrSize = sizeof(_clientAddr);
 	char _sBuff[30];
 	unsigned long _sBuffSize = sizeof(_sBuff);
 
+	std::vector<std::string> _splitStr;
 
 	if (hr == 0) hr = getpeername(clientsSocket[_clientID], (SOCKADDR*)&_clientAddr, &_clientAddrSize);
+
 	if (hr == 0) hr = WSAAddressToStringA((SOCKADDR*)&_clientAddr, _clientAddrSize, NULL, _sBuff, &_sBuffSize);
-	std::vector<std::string> _splitStr = split(std::string(_sBuff), ':');
+	if (hr == 0) _splitStr = split(std::string(_sBuff), ':');
 
 
-	_returnPort = myParse<unsigned short>(_splitStr[1]);
+	if (hr == 0) _returnPort = myParse<unsigned short>(_splitStr[1]);
 
-	if (hr != 0) throw hr;
+	if (hr != 0) {
+		std::cerr << "\n ERROR at bool UDP::Connect(std::string _ipAddress, unsigned short _port) :\n"
+			<< WSAGetLastError();
+		return "ERROR";
+	}
 
 	return _splitStr[0];
 }
 #pragma endregion //TCP
 
 #pragma region UDP
-bool UDP::Bind(std::string _ipAddress, unsigned short _port) {
-	//_ipAddress = INADDR_ANY;
-	//serverAddr = Network::CreateSockaddr_in(AF_INET, _ipAddress, _port);
+bool UDP::Bind(std::string _ipAddress, unsigned short _port) { 
+	// Convert from String to Ip Address as ULONG
+	unsigned long _ipBuffer;
+	inet_pton(AF_INET, _ipAddress.c_str(), &_ipBuffer);
+
+	return Bind(_ipBuffer, _port);
+}
+
+bool UDP::Bind(unsigned long _ipAddress, unsigned short _port) {
+	int hr = 0;
+
+	// Create the socket with the _ipAddress and _port
 	serverAddr = Network::CreateSockaddr_in(AF_INET, _ipAddress, _port);
-	serverAddr.sin_addr.S_un.S_addr = INADDR_ANY;
 	mySocket = socket(serverInfo.ai_family, serverInfo.ai_socktype, serverInfo.ai_protocol);
 
 	// Bind the socket
@@ -242,19 +266,21 @@ bool UDP::Bind(std::string _ipAddress, unsigned short _port) {
 }
 
 unsigned int UDP::Connect(std::string _ipAddress, unsigned short _port) {
+	int hr = 0;
+
 	struct sockaddr_in _sendToAddr = Network::CreateSockaddr_in(AF_INET, _ipAddress, _port);
 	int _sendToAddrSize = sizeof(_sendToAddr);
 	unsigned long _ipBuffer;
-	int _nbSendBytes = 0;
 
-	const std::string _connectionDemandPacket = "CONNECTION_DEMAND";
+	unsigned int _clientID = addressBook.size();
 
 	addressBook.push_back(_sendToAddr);
-	addressLengthBook.push_back(_sendToAddrSize);
 
 	// Send the Connection Demand Packet to the server
-	if (hr == 0) _nbSendBytes = udpTcpSend(_sendToAddr, (char*)_connectionDemandPacket.c_str(), _connectionDemandPacket.size());
-	if (_nbSendBytes == SOCKET_ERROR) hr = SOCKET_ERROR;
+	Packet _connectionDemandPacket;
+
+	_connectionDemandPacket << std::string("CONNECTION_DEMAND");
+	Send(_clientID, _connectionDemandPacket);
 
 	if (hr != 0) {
 		std::cerr << "\n ERROR at bool UDP::Connect(std::string _ipAddress, unsigned short _port) :\n"
@@ -263,11 +289,11 @@ unsigned int UDP::Connect(std::string _ipAddress, unsigned short _port) {
 	}
 
 
-	return addressBook.size(); // Return the clientID
+	return _clientID; // Return the clientID
 }
 
 int UDP::udpTcpSend(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength) {
-	return sendto(mySocket, _bufferToSend, _bufferToSendLength, 0, (SOCKADDR*)&addressBook[_clientID], addressLengthBook[_clientID]);
+	return sendto(mySocket, _bufferToSend, _bufferToSendLength, 0, (SOCKADDR*)&addressBook[_clientID], sizeof(addressBook[_clientID]));
 }
 
 int UDP::udpTcpSend(sockaddr_in _sendToAddr, char* _bufferToSend, const int _bufferToSendLength) {
@@ -282,29 +308,32 @@ int UDP::udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _re
 
 	_nbRecvBytes = recvfrom(mySocket, _recvBuffer, _recvBufferLength, 0, (SOCKADDR*)&_senderAddr, &_senderAddrSize);
 
-	// If the address is not store, add it
-	unsigned int _i;
-	bool _alreadyInVector = false;
-	for (_i = 0; _i < addressBook.size(); _i++) {
-		if (Network::Compare(addressBook[_i], _senderAddr)) {
-			_alreadyInVector = true;
-			break;
+	if (_nbRecvBytes != SOCKET_ERROR) {
+		// If the address is not store, add it
+		unsigned int _i;
+		bool _alreadyInVector = false;
+		for (_i = 0; _i < addressBook.size(); _i++) {
+			if (Network::Compare(addressBook[_i], _senderAddr)) {
+				_alreadyInVector = true;
+				break;
+			}
 		}
-	}
-	if (!_alreadyInVector) {
-		addressBook.push_back(_senderAddr);
-		addressLengthBook.push_back(_senderAddrSize);
-		int test = sizeof(_senderAddr);
-		test = test;
-	}
+		if (!_alreadyInVector) {
+			addressBook.push_back(_senderAddr);
+			int test = sizeof(_senderAddr);
+			test = test;
+		}
 
-	_clientID = _i; // Return the clientID
+		_clientID = _i; // Return the clientID
+	}
 
 	return _nbRecvBytes;
 }
 
 
 std::string UDP::GetClientInfo(unsigned short& _returnPort, unsigned int _clientID) {
+	int hr = 0;
+
 	char _sBuff[30];
 	unsigned long _sBuffSize = sizeof(_sBuff);
 
@@ -357,13 +386,19 @@ bool Network::Compare(sockaddr_in _a, sockaddr_in _b) {
 }
 
 sockaddr_in Network::CreateSockaddr_in(unsigned short _family, std::string _ipAddress, unsigned short _port) {
-	struct sockaddr_in _returnAddr;
+	// Convert from String to Ip Address as ULONG
 	unsigned long _ipBuffer;
+	inet_pton(AF_INET, _ipAddress.c_str(), &_ipBuffer);
+
+	return CreateSockaddr_in(_family, _ipBuffer, _port);
+}
+
+sockaddr_in Network::CreateSockaddr_in(unsigned short _family, unsigned long _ipAddress, unsigned short _port) {
+	struct sockaddr_in _returnAddr;
 
 	_returnAddr.sin_family = AF_INET;
-	_returnAddr.sin_port = htons(_port);
-	inet_pton(AF_INET, _ipAddress.c_str(), &_ipBuffer);
-	_returnAddr.sin_addr.s_addr = _ipBuffer;
+	_returnAddr.sin_port = htons(_port); // Convert to big-endian
+	_returnAddr.sin_addr.s_addr = _ipAddress;
 	for (unsigned int _i = 0; _i < 8; _i++)
 		_returnAddr.sin_zero[_i] = 0;
 

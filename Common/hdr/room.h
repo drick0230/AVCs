@@ -48,8 +48,9 @@ class Room_server : public Room
 protected:
 public:
 	TCP* pTCP;
+	void* parent;
 
-	Room_server(string _name);
+	Room_server(string _name, void* _parent);
 
 	void addUser(user new_user);
 	void removeUser(string user_pseudo);
@@ -72,7 +73,6 @@ protected:
 	void fReception();
 	bool endReception;
 
-	std::thread tListen;
 	//sf::UdpSocket socket;
 public:
 	UDP udp;
@@ -82,6 +82,6 @@ public:
 	void print();
 	void send(Packet);
 
-	void setIdentity(std::string _ipAddress, unsigned short _port);
+	void setIdentity(std::string _pseudo, std::string _ipAddress, unsigned short _port);
 	string getPseudo() { return pseudo; }
 };

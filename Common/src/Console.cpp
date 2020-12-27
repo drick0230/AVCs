@@ -22,10 +22,10 @@ std::string Console::outCommands("");
 void Console::GoTo(short _x, short _y) { Write('\x1B'); Write('['); Write((int)(_y + 1)); Write(";"); Write((int)(_x + 1)); Write('H'); }
 void Console::Move(short _x, short _y) {
 	if (_x < 0) {
-		Write('\x1B'); Write('['); Write((int)(_x * -1)); Write("C"); // Move Frontward by _x
+		Write('\x1B'); Write('['); Write((int)(_x * -1)); Write("D"); // Move Backward by _x
 	}
 	else if (_x > 0) {
-		Write('\x1B'); Write('['); Write((int)(_x)); Write("D"); // Move Backward by _x
+		Write('\x1B'); Write('['); Write((int)(_x)); Write("C"); // Move Frontward by _x
 	}
 	if (_y < 0) {
 		Write('\x1B'); Write('['); Write((int)(_y * -1)); Write("A"); // Move Up by _y

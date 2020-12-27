@@ -12,6 +12,9 @@ short Client::FindRoomId(string name)
 Client::Client(std::string _ipAddress, unsigned short _port) : endServerCom(false), tcp()
 {
 	tcp.Connect(_ipAddress, _port);
+	Packet _connectPacket;
+	_connectPacket << ServerCommand::serverInfo << _ipAddress << _port;
+	tcp.Send(_connectPacket);
 	tServerCom = std::thread(&Client::fServerCom, this);
 	tServerCom.detach();
 	//if (socket.connect(ip, port, sf::milliseconds(5000)) == sf::Socket::Status::Error)std::cout << "error" << endl;
@@ -148,12 +151,12 @@ void Client::analysePacket(Packet _packet)
 	case ClientCommand::username:
 	{
 		string room;
-		user identity;
+		std::string pseudo;
 		std::string _userIpAddress;
 		unsigned short _userPort;
 
 		_packet >> room;
-		_packet >> identity.pseudo;
+		_packet >> pseudo;
 		_packet >> _userIpAddress;
 		_packet >> _userPort;
 
@@ -162,7 +165,7 @@ void Client::analysePacket(Packet _packet)
 		bool presence = (Roomid >= 0);
 		if (presence)
 		{
-			listeRoom[Roomid]->setIdentity(_userIpAddress, _userPort);
+			listeRoom[Roomid]->setIdentity(pseudo, _userIpAddress, _userPort);
 		}
 		lRoom.unlock();
 	}

@@ -16,8 +16,6 @@ namespace ProtocoleTypes {
 #pragma region Protocole
 class Protocole {
 protected:
-	int hr;
-
 	struct addrinfo clientInfo;
 	struct addrinfo serverInfo;
 
@@ -77,7 +75,6 @@ private:
 	struct sockaddr_in serverAddr;
 
 	std::vector<sockaddr_in> addressBook;
-	std::vector<int> addressLengthBook;
 
 	int udpTcpSend(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength);
 	int udpTcpSend(sockaddr_in _sendToAddr, char* _bufferToSend, const int _bufferToSendLength);
@@ -87,6 +84,7 @@ public:
 	UDP();
 
 	bool Bind(std::string _ipAddress, unsigned short _port);
+	bool Bind(unsigned long _ipAddress, unsigned short _port);
 	unsigned int Connect(std::string _ipAddress, unsigned short _port);
 
 	std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID);
@@ -118,4 +116,5 @@ public:
 
 	static bool Compare(sockaddr_in _a, sockaddr_in _b);
 	static sockaddr_in CreateSockaddr_in(unsigned short _family, std::string _ipAddress, unsigned short _port);
+	static sockaddr_in Network::CreateSockaddr_in(unsigned short _family, unsigned long _ipAddress, unsigned short _port);
 };

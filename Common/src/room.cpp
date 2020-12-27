@@ -1,3 +1,4 @@
+#include "server.h"
 #include "room.h"
 
 #pragma region ROOM
@@ -91,10 +92,25 @@ void Room::removeUser(string user_pseudo)
 #pragma endregion
 
 #pragma region Serveur
-Room_server::Room_server(string _name) :Room(_name), pTCP(NULL) {}
+Room_server::Room_server(string _name, void* _parent) :Room(_name), pTCP(NULL), parent(_parent) {}
 void Room_server::addUser(user new_user)
 {
-	//envoie des user existant
+	//ajout du nouvel utilisateur
+	if (!addUserAdaptative(new_user)) throw string("probleme ajout user");
+	string pseudo = listeUser[listeUser.size() - 1].pseudo;
+
+	unsigned short _newUserPort;
+	std::string _newUserIpAddress = pTCP->GetClientInfo(_newUserPort, new_user.id);
+
+	// Is-he on the same network as me?
+	if (_newUserIpAddress == ((Server*)parent)->localNetworkIP)
+		_newUserIpAddress = ((Server*)parent)->myAddress; // Return the public address of our Network
+
+	Packet usernamePacket;
+	usernamePacket << ClientCommand::username << name << pseudo << _newUserIpAddress << _newUserPort;
+	pTCP->Send(new_user.id, usernamePacket);
+
+	//envoie des user au nouvel utilisateur
 	for (int i = 0; i < listeUser.size(); i++)
 	{
 		unsigned short _userPort;
@@ -105,21 +121,12 @@ void Room_server::addUser(user new_user)
 		pTCP->Send(new_user.id, packet);
 	}
 
-	//ajout du nouvel utilisateur
-	if (!addUserAdaptative(new_user)) throw string("probleme ajout user");
-	string pseudo = listeUser[listeUser.size() - 1].pseudo;
-	unsigned short _newUserPort;
-	std::string _newUserIpAddress = pTCP->GetClientInfo(_newUserPort, new_user.id);
-
-	Packet usernamePacket;
-	usernamePacket << ClientCommand::username << name << pseudo << _newUserIpAddress << _newUserPort;
-	pTCP->Send(new_user.id, usernamePacket);
-
-	//envoie du nouvel utilisateur
+	//envoie du nouvel utilisateur aux autres utilisateurs
 	Packet addUserPacket;
 	addUserPacket << ClientCommand::addUser << name << pseudo << _newUserIpAddress << _newUserPort;
 	for (int i = 0; i < listeUser.size(); i++)
 	{
+		if(listeUser[i].id != new_user.id)
 		pTCP->Send(listeUser[i].id, addUserPacket);
 	}
 }
@@ -158,7 +165,7 @@ void Room_server::removeUser(string pseudo_user)
 #pragma endregion
 
 #pragma region client
-Room_client::Room_client(string _name) : udp(), tListen(), hasIdentity(false), endReception(false), pseudo(""), Room(_name), tReception(&Room_client::fReception, this) {}
+Room_client::Room_client(string _name) : udp(), hasIdentity(false), endReception(false), pseudo(""), Room(_name), tReception() {}
 void Room_client::print()
 {
 	cout << "username: " << pseudo << endl;
@@ -201,12 +208,15 @@ Room_client::~Room_client()
 	if (tReception.joinable())tReception.join();
 }
 
-void Room_client::setIdentity(std::string _ipAddress, unsigned short _port)
+void Room_client::setIdentity(std::string _pseudo, std::string _ipAddress, unsigned short _port)
 {
+	_ipAddress = "192.168.1.141";
+
+	pseudo = _pseudo;
 	if (udp.Bind(_ipAddress, _port))
 	{
-		tListen = std::thread(&Room_client::fReception, this);
-		tListen.detach();
+		tReception = std::thread(&Room_client::fReception, this);
+		tReception.detach();
 	}
 	else throw "Bind ERROR";
 	hasIdentity = true;
