@@ -6,31 +6,63 @@
 std::string GetNextCommand();
 
 namespace Main {
-	std::string myIP = "24.212.42.80";
+	const unsigned short serverPort = 11111;
+	//std::string myIP = "24.212.42.80";
 	//std::string myLocalIP = "192.168.1.141";
 	unsigned long myLocalIP = INADDR_ANY;
-
-	unsigned short myPort;
+	unsigned int msBetweenKeepAlive = 0;
 }
 
 int main()
 {
+	////////// AUDIO TEST ////////
+	DevicesManager devManager;
+	devManager.EnumerateDevices();
+	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_CAPT, 0) << '\n';
+	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
+	std::wcout << devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
+	devManager.mediaSession.SetActiveDevice(devManager.audioCaptureDevices[0]);
+	devManager.mediaSession.SetActiveDevice(devManager.audioRenderDevices[0]);
+	devManager.mediaSession.PlayAudioCaptureDatas();
+	while (1) Sleep(1000);
+
+
+	////////// PROGRAM ///////////
 	Network::Initialize();
-	Network::Add(ProtocoleTypes::UDP, 2);
+	Network::Add(ProtocoleTypes::UDP, 1);
 	Console::InitializeConsole();
 
-	Console::Write("\nVotre port :\n");
+	Console::Write("Delais entre les Keep Alive:");
 	Console::Write();
-	Main::myPort = myParse<unsigned short>(GetNextCommand());
+	Main::msBetweenKeepAlive = myParse<unsigned int>(GetNextCommand());
 
-	Network::udp[0].Bind(Main::myLocalIP, Main::myPort);
-	std::thread tserverUDP(&serverUDP);
-	tserverUDP.detach();
+	std::string userInput = "";
+	do {
+		Console::Write("[0] Client\n[1] Server\n");
+		Console::Write();
 
-	std::thread tclientUDP(&clientUDP);
-	tclientUDP.detach();
+		userInput = GetNextCommand();
+	} while (userInput == "0" && userInput == "1");
 
-	while (GetNextCommand() != "quit");
+	if (userInput == "0") {
+		// Is Client
+		Network::udp[0].Bind(Main::myLocalIP, 0);
+
+		std::thread tclientUDP(&clientUDP);
+		tclientUDP.detach();
+	}
+	else {
+		// Is Server
+		Network::udp[0].Bind(Main::myLocalIP, Main::serverPort);
+
+		Console::Write("Serveur ouvert sur le port "); Console::Write(Main::serverPort); Console::Write('\n');
+		Console::Write();
+
+		std::thread tserverUDP(&serverUDP);
+		tserverUDP.detach();
+	}
+
+	while (1);
 
 
 	return 0;
@@ -68,45 +100,137 @@ std::string GetNextCommand() {
 		}
 	}
 
+	Console::Write('\n');
+	Console::Write();
+
 	return consoleIn;
 }
 
 void serverUDP() {
-	Packet _packet;
-	Packet _packet2;
+	std::string _localIP;
+	std::string _publicIP;
 
 	std::string _str;
+	unsigned short _uShort;
 
-	Network::udp[0].WaitReceive(_packet);
-	_packet.move(0);
-	_packet >> _str;
+	// Get Local and Public IP
+	Console::Write("IP local du Serveur:");
+	Console::Write();
+	_localIP = GetNextCommand();
 
+	Console::Write("IP publique du Serveur:");
+	Console::Write();
+	_publicIP = GetNextCommand();
+
+	// Wait the connection of 2 clients
+	while (Network::udp[0].addressBook.size() != 2) {
+		Packet _packet;
+		Network::udp[0].WaitReceive(_packet);
+
+		_packet >> _str;
+
+		Console::Write(_str);
+		Console::Write('\n');
+		Console::Write();
+	}
+
+	// Wait a bit to be sure the client are ready to receive packets
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-	_packet2.move(0);
-	_packet2 << std::string("test1");
-	Network::udp[0].Send(0, _packet2);
+	// Send ip and port of each other to each other
+	for (unsigned int _from = 0; _from < Network::udp[0].addressBook.size(); _from++) {
+		for (unsigned int _to = 0; _to < Network::udp[0].addressBook.size(); _to++) {
+			if (_from != _to) {
+				Packet _packet;
+				_packet << (Network::udp[0].addressBook[_from] == _localIP ? _publicIP : Network::udp[0].addressBook[_from]);
+				_packet << Network::udp[0].portBook[_from];
 
-	Console::Write(_str);
-	Console::Write();
+				Network::udp[0].Send(_to, _packet);
+			}
+		}
+	}
+
+	// Write received Packet
+	while (1) {
+		Packet _packet;
+		Network::udp[0].WaitReceive(_packet);
+
+		_packet >> _str;
+
+		Console::Write(_str);
+		Console::Write('\n');
+		Console::Write();
+	}
 }
 
 void clientUDP() {
-	Packet _packet;
+	std::string _serverIP;
+
 	std::string _str;
+	unsigned short _uShort;
 
-	Network::udp[1].Bind(Main::myLocalIP, Main::myPort + 1);
-
-	std::this_thread::sleep_for(std::chrono::milliseconds(4000));
-
-	Network::udp[1].Connect(Main::myIP, Main::myPort);
-
-	Network::udp[1].WaitReceive(_packet);
-	_packet.move(0);
-	_packet >> _str;
-
-	Console::Write(_str);
+	// Get Server IP
+	Console::Write("IP du Serveur:");
 	Console::Write();
+	_serverIP = GetNextCommand();
+
+
+	// Connect to Server
+	{
+		Packet _packet;
+
+		_packet << std::string("CONNECT_DEMAND");
+
+		Network::udp[0].AddToBook(_serverIP, Main::serverPort);
+		Network::udp[0].Send(0, _packet);
+
+		std::thread tKeepAlive(&KeepAlive, 0, 5000);
+		tKeepAlive.detach();
+	}
+
+	// Establish Connection with other client
+	{
+		Packet _packet;
+
+		Network::udp[0].WaitReceive(_packet);
+		_packet >> _str;
+		_packet >> _uShort;
+
+		Network::udp[0].AddToBook(_str, _uShort);
+		//Network::udp[0].AddToBook("192.168.1.141", _uShort);
+
+		Packet _packet2;
+		_packet2 << std::string("HOLE_PUNCHING");
+		//Network::udp[0].Send(2, _packet2);
+
+		std::thread tKeepAlive(&KeepAlive, 1, Main::msBetweenKeepAlive);
+		tKeepAlive.detach();
+
+		Console::Write("Client : "); Console::Write(_str); Console::Write(':'); Console::Write(_uShort); Console::Write('\n');
+		Console::Write();
+	}
+
+	// Write received Packet
+	while (1) {
+		unsigned int _clientID;
+		Packet _packet;
+		_clientID = Network::udp[0].WaitReceive(_packet);
+
+		_packet >> _str;
+
+		Console::Write(_str);
+		Console::Write('\n');
+		Console::Write();
+	}
+}
+
+void KeepAlive(unsigned int _clientID, unsigned int _ms) {
+	while (1) {
+		Packet _packet;
+		_packet << std::string("KEEP_ALIVE");
+		Network::udp[0].Send(_clientID, _packet);
+		std::this_thread::sleep_for(std::chrono::milliseconds(_ms));
+	}
 }
 
 //

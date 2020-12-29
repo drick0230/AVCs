@@ -12,6 +12,9 @@
 #include <Functiondiscoverykeys_devpkey.h> // IMMDevice property Ex: PKEY_Device_FriendlyName
 // Core Audio API
 #include <audioclient.h> // WASAPI
+#include <audiopolicy.h> // WASAPI
+#include <AudioSessionTypes.h> // Constants define for Core Audio
+
 #include <initguid.h> // include this for DEFINE_GUID to create definition, not declaration
 
 DEFINE_MEDIATYPE_GUID(MFAudioFormat_PCM, WAVE_FORMAT_PCM);
@@ -84,6 +87,8 @@ class SourceReader_SinkWritter {
 	IMFMediaSource* audioCaptureSource;
 	IMFSourceReader* audioCaptureDatas;
 
+	IMFMediaBuffer* inBuffer;
+	IMFSample* inSample;
 	IMFMediaSink* audioRenderSink;
 	IMFSinkWriter* audioRenderDatas;
 public:

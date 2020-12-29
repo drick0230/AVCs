@@ -140,7 +140,7 @@ void Client::analysePacket(Packet _packet)
 		short Roomid = FindRoomId(room);
 		bool presence = Roomid >= 0;
 		if (presence) {
-			new_user.id = listeRoom[Roomid]->udp.Connect(_userIpAddress, _userPort);
+			new_user.id = listeRoom[Roomid]->udp.AddToBook(_userIpAddress, _userPort);
 			listeRoom[Roomid]->addUser(new_user);
 		}
 		lRoom.unlock();

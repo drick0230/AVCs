@@ -156,6 +156,9 @@ SourceReader_SinkWritter::~SourceReader_SinkWritter() {
 	SafeRelease(&audioCaptureSource);
 	SafeRelease(&audioCaptureDatas);
 
+	SafeRelease(&inBuffer);
+	SafeRelease(&inSample);
+
 	SafeRelease(&audioRenderSink);
 	SafeRelease(&audioRenderDatas);
 }
@@ -250,7 +253,7 @@ void SourceReader_SinkWritter::PlayAudioCaptureDatas(HRESULT* hr) {
 
 	// Set the SinkWritter's Input MediaType to the MediaType of the capture device's MediaSource
 	if (SUCCEEDED(*hr)) *hr = audioCaptureDatas->GetCurrentMediaType(0, &_mediaType); // Get the MediaType
-	if (SUCCEEDED(*hr)) *hr = audioRenderDatas->SetInputMediaType(0, _mediaType, NULL);
+	if (SUCCEEDED(*hr)) *hr = audioRenderDatas->SetInputMediaType(0, _mediaType, NULL); // Need to send this information at the begining of a Room or when it change (IMPORTANT)
 
 	if (SUCCEEDED(*hr)) *hr = audioRenderDatas->BeginWriting(); // The SinkWriter is ready to receive and write datas
 
@@ -300,7 +303,53 @@ void SourceReader_SinkWritter::PlayAudioCaptureDatas(HRESULT* hr) {
 
 		if (pSample) {
 			++cSamples; // Count how many sample are process (Not NULL)
-			audioRenderDatas->WriteSample(0, pSample);
+
+			/////////// Sender Side ///////////////
+			// Get useful datas from Sample
+			// Useful datas
+			unsigned long _captureBufferLength; // How many datas in the buffer
+			if (SUCCEEDED(*hr)) *hr = pSample->GetTotalLength(&_captureBufferLength);
+
+			unsigned char* _captureDatas = new unsigned char[_captureBufferLength]; // Copies of datas from the buffer
+
+			{
+				IMFMediaBuffer* _captureBuffer; // Copy of the contiguous buffer in the Capture Device Sample
+				if (SUCCEEDED(*hr)) *hr = MFCreateMemoryBuffer(_captureBufferLength, &_captureBuffer);
+				if (SUCCEEDED(*hr)) *hr = pSample->CopyToBuffer(_captureBuffer);
+
+				// Get Datas
+				unsigned char* _bufferPointer;
+
+				if (SUCCEEDED(*hr)) *hr = _captureBuffer->Lock(&_bufferPointer, NULL, NULL);
+				for (unsigned long _i = 0; _i < _captureBufferLength; _i++)
+					_captureDatas[_i] = _bufferPointer[_i];
+				if (SUCCEEDED(*hr)) *hr = _captureBuffer->Unlock();
+
+				SafeRelease(&_captureBuffer);
+			}
+
+			/////////// Receiver Side ///////////////
+			{
+				// Create and fill the Buffer
+				unsigned char* _bufferPointer;
+				if (SUCCEEDED(*hr)) *hr = MFCreateMemoryBuffer(_captureBufferLength, &inBuffer);
+
+				if (SUCCEEDED(*hr)) *hr = inBuffer->Lock(&_bufferPointer, NULL, NULL);
+				for (unsigned long _i = 0; _i < _captureBufferLength; _i++)
+					_bufferPointer[_i] = _captureDatas[_i];
+				if (SUCCEEDED(*hr)) *hr = inBuffer->SetCurrentLength(_captureBufferLength);
+				if (SUCCEEDED(*hr)) *hr = inBuffer->Unlock();
+
+				// Create the sample that will be read on the Audio Render Device
+				if (SUCCEEDED(*hr)) *hr = MFCreateSample(&inSample);
+				if(SUCCEEDED(*hr))* hr = inSample->AddBuffer(inBuffer);
+
+				// Read the sample
+				audioRenderDatas->WriteSample(0, inSample);
+			}
+
+			delete[] _captureDatas;
+
 		}
 		SafeRelease(&pSample);
 	}
@@ -377,7 +426,7 @@ void MediaSession::SetActiveDevice(AudioCaptureDevice& _audioCaptureDevice, HRES
 	if (_localHr) delete hr;
 }
 void MediaSession::SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESULT* hr) {
-	IMFAttributes* pConfig; // Store the search criteria for the devices
+	//IMFAttributes* pConfig; // Store the search criteria for the devices
 
 	bool _localHr = false;
 	if (hr == NULL) {
@@ -389,7 +438,7 @@ void MediaSession::SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESUL
 	if (SUCCEEDED(*hr)) *hr = MFCreateAudioRendererActivate(&audioRenderSource);
 	if (SUCCEEDED(*hr)) *hr = audioRenderSource->SetString(MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ID, _audioRenderDevice.GetId(hr).c_str());
 
-	SafeRelease(&pConfig);
+	//SafeRelease(&pConfig);
 
 	if (!SUCCEEDED(*hr)) throw* hr;
 	if (_localHr) delete hr;

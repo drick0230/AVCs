@@ -183,6 +183,12 @@ unsigned int TCP::WaitClientConnection() {
 		throw(clientsSocket.back());
 		closesocket(mySocket);
 	}
+	else {
+		// Add info in addressBook and portBook
+		unsigned short _clientPort;
+		addressBook.push_back(Network::GetSocketInfo(_clientPort, clientsSocket.back()));
+		portBook.push_back(_clientPort);
+	}
 
 	return _returnClientID;
 }
@@ -205,32 +211,7 @@ int TCP::udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _re
 	return recv(*recvFromSocket, _recvBuffer, _recvBufferLength, 0);
 }
 
-std::string TCP::GetClientInfo(unsigned short& _returnPort, unsigned int _clientID) {
-	int hr = 0;
-
-	sockaddr_in _clientAddr;
-	int _clientAddrSize = sizeof(_clientAddr);
-	char _sBuff[30];
-	unsigned long _sBuffSize = sizeof(_sBuff);
-
-	std::vector<std::string> _splitStr;
-
-	if (hr == 0) hr = getpeername(clientsSocket[_clientID], (SOCKADDR*)&_clientAddr, &_clientAddrSize);
-
-	if (hr == 0) hr = WSAAddressToStringA((SOCKADDR*)&_clientAddr, _clientAddrSize, NULL, _sBuff, &_sBuffSize);
-	if (hr == 0) _splitStr = split(std::string(_sBuff), ':');
-
-
-	if (hr == 0) _returnPort = myParse<unsigned short>(_splitStr[1]);
-
-	if (hr != 0) {
-		std::cerr << "\n ERROR at bool UDP::Connect(std::string _ipAddress, unsigned short _port) :\n"
-			<< WSAGetLastError();
-		return "ERROR";
-	}
-
-	return _splitStr[0];
-}
+std::string TCP::GetClientInfo(unsigned short& _returnPort, unsigned int _clientID) { return Network::GetSocketInfo(_returnPort, clientsSocket[_clientID]); }
 #pragma endregion //TCP
 
 #pragma region UDP
@@ -265,35 +246,20 @@ bool UDP::Bind(unsigned long _ipAddress, unsigned short _port) {
 	return true;
 }
 
-unsigned int UDP::Connect(std::string _ipAddress, unsigned short _port) {
-	int hr = 0;
-
+unsigned int UDP::AddToBook(std::string _ipAddress, unsigned short _port) {
+	// Create the sockaddr of the destination
 	struct sockaddr_in _sendToAddr = Network::CreateSockaddr_in(AF_INET, _ipAddress, _port);
-	int _sendToAddrSize = sizeof(_sendToAddr);
-	unsigned long _ipBuffer;
 
-	unsigned int _clientID = addressBook.size();
+	// Add it in the Book
+	sockAddressBook.push_back(_sendToAddr);
+	addressBook.push_back(_ipAddress);
+	portBook.push_back(_port);
 
-	addressBook.push_back(_sendToAddr);
-
-	// Send the Connection Demand Packet to the server
-	Packet _connectionDemandPacket;
-
-	_connectionDemandPacket << std::string("CONNECTION_DEMAND");
-	Send(_clientID, _connectionDemandPacket);
-
-	if (hr != 0) {
-		std::cerr << "\n ERROR at bool UDP::Connect(std::string _ipAddress, unsigned short _port) :\n"
-			<< WSAGetLastError();
-		return -2;
-	}
-
-
-	return _clientID; // Return the clientID
+	return sockAddressBook.size() - 1; // Return the clientID
 }
 
 int UDP::udpTcpSend(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength) {
-	return sendto(mySocket, _bufferToSend, _bufferToSendLength, 0, (SOCKADDR*)&addressBook[_clientID], sizeof(addressBook[_clientID]));
+	return sendto(mySocket, _bufferToSend, _bufferToSendLength, 0, (SOCKADDR*)&sockAddressBook[_clientID], sizeof(sockAddressBook[_clientID]));
 }
 
 int UDP::udpTcpSend(sockaddr_in _sendToAddr, char* _bufferToSend, const int _bufferToSendLength) {
@@ -312,14 +278,18 @@ int UDP::udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _re
 		// If the address is not store, add it
 		unsigned int _i;
 		bool _alreadyInVector = false;
-		for (_i = 0; _i < addressBook.size(); _i++) {
-			if (Network::Compare(addressBook[_i], _senderAddr)) {
+		for (_i = 0; _i < sockAddressBook.size(); _i++) {
+			if (Network::Compare(sockAddressBook[_i], _senderAddr)) {
 				_alreadyInVector = true;
 				break;
 			}
 		}
 		if (!_alreadyInVector) {
-			addressBook.push_back(_senderAddr);
+			unsigned short _senderPort;
+			sockAddressBook.push_back(_senderAddr);
+			addressBook.push_back(Network::GetSocketInfo(_senderPort, _senderAddr));
+			portBook.push_back(_senderPort);
+
 			int test = sizeof(_senderAddr);
 			test = test;
 		}
@@ -331,20 +301,7 @@ int UDP::udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _re
 }
 
 
-std::string UDP::GetClientInfo(unsigned short& _returnPort, unsigned int _clientID) {
-	int hr = 0;
-
-	char _sBuff[30];
-	unsigned long _sBuffSize = sizeof(_sBuff);
-
-	if (hr == 0) hr = WSAAddressToStringA((SOCKADDR*)&addressBook[_clientID], sizeof(addressBook[_clientID]), NULL, _sBuff, &_sBuffSize);
-
-	_returnPort = ntohs(addressBook[_clientID].sin_port);
-
-	if (hr != 0) throw hr;
-
-	return std::string(_sBuff);
-}
+std::string UDP::GetClientInfo(unsigned short& _returnPort, unsigned int _clientID) { return Network::GetSocketInfo(_returnPort, sockAddressBook[_clientID]); }
 #pragma endregion //UDP
 
 
@@ -403,4 +360,43 @@ sockaddr_in Network::CreateSockaddr_in(unsigned short _family, unsigned long _ip
 		_returnAddr.sin_zero[_i] = 0;
 
 	return _returnAddr;
+}
+
+std::string Network::GetSocketInfo(unsigned short& _returnPort, SOCKET _socket) {
+	int hr = 0;
+	sockaddr_in _socketAddr;
+	int _socketAddrSize = sizeof(_socketAddr);
+
+	// Socket to sockaddr
+	if (hr == 0) hr = getpeername(_socket, (SOCKADDR*)&_socketAddr, &_socketAddrSize);
+
+	if (hr != 0) {
+		std::cerr << "\n ERROR at std::string Network::GetSocketInfo(unsigned short& _returnPort, SOCKET _socket) :\n"
+			<< WSAGetLastError();
+		return "ERROR";
+	}
+
+	return GetSocketInfo(_returnPort, _socketAddr);
+}
+std::string Network::GetSocketInfo(unsigned short& _returnPort, sockaddr_in _socket) {
+	int hr = 0;
+
+	char _sBuff[30];
+	unsigned long _sBuffSize = sizeof(_sBuff);
+
+	std::vector<std::string> _splitStr;
+
+	if (hr == 0) hr = WSAAddressToStringA((SOCKADDR*)&_socket, sizeof(_socket), NULL, _sBuff, &_sBuffSize);
+	if (hr == 0) _splitStr = split(std::string(_sBuff), ':');
+
+
+	if (hr == 0) _returnPort = myParse<unsigned short>(_splitStr[1]);
+
+	if (hr != 0) {
+		std::cerr << "\n ERROR at std::string TCP::GetClientInfo(unsigned short& _returnPort, unsigned int _clientID) :\n"
+			<< WSAGetLastError();
+		return "ERROR";
+	}
+
+	return _splitStr[0];
 }

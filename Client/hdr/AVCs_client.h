@@ -23,4 +23,7 @@ void clientTCP();
 void serverUDP();
 void clientUDP();
 
+// Send a Packet to be able to receive Packet from distant connection
+void KeepAlive(unsigned int _clientID, unsigned int _ms);
+
 // TODO: Référencez ici les en-têtes supplémentaires nécessaires à votre programme.
