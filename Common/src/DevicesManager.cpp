@@ -298,37 +298,41 @@ void SourceReader_SinkWritter::PlayAudioDatas(std::vector<unsigned char> _datas,
 		_localHr = true;
 	}
 
-	// Create and fill the Buffer
-	unsigned char* _bufferPointer;
-	IMFMediaBuffer* _buffer;
-	IMFSample* _sample;
-	if (SUCCEEDED(*hr)) *hr = MFCreateMemoryBuffer(_datas.size(), &_buffer);
+	if (_datas.size() > 0) {
+		// Create and fill the Buffer
+		unsigned char* _bufferPointer;
+		IMFMediaBuffer* _buffer;
+		IMFSample* _sample;
+		if (SUCCEEDED(*hr)) *hr = MFCreateMemoryBuffer(_datas.size(), &_buffer);
 
-	if (SUCCEEDED(*hr)) *hr = _buffer->Lock(&_bufferPointer, NULL, NULL);
-	if (SUCCEEDED(*hr)) for (unsigned long _i = 0; _i < _datas.size(); _i++)
-		_bufferPointer[_i] = _datas[_i];
-	if (SUCCEEDED(*hr)) *hr = _buffer->SetCurrentLength(_datas.size());
-	if (SUCCEEDED(*hr)) *hr = _buffer->Unlock();
+		if (SUCCEEDED(*hr)) *hr = _buffer->Lock(&_bufferPointer, NULL, NULL);
+		if (SUCCEEDED(*hr)) for (unsigned long _i = 0; _i < _datas.size(); _i++)
+			_bufferPointer[_i] = _datas[_i];
+		if (SUCCEEDED(*hr)) *hr = _buffer->SetCurrentLength(_datas.size());
+		if (SUCCEEDED(*hr)) *hr = _buffer->Unlock();
 
-	// Create the sample that will be read on the Audio Render Device
-	if (SUCCEEDED(*hr)) *hr = MFCreateSample(&_sample);
-	if (SUCCEEDED(*hr))*hr = _sample->AddBuffer(_buffer);
+		// Create the sample that will be read on the Audio Render Device
+		if (SUCCEEDED(*hr)) *hr = MFCreateSample(&_sample);
+		if (SUCCEEDED(*hr))*hr = _sample->AddBuffer(_buffer);
 
-	if (SUCCEEDED(*hr))*hr = _sample->SetSampleTime(_datasTime);
+		if (SUCCEEDED(*hr))*hr = _sample->SetSampleTime(_datasTime);
 
-	// Read the sample
-	if (SUCCEEDED(*hr))*hr = audioRenderDatas->WriteSample(0, _sample);
+		// Read the sample
+		if (SUCCEEDED(*hr))*hr = audioRenderDatas->WriteSample(0, _sample);
 
-	//audioRenderDatas->Finalize();
+		//audioRenderDatas->Finalize();
 
-	SafeRelease(&_buffer);
-	SafeRelease(&_sample);
+		SafeRelease(&_buffer);
+		SafeRelease(&_sample);
+	}
 
 	if (!SUCCEEDED(*hr)) throw* hr;
 	if (_localHr) delete hr;
 }
 
-void SourceReader_SinkWritter::ReadAudioDatas(unsigned int _maxSample, HRESULT* hr) {
+std::vector<unsigned char> SourceReader_SinkWritter::ReadAudioDatas(long long& _returnTime, HRESULT* hr) {
+	std::vector<unsigned char> _returnAudioDatas;
+
 	IMFSample* pSample = NULL;
 	size_t  cSamples = 0;
 
@@ -341,22 +345,16 @@ void SourceReader_SinkWritter::ReadAudioDatas(unsigned int _maxSample, HRESULT* 
 
 	//if (SUCCEEDED(*hr)) *hr = audioCaptureDatas->GetCurrentMediaType(0, &_returnMediaType); // Get the MediaType and return it
 
-	bool quit = false;
-	while (!quit && cSamples < _maxSample) {
-		DWORD streamIndex = 0, streamStatus = 0;
-		LONGLONG llTimeStamp = 0;
+	DWORD streamIndex = 0, streamStatus = 0;
+	LONGLONG llTimeStamp = 0;
 
-		if (SUCCEEDED(*hr)) *hr = audioCaptureDatas->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &streamIndex, &streamStatus, &llTimeStamp, &pSample);
-		if (FAILED(*hr))
-		{
-			break;
-		}
-
+	if (SUCCEEDED(*hr)) *hr = audioCaptureDatas->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &streamIndex, &streamStatus, &llTimeStamp, &pSample);
+	if (SUCCEEDED(*hr))
+	{
 		wprintf(L"Stream %d (%I64d)\n", streamIndex, llTimeStamp);
 		if (streamStatus & MF_SOURCE_READERF_ENDOFSTREAM)
 		{
 			wprintf(L"\tEnd of stream\n");
-			quit = true;
 		}
 		if (streamStatus & MF_SOURCE_READERF_NEWSTREAM)
 		{
@@ -380,43 +378,39 @@ void SourceReader_SinkWritter::ReadAudioDatas(unsigned int _maxSample, HRESULT* 
 		{
 			// The format changed. Reconfigure the decoder.
 			throw "Format Changed";
-			break;
 		}
 
 		if (pSample) {
 			++cSamples; // Count how many sample are process (Not NULL)
 
-			audioDatas.emplace_back();
-
-			// Get useful datas from Sample
-			// Useful datas
 			unsigned long _captureBufferLength; // How many datas in the buffer
 			if (SUCCEEDED(*hr)) *hr = pSample->GetTotalLength(&_captureBufferLength);
+
+			_returnAudioDatas.reserve(_captureBufferLength); // Reserve the right amount of datas
 
 			IMFMediaBuffer* _captureBuffer; // Copy of the contiguous buffer from the Capture Device Sample
 			if (SUCCEEDED(*hr)) *hr = MFCreateMemoryBuffer(_captureBufferLength, &_captureBuffer);
 			if (SUCCEEDED(*hr)) *hr = pSample->CopyToBuffer(_captureBuffer);
 
-			// Get Datas
+			//	Transfer Audio Datas in the vector
 			unsigned char* _bufferPointer;
 
 			if (SUCCEEDED(*hr)) *hr = _captureBuffer->Lock(&_bufferPointer, NULL, NULL);
 			for (unsigned long _i = 0; _i < _captureBufferLength; _i++)
-				audioDatas.back().push_back(_bufferPointer[_i]);
+				_returnAudioDatas.push_back(_bufferPointer[_i]);
 			if (SUCCEEDED(*hr)) *hr = _captureBuffer->Unlock();
 
-			// Get Times
-			long long _time;
-			pSample->GetSampleTime(&_time);
-			audioDatasTime.push_back(_time);
+			pSample->GetSampleTime(&_returnTime); // Return the time
 
 			SafeRelease(&_captureBuffer);
 		}
-		SafeRelease(&pSample);
 	}
+	SafeRelease(&pSample);
 
 	if (!SUCCEEDED(*hr)) throw* hr;
 	if (_localHr) delete hr;
+
+	return _returnAudioDatas;
 }
 
 #pragma endregion //SourceReader_SinkWritter

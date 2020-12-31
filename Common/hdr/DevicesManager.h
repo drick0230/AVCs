@@ -90,8 +90,8 @@ class SourceReader_SinkWritter {
 	IMFMediaSink* audioRenderSink;
 	IMFSinkWriter* audioRenderDatas;
 public:
-	std::vector<std::vector<unsigned char>> audioDatas;
-	std::vector<long long> audioDatasTime;
+	//std::vector<std::vector<unsigned char>> audioDatas;
+	//std::vector<long long> audioDatasTime;
 
 	SourceReader_SinkWritter(HRESULT* hr = NULL);
 	~SourceReader_SinkWritter();
@@ -105,7 +105,7 @@ public:
 	void PlayAudioCaptureDatas(HRESULT* hr = NULL);
 
 	void PlayAudioDatas(std::vector<unsigned char> _datas, long long _datasTime, HRESULT* hr = NULL);
-	void ReadAudioDatas(unsigned int _maxSample, HRESULT* hr = NULL);
+	std::vector<unsigned char> ReadAudioDatas(long long& _returnTime, HRESULT* hr = NULL);
 };
 
 class MediaSession {

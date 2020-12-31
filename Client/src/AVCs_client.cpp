@@ -24,17 +24,13 @@ int main()
 	std::wcout << Main::devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
 	Main::devManager.sr_sw.SetActiveDevice(Main::devManager.audioCaptureDevices[0]);
 	Main::devManager.sr_sw.SetActiveDevice(Main::devManager.audioRenderDevices[0]);
+
+	//////// MEMORY LEAK TEST//////
 	//Main::devManager.sr_sw.SetInputMediaType(Main::devManager.sr_sw.GetAudioCaptureDeviceMediaTypeDatas()); //Set the Media Type
-
-	////////// MEMORY LEAK TEST//////
 	//while (1) {
-	//	Packet test;
-
-	//	Main::devManager.sr_sw.ReadAudioDatas(1);
-	//	Main::devManager.sr_sw.PlayAudioDatas(Main::devManager.sr_sw.audioDatas[0], Main::devManager.sr_sw.audioDatasTime[0]);
-
-	//	Main::devManager.sr_sw.audioDatas.clear();
-	//	Main::devManager.sr_sw.audioDatasTime.clear();
+	//	long long _audioDatasTime;
+	//	std::vector<unsigned char> _audioDatas = Main::devManager.sr_sw.ReadAudioDatas(_audioDatasTime);
+	//	Main::devManager.sr_sw.PlayAudioDatas(_audioDatas, _audioDatasTime);
 	//}
 
 	////////// PROGRAM ///////////
@@ -108,6 +104,7 @@ std::string GetNextCommand() {
 			}
 			Console::inKeys.clear();
 		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduce CPU Usage
 	}
 
 	Console::Write('\n');
@@ -213,14 +210,6 @@ void clientUDP() {
 		_packet >> _uShort;
 
 		Network::udp[0].AddToBook(_str, _uShort);
-		//Network::udp[0].AddToBook("192.168.1.141", _uShort);
-
-		//Packet _packet2;
-		//_packet2 << std::string("HOLE_PUNCHING");
-		//Network::udp[0].Send(2, _packet2);
-
-		//std::thread tKeepAlive(&KeepAlive, 1, Main::msBetweenKeepAlive);
-		//tKeepAlive.detach();
 
 		std::thread tSendAudioNetwork(&SendAudioNetwork, 1);
 		tSendAudioNetwork.detach();
@@ -283,6 +272,7 @@ void clientUDP() {
 
 void SendAudioNetwork(unsigned int _clientID) {
 	while (1) {
+		// Send the Mediatype each 10 Audio datas (in case the other client didnt receive it)
 		{
 			Packet _packet;
 
@@ -291,38 +281,36 @@ void SendAudioNetwork(unsigned int _clientID) {
 
 			Network::udp[0].Send(_clientID, _packet);
 		}
+		
+		// Send 10 Audio Datas
+		for(unsigned int _iAudioDatas = 0; _iAudioDatas < 10; _iAudioDatas++) {
+			long long _audioDatasTime;
+			std::vector<unsigned char> _audioDatas = Main::devManager.sr_sw.ReadAudioDatas(_audioDatasTime);
 
-		// Send maximum 10 Audio Datas
-		Main::devManager.sr_sw.ReadAudioDatas(2);
-		for (unsigned int _i = 0; _i < Main::devManager.sr_sw.audioDatas.size(); _i++) {
-			unsigned int _nbPackets = Main::devManager.sr_sw.audioDatas[_i].size() / 512 + 1;
+			unsigned int _nbPackets = _audioDatas.size() / 512 + 1;
 			unsigned int _actualData = 0;
 
+			// New Audio Datas Packet
 			{
 				Packet _packet;
-				// Write Start new Audio Datas
-				_packet << std::string("AUDIO_DATAS");
-				// Write the Time
-				_packet << Main::devManager.sr_sw.audioDatasTime[_i];
 
+				_packet << std::string("AUDIO_DATAS"); // Write Start new Audio Datas
+				_packet << _audioDatasTime;	 // Write the Time
+
+				Network::udp[0].Send(_clientID, _packet); // Send the Packet
+			}
+
+			// Send the Audio Datas in multiple Packets of 512 Bytes
+			for (unsigned _iPackets = 0; _iPackets < _nbPackets && _actualData < _audioDatas.size(); _iPackets++) {
+				Packet _packet;
+				// Write the datas
+				for (unsigned int _i2 = 0; _i2 < 512 && _actualData < _audioDatas.size(); _i2++) {
+					_packet << _audioDatas[_actualData];
+					_actualData++;
+				}
 				Network::udp[0].Send(_clientID, _packet);
 			}
-
-			{
-				for (unsigned _iPackets = 0; _iPackets < _nbPackets && _actualData < Main::devManager.sr_sw.audioDatas[_i].size(); _iPackets++) {
-					Packet _packet;
-					// Write the datas
-					for (unsigned int _i2 = 0; _i2 < 512 && _actualData < Main::devManager.sr_sw.audioDatas[_i].size(); _i2++) {
-						_packet << Main::devManager.sr_sw.audioDatas[_i][_actualData];
-						_actualData++;
-					}
-					Network::udp[0].Send(_clientID, _packet);
-				}
-			}
 		}
-
-		Main::devManager.sr_sw.audioDatas.clear();
-		Main::devManager.sr_sw.audioDatasTime.clear();
 	}
 }
 
@@ -334,107 +322,3 @@ void KeepAlive(unsigned int _clientID, unsigned int _ms) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(_ms));
 	}
 }
-//
-//void serverTCP() {
-//	Network::tcp[0].WaitClientConnection();
-//	Network::tcp[0].WaitReceive(0);
-//	std::cout << "Someone is connected\n";
-//	Network::tcp[0].Send(0, "Test Message 2!");
-//	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-//}
-//
-//void clientTCP() {
-//	if (Network::tcp[1].Connect("127.0.0.1", 22))
-//	{
-//		std::cout << "U are connected!\n";
-//		Network::tcp[1].Send("Test Message!");
-//		Network::tcp[1].WaitReceive();
-//	}
-//	else
-//		throw "Hosting problem";
-//}
-//
-//void serverUDP() {
-//	//Network::udp.WaitClientConnection();
-//	Network::udp[0].WaitReceive(0);
-//	std::cout << "Someone is connected\n";
-//	Network::udp[0].WaitReceive(0);
-//	Network::udp[0].Send(0, "Test Message 2!");
-//	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-//}
-//
-//void clientUDP() {
-//	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-//	if (Network::udp[1].Connect("127.0.0.1", 22))
-//	{
-//		std::cout << "U are connected!\n";
-//		Network::udp[1].Send(0, "Test Message!");
-//		Network::udp[1].WaitReceive();
-//	}
-//	else
-//		throw "Hosting problem";
-//}
-
-/*
-void ConsoleIO(bool* isConnected, bool* voiceEnable, bool* speakerEnable, bool* isRecording, VOIP* voip) {
-	// Command-Line
-	std::vector<std::string> splitCommand;
-
-	// main Loop
-	while (true)
-	{
-		if (Console::Read())
-		{
-			while (Console::inKeys.size() > 0) {
-				unsigned short _inKey = Console::GetInKeys(0);
-				_inKey = 0;
-				/*if (_inKey == '\r') { // Touche Enter
-					// Split le texte entrant en commandes séparées par des espaces
-					splitCommand.clear();
-					for (unsigned int i = 0; i < Console::inText.content.size(); i++) {
-						splitCommand.emplace_back();
-
-						while (Console::inText.content[i] != ' ' && Console::inText.content[i] != '\0') {
-							splitCommand.back().push_back(Console::inText.content[i]);
-							i++;
-						}
-					}
-					Console::GoTo(1, 23);
-					Console::EraseChar(Console::inText.content.size());
-					Console::inText.content = "";
-
-					// Faire l'action correspondant aux commandes entrées
-					if (splitCommand[0] == "connect") {
-						voip->Connect(splitCommand[1], myParse<unsigned int>(splitCommand[2]));
-						*isConnected = true;
-					}
-					else if (splitCommand[0] == "send") {
-						voip->Send();
-					}
-					else if (splitCommand[0] == "receive") {
-						voip->Receive();
-						voip->TreatAudio();
-					}
-					else if (splitCommand[0] == "enable") {
-						if (splitCommand[1] == "voice")
-							*voiceEnable = true;
-						else if (splitCommand[1] == "speaker")
-							*speakerEnable = true;
-					}
-					else if (splitCommand[0] == "disable") {
-						if (splitCommand[1] == "voice")
-							*voiceEnable = false;
-						else if (splitCommand[1] == "speaker")
-							*speakerEnable = false;
-					}
-				}
-				else if (_inKey == (char)127 && Console::inText.content.size() > 0) { // Touche Effacer
-					// Effacer le dernier caractère du texte
-					Console::inText.content.pop_back();
-				}*//*
-			}
-			//Console::inText.Show();
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-	}
-}*/
