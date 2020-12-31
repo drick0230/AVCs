@@ -23,6 +23,8 @@ void clientTCP();
 void serverUDP();
 void clientUDP();
 
+void SendAudioNetwork(unsigned int _clientID);
+
 // Send a Packet to be able to receive Packet from distant connection
 void KeepAlive(unsigned int _clientID, unsigned int _ms);
 

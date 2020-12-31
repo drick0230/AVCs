@@ -10,31 +10,41 @@ namespace Main {
 	//std::string myIP = "24.212.42.80";
 	//std::string myLocalIP = "192.168.1.141";
 	unsigned long myLocalIP = INADDR_ANY;
-	unsigned int msBetweenKeepAlive = 0;
+	unsigned int msBetweenKeepAlive = 10;
+
+	DevicesManager devManager;
 }
 
 int main()
 {
 	////////// AUDIO TEST ////////
-	DevicesManager devManager;
-	devManager.EnumerateDevices();
-	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_CAPT, 0) << '\n';
-	std::wcout << devManager.GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
-	std::wcout << devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
-	devManager.mediaSession.SetActiveDevice(devManager.audioCaptureDevices[0]);
-	devManager.mediaSession.SetActiveDevice(devManager.audioRenderDevices[0]);
-	devManager.mediaSession.PlayAudioCaptureDatas();
-	while (1) Sleep(1000);
+	Main::devManager.EnumerateDevices();
+	std::wcout << Main::devManager.GetDevicesName(DevicesTypes::AUD_CAPT, 0) << '\n';
+	std::wcout << Main::devManager.GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
+	std::wcout << Main::devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
+	Main::devManager.sr_sw.SetActiveDevice(Main::devManager.audioCaptureDevices[0]);
+	Main::devManager.sr_sw.SetActiveDevice(Main::devManager.audioRenderDevices[0]);
+	//Main::devManager.sr_sw.SetInputMediaType(Main::devManager.sr_sw.GetAudioCaptureDeviceMediaTypeDatas()); //Set the Media Type
 
+	////////// MEMORY LEAK TEST//////
+	//while (1) {
+	//	Packet test;
+
+	//	Main::devManager.sr_sw.ReadAudioDatas(1);
+	//	Main::devManager.sr_sw.PlayAudioDatas(Main::devManager.sr_sw.audioDatas[0], Main::devManager.sr_sw.audioDatasTime[0]);
+
+	//	Main::devManager.sr_sw.audioDatas.clear();
+	//	Main::devManager.sr_sw.audioDatasTime.clear();
+	//}
 
 	////////// PROGRAM ///////////
 	Network::Initialize();
 	Network::Add(ProtocoleTypes::UDP, 1);
 	Console::InitializeConsole();
 
-	Console::Write("Delais entre les Keep Alive:");
-	Console::Write();
-	Main::msBetweenKeepAlive = myParse<unsigned int>(GetNextCommand());
+	//Console::Write("Delais entre les Keep Alive:");
+	//Console::Write();
+	//Main::msBetweenKeepAlive = myParse<unsigned int>(GetNextCommand());
 
 	std::string userInput = "";
 	do {
@@ -62,7 +72,7 @@ int main()
 		tserverUDP.detach();
 	}
 
-	while (1);
+	while (1) std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 
 	return 0;
@@ -116,11 +126,15 @@ void serverUDP() {
 	// Get Local and Public IP
 	Console::Write("IP local du Serveur:");
 	Console::Write();
-	_localIP = GetNextCommand();
+	Console::Write("192.168.1.1\n");
+	Console::Write();
+	_localIP = "192.168.1.1";// GetNextCommand();
 
 	Console::Write("IP publique du Serveur:");
 	Console::Write();
-	_publicIP = GetNextCommand();
+	Console::Write("127.0.0.1\n");
+	Console::Write();
+	_publicIP = "127.0.0.1";//GetNextCommand();
 
 	// Wait the connection of 2 clients
 	while (Network::udp[0].addressBook.size() != 2) {
@@ -172,7 +186,9 @@ void clientUDP() {
 	// Get Server IP
 	Console::Write("IP du Serveur:");
 	Console::Write();
-	_serverIP = GetNextCommand();
+	Console::Write("24.212.42.80\n");
+	Console::Write();
+	_serverIP = "24.212.42.80";//GetNextCommand();
 
 
 	// Connect to Server
@@ -199,28 +215,114 @@ void clientUDP() {
 		Network::udp[0].AddToBook(_str, _uShort);
 		//Network::udp[0].AddToBook("192.168.1.141", _uShort);
 
-		Packet _packet2;
-		_packet2 << std::string("HOLE_PUNCHING");
+		//Packet _packet2;
+		//_packet2 << std::string("HOLE_PUNCHING");
 		//Network::udp[0].Send(2, _packet2);
 
-		std::thread tKeepAlive(&KeepAlive, 1, Main::msBetweenKeepAlive);
-		tKeepAlive.detach();
+		//std::thread tKeepAlive(&KeepAlive, 1, Main::msBetweenKeepAlive);
+		//tKeepAlive.detach();
+
+		std::thread tSendAudioNetwork(&SendAudioNetwork, 1);
+		tSendAudioNetwork.detach();
 
 		Console::Write("Client : "); Console::Write(_str); Console::Write(':'); Console::Write(_uShort); Console::Write('\n');
 		Console::Write();
 	}
 
+	std::vector<unsigned char> _audioDatas;
+	long long _audioDataTime = -1;
+
+	bool _receivedMediaType = false;
 	// Write received Packet
 	while (1) {
 		unsigned int _clientID;
 		Packet _packet;
 		_clientID = Network::udp[0].WaitReceive(_packet);
 
-		_packet >> _str;
+		//Read the type of datas
+		if (_packet.Peek("MEDIATYPE")) {
+			if (!_receivedMediaType) {
+				std::string _str;
+				std::vector<unsigned char> _mediaTypeDatas;
 
-		Console::Write(_str);
-		Console::Write('\n');
-		Console::Write();
+				_packet >> _str; // Get "MEDIATYPE"
+				_packet >> _mediaTypeDatas; // Get the Media Type Datas
+
+				Main::devManager.sr_sw.SetInputMediaType(_mediaTypeDatas); //Set the Media Type
+
+				_receivedMediaType = true;
+			}
+		}
+		else if (_receivedMediaType) {
+			if (_packet.Peek("AUDIO_DATAS")) {
+				// We are at the beginning of a new AUDIO_DATAS
+				//Play the actual datas
+				if (_audioDatas.size() > 0 && _audioDataTime != -1) {
+					Main::devManager.sr_sw.PlayAudioDatas(_audioDatas, _audioDataTime);
+				}
+				_audioDatas.clear();
+
+				std::string _str;
+				_packet >> _str; // Get "AUDIO_DATAS"
+				_packet >> _audioDataTime; // Get Audio Data Time
+
+				Console::Write("New AUDIO_DATAS\n");
+				Console::Write();
+			}
+			else {
+				// Reading the actual Audio Datas
+				for (unsigned int _i = 0; _i < _packet.size(); _i++)
+					_audioDatas.push_back(_packet.data()[_i]);
+
+				Console::Write("Get AUDIO_DATAS\n");
+				Console::Write();
+			}
+		}
+	}
+}
+
+void SendAudioNetwork(unsigned int _clientID) {
+	while (1) {
+		{
+			Packet _packet;
+
+			_packet << std::string("MEDIATYPE"); // Write the type of datas
+			_packet << Main::devManager.sr_sw.GetAudioCaptureDeviceMediaTypeDatas(); // Write the Media Type datas
+
+			Network::udp[0].Send(_clientID, _packet);
+		}
+
+		// Send maximum 10 Audio Datas
+		Main::devManager.sr_sw.ReadAudioDatas(2);
+		for (unsigned int _i = 0; _i < Main::devManager.sr_sw.audioDatas.size(); _i++) {
+			unsigned int _nbPackets = Main::devManager.sr_sw.audioDatas[_i].size() / 512 + 1;
+			unsigned int _actualData = 0;
+
+			{
+				Packet _packet;
+				// Write Start new Audio Datas
+				_packet << std::string("AUDIO_DATAS");
+				// Write the Time
+				_packet << Main::devManager.sr_sw.audioDatasTime[_i];
+
+				Network::udp[0].Send(_clientID, _packet);
+			}
+
+			{
+				for (unsigned _iPackets = 0; _iPackets < _nbPackets && _actualData < Main::devManager.sr_sw.audioDatas[_i].size(); _iPackets++) {
+					Packet _packet;
+					// Write the datas
+					for (unsigned int _i2 = 0; _i2 < 512 && _actualData < Main::devManager.sr_sw.audioDatas[_i].size(); _i2++) {
+						_packet << Main::devManager.sr_sw.audioDatas[_i][_actualData];
+						_actualData++;
+					}
+					Network::udp[0].Send(_clientID, _packet);
+				}
+			}
+		}
+
+		Main::devManager.sr_sw.audioDatas.clear();
+		Main::devManager.sr_sw.audioDatasTime.clear();
 	}
 }
 
@@ -232,7 +334,6 @@ void KeepAlive(unsigned int _clientID, unsigned int _ms) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(_ms));
 	}
 }
-
 //
 //void serverTCP() {
 //	Network::tcp[0].WaitClientConnection();

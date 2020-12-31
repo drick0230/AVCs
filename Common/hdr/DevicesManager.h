@@ -87,18 +87,25 @@ class SourceReader_SinkWritter {
 	IMFMediaSource* audioCaptureSource;
 	IMFSourceReader* audioCaptureDatas;
 
-	IMFMediaBuffer* inBuffer;
-	IMFSample* inSample;
 	IMFMediaSink* audioRenderSink;
 	IMFSinkWriter* audioRenderDatas;
 public:
+	std::vector<std::vector<unsigned char>> audioDatas;
+	std::vector<long long> audioDatasTime;
+
 	SourceReader_SinkWritter(HRESULT* hr = NULL);
 	~SourceReader_SinkWritter();
 
 	void SetActiveDevice(AudioCaptureDevice& _audioCaptureDevice, HRESULT* hr = NULL);
 	void SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESULT* hr = NULL);
 
+	std::vector<unsigned char> GetAudioCaptureDeviceMediaTypeDatas(HRESULT* hr = NULL);
+	void SetInputMediaType(std::vector<unsigned char> _mediaTypeDatas, HRESULT* hr = NULL);
+
 	void PlayAudioCaptureDatas(HRESULT* hr = NULL);
+
+	void PlayAudioDatas(std::vector<unsigned char> _datas, long long _datasTime, HRESULT* hr = NULL);
+	void ReadAudioDatas(unsigned int _maxSample, HRESULT* hr = NULL);
 };
 
 class MediaSession {

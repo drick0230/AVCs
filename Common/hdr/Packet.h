@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 
 class Packet
 {
@@ -19,7 +20,7 @@ public:
 	static void setMaxSize(size_t maxSize) { MAXSIZE = maxSize; }
 	//constructeur et destructeur
 	Packet(size_t beginCapacity = Packet::MAXSIZE); //constructeur avec capacité de départ
-	Packet(const Packet &base);
+	Packet(const Packet& base);
 	~Packet();
 
 	//modification de la taille des données
@@ -35,6 +36,8 @@ public:
 	const bool end() { return _cursor == _size; } //retourne vrai si le curseur est à la fin des données
 	void move(size_t);//déplace le curseur
 
+	bool Peek(std::string _str);
+
 	//modification
 	void add(char* newData, size_t dataSize); //ajoute les données à partir de la position du curseur et déplace le curseur à la fin des données
 
@@ -47,6 +50,8 @@ public:
 	Packet& operator << (T data);
 	template <>
 	Packet& operator << (std::string data);
+	template <typename T>
+	Packet& operator << (std::vector<T> data);
 
 
 	//Packet& operator << (float data);
@@ -57,13 +62,15 @@ public:
 	Packet& operator >> (T& data);
 	template <>
 	Packet& operator >> (std::string& data);
+	template <typename T>
+	Packet& operator >> (std::vector<T>& data);
 };
 
 
 
 #pragma region << operator
 template <typename T>
-Packet& Packet::operator << (T data)
+inline Packet& Packet::operator << (T data)
 {
 	const size_t bytesNbr = sizeof(T);
 
@@ -73,7 +80,7 @@ Packet& Packet::operator << (T data)
 }
 
 template <>
-Packet& Packet::operator << (std::string data)
+inline Packet& Packet::operator << (std::string data)
 {
 	const size_t bytesNbr = data.size() + 1;
 
@@ -83,12 +90,24 @@ Packet& Packet::operator << (std::string data)
 	return *this;
 }
 
+template <typename T>
+inline Packet& Packet::operator << (std::vector<T> _data)
+{
+	*this << (size_t)_data.size();// Write nbDatas
+
+	const size_t bytesNbr = _data.size() * sizeof(T);
+
+	char* cdata = (char*)_data.data();
+
+	add(cdata, bytesNbr);
+	return *this;
+}
 #pragma endregion
 
 #pragma region >> operator
 
 template <typename T>
-Packet& Packet::operator >> (T& data)
+inline Packet& Packet::operator >> (T& data)
 {
 	const size_t bytesNbr = sizeof(T);
 	if ((_cursor + bytesNbr) > _size)throw "depassement lors de la lecture";
@@ -99,11 +118,11 @@ Packet& Packet::operator >> (T& data)
 }
 
 template <>
-Packet& Packet::operator >> (std::string& data)
+inline Packet& Packet::operator >> (std::string& data)
 {
 	size_t bytesNbr = 0;
 	const size_t virtSize = _size - 1;
-	while (*(_data + _cursor + bytesNbr ) != 0)
+	while (*(_data + _cursor + bytesNbr) != 0)
 	{
 		bytesNbr++;
 		if ((_cursor + bytesNbr) > virtSize)throw "depassement lors de la lecture";
@@ -114,5 +133,28 @@ Packet& Packet::operator >> (std::string& data)
 	return *this;
 }
 
+template <typename T>
+inline Packet& Packet::operator >> (std::vector<T>& data)
+{
+	size_t _nbDatas; // Get nbDatas
+	*this >> _nbDatas;
+
+	size_t bytesNbr = sizeof(T) * _nbDatas; // Get the number of byte to read
+	if ((_cursor + bytesNbr) > MAXSIZE)throw "depassement lors de la lecture";
+	else {
+		// Read the Datas and put them in the vector
+		data.clear();
+		data.reserve(_nbDatas);
+		for (unsigned int _i = 0; _i < _nbDatas; _i++) {
+			T _Tvar;
+			*this >> _Tvar;
+			data.push_back(_Tvar);
+		}
+
+		_cursor += bytesNbr;
+	}
+
+	return *this;
+}
 #pragma endregion
 

@@ -33,7 +33,7 @@ void Packet::setCapacity(size_t newCapacity)
 	{
 		new_data[i] = _data[i];
 	}
-	delete[_capacity] _data;
+	delete[] _data;
 	_data = new_data;
 	new_data = nullptr;
 	_capacity = newCapacity;
@@ -43,6 +43,19 @@ void Packet::move(size_t position)
 {
 	if (position > _size) throw "deplacement à l'exterieur des donnees";
 	_cursor = position;
+}
+
+bool Packet::Peek(std::string _strToFound) {
+	if (_cursor + _strToFound.size() > _size) return false;
+	if (_data[_cursor + _strToFound.size()] != '\0') return false;
+
+	std::string _str;
+	*this >> _str;
+	_cursor -= _strToFound.size() + 1;
+	if (_str == _strToFound)
+		return true;
+
+	return false;
 }
 
 void Packet::add(char* newData, size_t dataSize)
