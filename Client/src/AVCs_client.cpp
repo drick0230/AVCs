@@ -104,7 +104,7 @@ std::string GetNextCommand() {
 			}
 			Console::inKeys.clear();
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Reduce CPU Usage
+		std::this_thread::sleep_for(std::chrono::milliseconds(20)); // Reduce CPU Usage
 	}
 
 	Console::Write('\n');
@@ -121,17 +121,17 @@ void serverUDP() {
 	unsigned short _uShort;
 
 	// Get Local and Public IP
-	Console::Write("IP local du Serveur:");
+	Console::Write("Passerelle par défaut:");
 	Console::Write();
-	Console::Write("192.168.1.1\n");
-	Console::Write();
-	_localIP = "192.168.1.1";// GetNextCommand();
+	//Console::Write("192.168.1.1\n");
+	//Console::Write();
+	_localIP = GetNextCommand();
 
 	Console::Write("IP publique du Serveur:");
 	Console::Write();
-	Console::Write("127.0.0.1\n");
-	Console::Write();
-	_publicIP = "127.0.0.1";//GetNextCommand();
+	//Console::Write("127.0.0.1\n");
+	//Console::Write();
+	_publicIP = GetNextCommand();
 
 	// Wait the connection of 2 clients
 	while (Network::udp[0].addressBook.size() != 2) {
@@ -183,9 +183,9 @@ void clientUDP() {
 	// Get Server IP
 	Console::Write("IP du Serveur:");
 	Console::Write();
-	Console::Write("24.212.42.80\n");
-	Console::Write();
-	_serverIP = "24.212.42.80";//GetNextCommand();
+	//Console::Write("24.212.42.80\n");
+	//Console::Write();
+	_serverIP = GetNextCommand();
 
 
 	// Connect to Server
