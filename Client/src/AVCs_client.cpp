@@ -48,7 +48,7 @@ int main()
 		Console::Write();
 
 		userInput = GetNextCommand();
-	} while (userInput == "0" && userInput == "1");
+	} while (userInput != "0" && userInput != "1");
 
 	if (userInput == "0") {
 		// Is Client
@@ -287,28 +287,30 @@ void SendAudioNetwork(unsigned int _clientID) {
 			long long _audioDatasTime;
 			std::vector<unsigned char> _audioDatas = Main::devManager.sr_sw.ReadAudioDatas(_audioDatasTime);
 
-			unsigned int _nbPackets = _audioDatas.size() / 512 + 1;
-			unsigned int _actualData = 0;
+			if (_audioDatas.size() > 0) {
+				unsigned int _nbPackets = _audioDatas.size() / 512 + 1;
+				unsigned int _actualData = 0;
 
-			// New Audio Datas Packet
-			{
-				Packet _packet;
+				// New Audio Datas Packet
+				{
+					Packet _packet;
 
-				_packet << std::string("AUDIO_DATAS"); // Write Start new Audio Datas
-				_packet << _audioDatasTime;	 // Write the Time
+					_packet << std::string("AUDIO_DATAS"); // Write Start new Audio Datas
+					_packet << _audioDatasTime;	 // Write the Time
 
-				Network::udp[0].Send(_clientID, _packet); // Send the Packet
-			}
-
-			// Send the Audio Datas in multiple Packets of 512 Bytes
-			for (unsigned _iPackets = 0; _iPackets < _nbPackets && _actualData < _audioDatas.size(); _iPackets++) {
-				Packet _packet;
-				// Write the datas
-				for (unsigned int _i2 = 0; _i2 < 512 && _actualData < _audioDatas.size(); _i2++) {
-					_packet << _audioDatas[_actualData];
-					_actualData++;
+					Network::udp[0].Send(_clientID, _packet); // Send the Packet
 				}
-				Network::udp[0].Send(_clientID, _packet);
+
+				// Send the Audio Datas in multiple Packets of 512 Bytes
+				for (unsigned _iPackets = 0; _iPackets < _nbPackets && _actualData < _audioDatas.size(); _iPackets++) {
+					Packet _packet;
+					// Write the datas
+					for (unsigned int _i2 = 0; _i2 < 512 && _actualData < _audioDatas.size(); _i2++) {
+						_packet << _audioDatas[_actualData];
+						_actualData++;
+					}
+					Network::udp[0].Send(_clientID, _packet);
+				}
 			}
 		}
 	}

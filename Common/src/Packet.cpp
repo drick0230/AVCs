@@ -48,10 +48,11 @@ void Packet::move(size_t position)
 bool Packet::Peek(std::string _strToFound) {
 	if (_cursor + _strToFound.size() > _size) return false;
 	if (_data[_cursor + _strToFound.size()] != '\0') return false;
+	size_t _oldCursor = _cursor;
 
 	std::string _str;
 	*this >> _str;
-	_cursor -= _strToFound.size() + 1;
+	_cursor = _oldCursor;
 	if (_str == _strToFound)
 		return true;
 
