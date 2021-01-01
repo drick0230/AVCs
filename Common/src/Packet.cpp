@@ -1,7 +1,5 @@
 #include "Packet.h"
 
-size_t Packet::MAXSIZE = 512;
-
 #pragma region méthode
 
 Packet::Packet(size_t beginCapacity) :_capacity(beginCapacity), _size(0), _cursor(0)
@@ -25,7 +23,6 @@ Packet::~Packet()
 void Packet::setCapacity(size_t newCapacity)
 {
 	char* new_data = nullptr;
-	if (newCapacity > MAXSIZE)throw "depassement de MAXSIZE";
 	if ((new_data = new char[newCapacity]) == nullptr)throw "echec de l'assignation";
 	size_t limit = _size;
 	if (newCapacity < limit) limit = newCapacity;
@@ -81,11 +78,27 @@ Packet& Packet::operator = (const Packet& _b) {
 	_size = _b._size;
 	_cursor = _b._cursor;
 
-	for (size_t i = 0; i < _capacity; i++)
+	for (size_t i = 0; i < _size; i++)
 		_data[i] = _b._data[i];
 	return *this;
 }
 
 
+void Packet::popBack(size_t nbr)
+{
+	if (((long)_size - (long)nbr) < 0)throw "nbr insufisant de data dans le packet";
+	_size -= nbr;
+	if (_cursor > _size) _cursor = _size;
+}
 
+void Packet::read(char* data, size_t readSize)
+{
+	if ((_cursor + readSize) > _size)throw "depassement lors de la lecture";
+	for (int i = 0; i < readSize; i++)
+	{
+		data[i] = _data[i + _cursor];
+	}
+	_cursor += readSize;
+
+}
 #pragma endregion

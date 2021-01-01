@@ -2,11 +2,15 @@
 #include <string>
 #include <vector>
 
+namespace PacketConst
+{
+	const size_t INIT_PACKET_SIZE = 512;
+}
+
 class Packet
 {
 protected:
-	//static
-	static size_t MAXSIZE;
+
 	// gestion de la taille et de la capacité
 	size_t _capacity;
 	size_t _size;
@@ -16,10 +20,9 @@ protected:
 	char* _data;
 
 public:
-	//static function
-	static void setMaxSize(size_t maxSize) { MAXSIZE = maxSize; }
+
 	//constructeur et destructeur
-	Packet(size_t beginCapacity = Packet::MAXSIZE); //constructeur avec capacité de départ
+	Packet(size_t beginCapacity = PacketConst::INIT_PACKET_SIZE); //constructeur avec capacité de départ
 	Packet(const Packet& base);
 	~Packet();
 
@@ -36,10 +39,13 @@ public:
 	const bool end() { return _cursor == _size; } //retourne vrai si le curseur est à la fin des données
 	void move(size_t);//déplace le curseur
 
-	bool Peek(std::string _str);
-
 	//modification
 	void add(char* newData, size_t dataSize); //ajoute les données à partir de la position du curseur et déplace le curseur à la fin des données
+	void popBack(size_t nbr);//retire les nbr dernier data du packet
+
+	//lecture
+	bool Peek(std::string _str);
+	void read(char* data, size_t readSize); // lit un nombre déterminer de donné et déplace le curseur
 
 
 	//operateur pour écriture
@@ -64,9 +70,8 @@ public:
 	Packet& operator >> (std::string& data);
 	template <typename T>
 	Packet& operator >> (std::vector<T>& data);
+
 };
-
-
 
 #pragma region << operator
 template <typename T>
@@ -140,7 +145,7 @@ inline Packet& Packet::operator >> (std::vector<T>& data)
 	*this >> _nbDatas;
 
 	size_t bytesNbr = sizeof(T) * _nbDatas; // Get the number of byte to read
-	if ((_cursor + bytesNbr) > MAXSIZE)throw "depassement lors de la lecture";
+	if ((_cursor + bytesNbr) > _size)throw "depassement lors de la lecture";
 	else {
 		// Read the Datas and put them in the vector
 		data.clear();
@@ -156,5 +161,5 @@ inline Packet& Packet::operator >> (std::vector<T>& data)
 
 	return *this;
 }
-#pragma endregion
 
+#pragma endregion
