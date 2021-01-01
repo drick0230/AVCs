@@ -16,6 +16,9 @@ set (SFML_STATIC_LIBRARIES TRUE)
 set (SFML_USE_STATIC_LIBS TRUE)
 set (BUILD_SHARED_LIBS FALSE)
 
+set(VS_GLOBAL_ApplicationIcon "${COMMON_DIR}/Ressources/AVCs_Icon_Squr.ico")
+
+
 # Incluez les sous-projets.
 # add_subdirectory ("lib/SFML")
 add_subdirectory ("Client")

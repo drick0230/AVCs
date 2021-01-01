@@ -351,7 +351,7 @@ std::vector<unsigned char> SourceReader_SinkWritter::ReadAudioDatas(long long& _
 	if (SUCCEEDED(*hr)) *hr = audioCaptureDatas->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &streamIndex, &streamStatus, &llTimeStamp, &pSample);
 	if (SUCCEEDED(*hr))
 	{
-		wprintf(L"Stream %d (%I64d)\n", streamIndex, llTimeStamp);
+		//wprintf(L"Stream %d (%I64d)\n", streamIndex, llTimeStamp);
 		if (streamStatus & MF_SOURCE_READERF_ENDOFSTREAM)
 		{
 			wprintf(L"\tEnd of stream\n");

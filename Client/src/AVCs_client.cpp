@@ -18,10 +18,12 @@ namespace Main {
 int main()
 {
 	////////// AUDIO TEST ////////
-	Main::devManager.EnumerateDevices();
+	Main::devManager.EnumerateDevices(DevicesTypes::AUD_CAPT);
+	Main::devManager.EnumerateDevices(DevicesTypes::AUD_REND);
+
 	std::wcout << Main::devManager.GetDevicesName(DevicesTypes::AUD_CAPT, 0) << '\n';
 	std::wcout << Main::devManager.GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
-	std::wcout << Main::devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
+	//std::wcout << Main::devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
 	Main::devManager.sr_sw.SetActiveDevice(Main::devManager.audioCaptureDevices[0]);
 	Main::devManager.sr_sw.SetActiveDevice(Main::devManager.audioRenderDevices[0]);
 
@@ -218,8 +220,13 @@ void clientUDP() {
 		Console::Write();
 	}
 
-	std::vector<unsigned char> _audioDatas;
-	long long _audioDataTime = -1;
+	const unsigned int _nbBuffer = 5;
+
+	std::vector<std::vector<unsigned char>> _audioDatasBuffer;
+	_audioDatasBuffer.resize(_nbBuffer);
+
+	std::vector<long long> _audioDataTime;
+	_audioDataTime.resize(_nbBuffer);
 
 	bool _receivedMediaType = false;
 	// Write received Packet
@@ -246,25 +253,31 @@ void clientUDP() {
 			if (_packet.Peek("AUDIO_DATAS")) {
 				// We are at the beginning of a new AUDIO_DATAS
 				//Play the actual datas
-				if (_audioDatas.size() > 0 && _audioDataTime != -1) {
-					Main::devManager.sr_sw.PlayAudioDatas(_audioDatas, _audioDataTime);
+				if (_audioDatasBuffer.back().size() > 0 && _audioDataTime.back() != 0) {
+					Main::devManager.sr_sw.PlayAudioDatas(_audioDatasBuffer.back(), _audioDataTime.back() + 2000000000000);
 				}
-				_audioDatas.clear();
+
+				for (unsigned int _i = _audioDatasBuffer.size() - 1; _i > 0; _i--) {
+					_audioDatasBuffer[_i] = _audioDatasBuffer[_i - 1];
+					_audioDataTime[_i] = _audioDataTime[_i - 1];
+				}
+				_audioDatasBuffer[0].clear();
+				_audioDataTime[0] = 0;
 
 				std::string _str;
 				_packet >> _str; // Get "AUDIO_DATAS"
-				_packet >> _audioDataTime; // Get Audio Data Time
+				_packet >> _audioDataTime[0]; // Get Audio Data Time
 
-				Console::Write("New AUDIO_DATAS\n");
-				Console::Write();
+				//Console::Write("New AUDIO_DATAS\n");
+				//Console::Write();
 			}
 			else {
 				// Reading the actual Audio Datas
 				for (unsigned int _i = 0; _i < _packet.size(); _i++)
-					_audioDatas.push_back(_packet.data()[_i]);
+					_audioDatasBuffer[0].push_back(_packet.data()[_i]);
 
-				Console::Write("Get AUDIO_DATAS\n");
-				Console::Write();
+				//Console::Write("Get AUDIO_DATAS\n");
+				//Console::Write();
 			}
 		}
 	}
@@ -281,9 +294,9 @@ void SendAudioNetwork(unsigned int _clientID) {
 
 			Network::udp[0].Send(_clientID, _packet);
 		}
-		
-		// Send 10 Audio Datas
-		for(unsigned int _iAudioDatas = 0; _iAudioDatas < 10; _iAudioDatas++) {
+
+		// Send 100 Audio Datas
+		for (unsigned int _iAudioDatas = 0; _iAudioDatas < 100; _iAudioDatas++) {
 			long long _audioDatasTime;
 			std::vector<unsigned char> _audioDatas = Main::devManager.sr_sw.ReadAudioDatas(_audioDatasTime);
 
