@@ -291,7 +291,7 @@ void SourceReader_SinkWritter::SetInputMediaType(std::vector<unsigned char> _med
 	if (_localHr) delete hr;
 }
 
-void SourceReader_SinkWritter::PlayAudioDatas(std::vector<unsigned char> _datas, long long _datasTime, HRESULT* hr) {
+void SourceReader_SinkWritter::PlayAudioDatas(std::vector<unsigned char> _datas, long long _datasDuration, long long _datasTime, HRESULT* hr) {
 	bool _localHr = false;
 	if (hr == NULL) {
 		hr = new HRESULT(S_OK);
@@ -315,6 +315,7 @@ void SourceReader_SinkWritter::PlayAudioDatas(std::vector<unsigned char> _datas,
 		if (SUCCEEDED(*hr)) *hr = MFCreateSample(&_sample);
 		if (SUCCEEDED(*hr))*hr = _sample->AddBuffer(_buffer);
 
+		if (SUCCEEDED(*hr))*hr = _sample->SetSampleDuration(_datasDuration);
 		if (SUCCEEDED(*hr))*hr = _sample->SetSampleTime(_datasTime);
 
 		// Read the sample
@@ -330,7 +331,7 @@ void SourceReader_SinkWritter::PlayAudioDatas(std::vector<unsigned char> _datas,
 	if (_localHr) delete hr;
 }
 
-std::vector<unsigned char> SourceReader_SinkWritter::ReadAudioDatas(long long& _returnTime, HRESULT* hr) {
+std::vector<unsigned char> SourceReader_SinkWritter::ReadAudioDatas(long long& _returnDuration, long long& _returnTime, HRESULT* hr) {
 	std::vector<unsigned char> _returnAudioDatas;
 
 	IMFSample* pSample = NULL;
@@ -401,6 +402,7 @@ std::vector<unsigned char> SourceReader_SinkWritter::ReadAudioDatas(long long& _
 			if (SUCCEEDED(*hr)) *hr = _captureBuffer->Unlock();
 
 			pSample->GetSampleTime(&_returnTime); // Return the time
+			pSample->GetSampleDuration(&_returnDuration); // Return the duration
 
 			SafeRelease(&_captureBuffer);
 		}

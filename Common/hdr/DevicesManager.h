@@ -104,8 +104,8 @@ public:
 
 	void PlayAudioCaptureDatas(HRESULT* hr = NULL);
 
-	void PlayAudioDatas(std::vector<unsigned char> _datas, long long _datasTime, HRESULT* hr = NULL);
-	std::vector<unsigned char> ReadAudioDatas(long long& _returnTime, HRESULT* hr = NULL);
+	void PlayAudioDatas(std::vector<unsigned char> _datas, long long _datasDuration, long long _datasTime, HRESULT* hr = NULL);
+	std::vector<unsigned char> ReadAudioDatas(long long& _returnDuration, long long& _returnTime, HRESULT* hr = NULL);
 };
 
 class MediaSession {

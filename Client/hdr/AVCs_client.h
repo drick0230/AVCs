@@ -6,8 +6,9 @@
 //#include <SFML/Audio.hpp>
 #include <thread>			// std::this_thread::sleep_for
 #include <chrono>			// std::chrono::seconds
+#include <queue>			// std::queue
+#include <mutex>			// Protected varaible for multithreading
 
-//#include "VOIP.h"
 #include "ATHElement.h"
 #include "DevicesManager.h"
 #include "Network.h"
@@ -24,6 +25,8 @@ void serverUDP();
 void clientUDP();
 
 void SendAudioNetwork(unsigned int _clientID);
+void ProcessAudioDatas();
+
 
 // Send a Packet to be able to receive Packet from distant connection
 void KeepAlive(unsigned int _clientID, unsigned int _ms);

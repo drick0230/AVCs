@@ -1,7 +1,6 @@
 ﻿// AVCs_5.cpp : définit le point d'entrée de l'application.
 //
 #include "AVCs_client.h"
-#define tcpActive false
 
 std::string GetNextCommand();
 
@@ -13,6 +12,16 @@ namespace Main {
 	unsigned int msBetweenKeepAlive = 10;
 
 	DevicesManager devManager;
+
+	const unsigned int minAudioBuffer = 50;
+
+	std::queue<std::vector<unsigned char>> audioDatasBuffer;
+	std::queue<long long> audioDatasTimeBuffer;
+	std::queue<long long> audioDatasDurationBuffer;
+
+	std::mutex audioBufferMutex;
+
+	std::mutex audioIsProcessing;
 }
 
 int main()
@@ -30,9 +39,23 @@ int main()
 	//////// MEMORY LEAK TEST//////
 	//Main::devManager.sr_sw.SetInputMediaType(Main::devManager.sr_sw.GetAudioCaptureDeviceMediaTypeDatas()); //Set the Media Type
 	//while (1) {
-	//	long long _audioDatasTime;
-	//	std::vector<unsigned char> _audioDatas = Main::devManager.sr_sw.ReadAudioDatas(_audioDatasTime);
-	//	Main::devManager.sr_sw.PlayAudioDatas(_audioDatas, _audioDatasTime);
+	//	for (unsigned int _i = 0; _i < 10; _i++) {
+	//		long long _audioDatasDuration;
+	//		long long _audioDatasTime;
+	//		std::vector<unsigned char> _audioDatas = Main::devManager.sr_sw.ReadAudioDatas(_audioDatasDuration, _audioDatasTime);
+	//		
+	//		Main::audioDatasBuffer.push(_audioDatas);
+	//		Main::audioDatasDurationBuffer.push(_audioDatasDuration);
+	//		Main::audioDatasTimeBuffer.push(_audioDatasTime);
+	//	}
+	//	while (!Main::audioDatasDurationBuffer.empty()) {
+	//		Main::devManager.sr_sw.PlayAudioDatas(Main::audioDatasBuffer.front(), Main::audioDatasDurationBuffer.front(), Main::audioDatasTimeBuffer.front());
+
+	//		//std::this_thread::sleep_for(std::chrono::nanoseconds(Main::audioDatasDurationBuffer.back()));
+	//		Main::audioDatasBuffer.pop();
+	//		Main::audioDatasDurationBuffer.pop();
+	//		Main::audioDatasTimeBuffer.pop();
+	//	}
 	//}
 
 	////////// PROGRAM ///////////
@@ -120,7 +143,6 @@ void serverUDP() {
 	std::string _publicIP;
 
 	std::string _str;
-	unsigned short _uShort;
 
 	// Get Local and Public IP
 	Console::Write("Passerelle par défaut:");
@@ -220,13 +242,9 @@ void clientUDP() {
 		Console::Write();
 	}
 
-	const unsigned int _nbBuffer = 5;
-
-	std::vector<std::vector<unsigned char>> _audioDatasBuffer;
-	_audioDatasBuffer.resize(_nbBuffer);
-
-	std::vector<long long> _audioDataTime;
-	_audioDataTime.resize(_nbBuffer);
+	std::vector<unsigned char> _actualAudioDatas;
+	long long _actualAudioDatasDuration;
+	long long _actualAudioDatasTime;
 
 	bool _receivedMediaType = false;
 	// Write received Packet
@@ -252,29 +270,38 @@ void clientUDP() {
 		else if (_receivedMediaType) {
 			if (_packet.Peek("AUDIO_DATAS")) {
 				// We are at the beginning of a new AUDIO_DATAS
-				//Play the actual datas
-				if (_audioDatasBuffer.back().size() > 0 && _audioDataTime.back() != 0) {
-					Main::devManager.sr_sw.PlayAudioDatas(_audioDatasBuffer.back(), _audioDataTime.back() + 2000000000000);
-				}
 
-				for (unsigned int _i = _audioDatasBuffer.size() - 1; _i > 0; _i--) {
-					_audioDatasBuffer[_i] = _audioDatasBuffer[_i - 1];
-					_audioDataTime[_i] = _audioDataTime[_i - 1];
+				//Add the actual Audio Data in the queue
+				if (_actualAudioDatas.size() > 0 && _actualAudioDatasTime != 0) {
+					Main::audioBufferMutex.lock();
+
+					Main::audioDatasBuffer.push(_actualAudioDatas);
+					Main::audioDatasDurationBuffer.push(_actualAudioDatasDuration);
+					Main::audioDatasTimeBuffer.push(_actualAudioDatasTime);
+
+					Main::audioBufferMutex.unlock();
+
+					// If no  Audio Processing thread is running, create a new one
+					if (Main::audioIsProcessing.try_lock()) {
+						std::thread tProcessAudioDatas(&ProcessAudioDatas);
+						tProcessAudioDatas.detach();
+						Main::audioIsProcessing.unlock();
+					}
 				}
-				_audioDatasBuffer[0].clear();
-				_audioDataTime[0] = 0;
 
 				std::string _str;
 				_packet >> _str; // Get "AUDIO_DATAS"
-				_packet >> _audioDataTime[0]; // Get Audio Data Time
+				_packet >> _actualAudioDatasDuration; // Get Audio Datas Duration
+				_packet >> _actualAudioDatasTime; // Get Audio Datas Time
 
+				_actualAudioDatas.clear();
 				//Console::Write("New AUDIO_DATAS\n");
 				//Console::Write();
 			}
 			else {
 				// Reading the actual Audio Datas
 				for (unsigned int _i = 0; _i < _packet.size(); _i++)
-					_audioDatasBuffer[0].push_back(_packet.data()[_i]);
+					_actualAudioDatas.push_back(_packet.data()[_i]);
 
 				//Console::Write("Get AUDIO_DATAS\n");
 				//Console::Write();
@@ -298,7 +325,9 @@ void SendAudioNetwork(unsigned int _clientID) {
 		// Send 100 Audio Datas
 		for (unsigned int _iAudioDatas = 0; _iAudioDatas < 100; _iAudioDatas++) {
 			long long _audioDatasTime;
-			std::vector<unsigned char> _audioDatas = Main::devManager.sr_sw.ReadAudioDatas(_audioDatasTime);
+			long long _audioDatasDuration;
+
+			std::vector<unsigned char> _audioDatas = Main::devManager.sr_sw.ReadAudioDatas(_audioDatasDuration, _audioDatasTime);
 
 			if (_audioDatas.size() > 0) {
 				unsigned int _nbPackets = _audioDatas.size() / 512 + 1;
@@ -309,6 +338,7 @@ void SendAudioNetwork(unsigned int _clientID) {
 					Packet _packet;
 
 					_packet << std::string("AUDIO_DATAS"); // Write Start new Audio Datas
+					_packet << _audioDatasDuration; // Write the duration
 					_packet << _audioDatasTime;	 // Write the Time
 
 					Network::udp[0].Send(_clientID, _packet); // Send the Packet
@@ -327,6 +357,28 @@ void SendAudioNetwork(unsigned int _clientID) {
 			}
 		}
 	}
+}
+
+void ProcessAudioDatas() {
+	std::unique_lock<std::mutex> _uLockMutex(Main::audioIsProcessing); // Unlock the mutex when ProcessAudioDatas() end
+	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	 // Test if we have a good amount of Audio Datas
+	if (Main::audioDatasBuffer.size() >= Main::minAudioBuffer) {
+		while (!Main::audioDatasBuffer.empty()) {
+			Main::audioBufferMutex.lock();
+
+			//Play the actual datas
+			Main::devManager.sr_sw.PlayAudioDatas(Main::audioDatasBuffer.front(), Main::audioDatasDurationBuffer.front(), Main::audioDatasTimeBuffer.front());
+
+			// Remove the processed element
+			Main::audioDatasBuffer.pop();
+			Main::audioDatasTimeBuffer.pop();
+			Main::audioDatasDurationBuffer.pop();
+
+			Main::audioBufferMutex.unlock();
+		}
+	}
+	_uLockMutex.unlock();
 }
 
 void KeepAlive(unsigned int _clientID, unsigned int _ms) {

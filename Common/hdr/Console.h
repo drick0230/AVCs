@@ -51,7 +51,7 @@ public:
 	Color(unsigned char _r = 0, unsigned char _g = 0, unsigned char _b = 0);
 };
 
-static class Console {
+class Console {
 private:
 	// Variables
 #if _WIN32
