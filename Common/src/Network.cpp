@@ -259,6 +259,8 @@ unsigned int UDP::AddToBook(std::string _ipAddress, unsigned short _port) {
 }
 
 int UDP::udpTcpSend(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength) {
+	if (_clientID == -1) _clientID = 0; // Send to "Server"
+
 	return sendto(mySocket, _bufferToSend, _bufferToSendLength, 0, (SOCKADDR*)&sockAddressBook[_clientID], sizeof(sockAddressBook[_clientID]));
 }
 

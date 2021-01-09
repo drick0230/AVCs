@@ -439,7 +439,8 @@ MediaSession::MediaSession(AudioCaptureDevice& _audioCaptureDevice, AudioRenderD
 
 MediaSession::~MediaSession() {
 	mediaSession->Close(); // Close Media Session
-	audioCaptureSource->Shutdown(); // Shut down IMFMediaSource
+	if(audioCaptureSource != NULL)
+		audioCaptureSource->Shutdown(); // Shut down IMFMediaSource
 	mediaSession->Shutdown(); // Shut down Media Session
 
 	SafeRelease(&audioCaptureSource);

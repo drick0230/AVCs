@@ -9,15 +9,19 @@ short Client::FindRoomId(string name)
 	return -1;
 }
 
-Client::Client(std::string _ipAddress, unsigned short _port) : endServerCom(false), tcp()
+Client::Client(std::string _serverIP, unsigned short _serverPort) : endServerCom(false), udp()
 {
-	tcp.Connect(_ipAddress, _port);
-	Packet _connectPacket;
-	_connectPacket << ServerCommand::serverInfo << _ipAddress << _port;
-	tcp.Send(_connectPacket);
+	udp.Bind(INADDR_ANY, 0);
+
+	// Connect to Server (Keep Alive)
+	udp.AddToBook(_serverIP, _serverPort);
+
+	tKeepAlives.emplace_back(&Client::KeepAlive, this, 0, 5000);
+	tKeepAlives.back().detach();
+
+	// Server communication thread
 	tServerCom = std::thread(&Client::fServerCom, this);
 	tServerCom.detach();
-	//if (socket.connect(ip, port, sf::milliseconds(5000)) == sf::Socket::Status::Error)std::cout << "error" << endl;
 }
 
 Client::~Client()
@@ -60,11 +64,7 @@ bool Client::joinRoom(string roomName, string pseudo)
 
 	demande << ServerCommand::joinRoom << roomName << pseudo;
 
-	//socket.setBlocking(true);
-	tcp.Send(demande);
-	//socket.send(demande);
-	//tcp.WaitReceive(reponse);
-	//socket.receive(reponse);
+	udp.Send(demande);
 
 	bool retour = true;
 	//reponse >> retour;
@@ -80,7 +80,7 @@ bool Client::createRoom(string roomName)
 
 	demande << ServerCommand::createRoom << roomName;
 
-	tcp.Send(demande);
+	udp.Send(demande);
 	//tcp.WaitReceive(reponse);
 
 	bool retour = true;
@@ -96,7 +96,7 @@ bool Client::exitRoom(string roomName)
 
 	demande << ServerCommand::ExitRoom << roomName;
 
-	tcp.Send(demande);
+	udp.Send(demande);
 	//tcp.WaitReceive(reponse);
 	lSocket.unlock();
 
@@ -111,8 +111,17 @@ void Client::fServerCom()
 	while (true)
 	{
 		Packet _recvPacket;
-		tcp.WaitReceive(_recvPacket);
+		udp.WaitReceive(_recvPacket);
 		analysePacket(_recvPacket);
+	}
+}
+
+void Client::KeepAlive(unsigned int _clientID, unsigned int _ms) {
+	while (1) {
+		Packet _packet;
+		_packet << std::string("KEEP_ALIVE");
+		udp.Send(_clientID, _packet);
+		std::this_thread::sleep_for(std::chrono::milliseconds(_ms));
 	}
 }
 
@@ -141,6 +150,10 @@ void Client::analysePacket(Packet _packet)
 		bool presence = Roomid >= 0;
 		if (presence) {
 			new_user.id = listeRoom[Roomid]->udp.AddToBook(_userIpAddress, _userPort);
+
+			listeRoom[Roomid]->tKeepAlives.emplace_back(&Room_client::KeepAlive, listeRoom[Roomid], new_user.id, 5000);
+			listeRoom[Roomid]->tKeepAlives.back().detach();
+
 			listeRoom[Roomid]->addUser(new_user);
 		}
 		lRoom.unlock();
@@ -152,20 +165,16 @@ void Client::analysePacket(Packet _packet)
 	{
 		string room;
 		std::string pseudo;
-		std::string _userIpAddress;
-		unsigned short _userPort;
 
 		_packet >> room;
 		_packet >> pseudo;
-		_packet >> _userIpAddress;
-		_packet >> _userPort;
 
 		unique_lock <mutex> lRoom(mRoom);
 		unsigned short Roomid = FindRoomId(room);
 		bool presence = (Roomid >= 0);
 		if (presence)
 		{
-			listeRoom[Roomid]->setIdentity(pseudo, _userIpAddress, _userPort);
+			listeRoom[Roomid]->setIdentity(pseudo);
 		}
 		lRoom.unlock();
 	}

@@ -77,24 +77,97 @@ int main()
 
 	if (userInput == "0") {
 		// Is Client
-		Network::udp[0].Bind(Main::myLocalIP, 0);
+		std::string _serverIP;
 
-		std::thread tclientUDP(&clientUDP);
-		tclientUDP.detach();
+		// Get Server IP
+		Console::Write("IP du Serveur:");
+		Console::Write();
+		_serverIP = GetNextCommand();
+
+		Main::client = new Client(_serverIP, Main::serverPort);
+
+		//std::thread tclientUDP(&clientUDP);
+		//tclientUDP.detach();
+		do {
+			do {
+				Console::Write("[0] Create Room\n[1] Join Room\n[2] Send Message\n[3] Exit\n");
+				Console::Write();
+
+				userInput = GetNextCommand();
+			} while (userInput != "0" && userInput != "1" && userInput != "2" && userInput != "3");
+
+			if (userInput == "0") {
+				// Create Room
+				Console::Write("Room's name : ");
+				Console::Write();
+				std::string _roomName = GetNextCommand();
+				Main::client->createRoom(_roomName);
+			}
+			else if (userInput == "1") {
+				// Join Room
+				Console::Write("Username for the room : ");
+				Console::Write();
+				std::string _username = GetNextCommand();
+
+				Console::Write("Room's name : ");
+				Console::Write();
+				std::string _roomName = GetNextCommand();
+				Main::client->joinRoom(_roomName, _username);
+			}
+			else if (userInput == "2") {
+				// Send Message
+				Packet _packet;
+
+				Console::Write("Message to send : ");
+				Console::Write();
+				std::string _msg = GetNextCommand();
+
+				Console::Write("Room's name : ");
+				Console::Write();
+				std::string _roomName = GetNextCommand();
+
+				_packet << _msg;
+
+				Main::client->send(_roomName, _packet);
+			}
+			else {
+				// Exit
+			}
+
+		} while (userInput != "3");
 	}
 	else {
 		// Is Server
-		Network::udp[0].Bind(Main::myLocalIP, Main::serverPort);
+		std::string defaultGateway;
+		std::string publicIP;
+
+		// Get Default Gateway
+		Console::Write("Passerelle par défaut:");
+		Console::Write();
+		defaultGateway = GetNextCommand();
+
+		// Get Public IP
+		Console::Write("IP publique du Serveur:");
+		Console::Write();
+		publicIP = GetNextCommand();
+
+		Main::server = new Server(INADDR_ANY, Main::serverPort, defaultGateway, publicIP);
 
 		Console::Write("Serveur ouvert sur le port "); Console::Write(Main::serverPort); Console::Write('\n');
 		Console::Write();
 
-		std::thread tserverUDP(&serverUDP);
-		tserverUDP.detach();
+		//std::thread tserverUDP(&serverUDP);
+		//tserverUDP.detach();
+
+		do {
+			Console::Write("[0] Exit\n");
+			Console::Write();
+
+			userInput = GetNextCommand();
+		} while (userInput != "0");
+		// Exit
+
 	}
-
-	while (1) std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
 
 	return 0;
 }
@@ -137,66 +210,50 @@ std::string GetNextCommand() {
 
 	return consoleIn;
 }
-
-void serverUDP() {
-	std::string _localIP;
-	std::string _publicIP;
-
-	std::string _str;
-
-	// Get Local and Public IP
-	Console::Write("Passerelle par défaut:");
-	Console::Write();
-	//Console::Write("192.168.1.1\n");
-	//Console::Write();
-	_localIP = GetNextCommand();
-
-	Console::Write("IP publique du Serveur:");
-	Console::Write();
-	//Console::Write("127.0.0.1\n");
-	//Console::Write();
-	_publicIP = GetNextCommand();
-
-	// Wait the connection of 2 clients
-	while (Network::udp[0].addressBook.size() != 2) {
-		Packet _packet;
-		Network::udp[0].WaitReceive(_packet);
-
-		_packet >> _str;
-
-		Console::Write(_str);
-		Console::Write('\n');
-		Console::Write();
-	}
-
-	// Wait a bit to be sure the client are ready to receive packets
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-	// Send ip and port of each other to each other
-	for (unsigned int _from = 0; _from < Network::udp[0].addressBook.size(); _from++) {
-		for (unsigned int _to = 0; _to < Network::udp[0].addressBook.size(); _to++) {
-			if (_from != _to) {
-				Packet _packet;
-				_packet << (Network::udp[0].addressBook[_from] == _localIP ? _publicIP : Network::udp[0].addressBook[_from]);
-				_packet << Network::udp[0].portBook[_from];
-
-				Network::udp[0].Send(_to, _packet);
-			}
-		}
-	}
-
-	// Write received Packet
-	while (1) {
-		Packet _packet;
-		Network::udp[0].WaitReceive(_packet);
-
-		_packet >> _str;
-
-		Console::Write(_str);
-		Console::Write('\n');
-		Console::Write();
-	}
-}
+//
+//void serverUDP() {
+//	std::string _str;
+//
+//	// Wait the connection of 2 clients
+//	while (Network::udp[0].addressBook.size() != 2) {
+//		Packet _packet;
+//		Network::udp[0].WaitReceive(_packet);
+//
+//		_packet >> _str;
+//
+//		Console::Write(_str);
+//		Console::Write('\n');
+//		Console::Write();
+//	}
+//
+//	// Wait a bit to be sure the client are ready to receive packets
+//	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+//
+//	// Send ip and port of each other to each other
+//	for (unsigned int _from = 0; _from < Network::udp[0].addressBook.size(); _from++) {
+//		for (unsigned int _to = 0; _to < Network::udp[0].addressBook.size(); _to++) {
+//			if (_from != _to) {
+//				Packet _packet;
+//				_packet << (Network::udp[0].addressBook[_from] == _localIP ? _publicIP : Network::udp[0].addressBook[_from]);
+//				_packet << Network::udp[0].portBook[_from];
+//
+//				Network::udp[0].Send(_to, _packet);
+//			}
+//		}
+//	}
+//
+//	// Write received Packet
+//	while (1) {
+//		Packet _packet;
+//		Network::udp[0].WaitReceive(_packet);
+//
+//		_packet >> _str;
+//
+//		Console::Write(_str);
+//		Console::Write('\n');
+//		Console::Write();
+//	}
+//}
 
 void clientUDP() {
 	std::string _serverIP;
@@ -362,7 +419,7 @@ void SendAudioNetwork(unsigned int _clientID) {
 void ProcessAudioDatas() {
 	std::unique_lock<std::mutex> _uLockMutex(Main::audioIsProcessing); // Unlock the mutex when ProcessAudioDatas() end
 	std::this_thread::sleep_for(std::chrono::milliseconds(200));
-	 // Test if we have a good amount of Audio Datas
+	// Test if we have a good amount of Audio Datas
 	if (Main::audioDatasBuffer.size() >= Main::minAudioBuffer) {
 		while (!Main::audioDatasBuffer.empty()) {
 			Main::audioBufferMutex.lock();

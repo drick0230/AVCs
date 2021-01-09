@@ -47,10 +47,10 @@ class Room_server : public Room
 {
 protected:
 public:
-	TCP* pTCP;
+	UDP* pUDP;
 	void* parent;
 
-	Room_server(string _name, void* _parent);
+	Room_server(string _name, void* _parent, UDP* _pUDP = NULL);
 
 	void addUser(user new_user);
 	void removeUser(string user_pseudo);
@@ -72,8 +72,6 @@ protected:
 	thread tReception;
 	void fReception();
 	bool endReception;
-
-	//sf::UdpSocket socket;
 public:
 	UDP udp;
 
@@ -82,6 +80,9 @@ public:
 	void print();
 	void send(Packet);
 
-	void setIdentity(std::string _pseudo, std::string _ipAddress, unsigned short _port);
+	void setIdentity(std::string _pseudo);
 	string getPseudo() { return pseudo; }
+
+	std::vector<std::thread> tKeepAlives;
+	void KeepAlive(unsigned int _clientID, unsigned int _ms);
 };

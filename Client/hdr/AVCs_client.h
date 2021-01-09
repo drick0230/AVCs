@@ -14,11 +14,14 @@
 #include "Network.h"
 #include "general.h"
 
+//#include "server.h"
+//#include "client.h"
+
 
 //void ConsoleIO(bool*, bool*, bool*, bool*, VOIP*);
 
 
-void serverTCP();
+//void serverTCP();
 void clientTCP();
 
 void serverUDP();

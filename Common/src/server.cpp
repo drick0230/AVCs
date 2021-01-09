@@ -9,10 +9,18 @@ short Server::FindRoomId(string name)
 	return -1;
 }
 
-Server::Server(std::string _localNetworkIP, unsigned short port) : tcp(), localNetworkIP(_localNetworkIP){
-	tcp.Host(port);
+Server::Server(std::string _localNetworkIP, unsigned short port, std::string _defaultGateway, std::string _publicIP) : udp(), defaultGateway(_localNetworkIP), publicIP(_publicIP){
+	//tcp.Host(port);
+	udp.Bind(_localNetworkIP, port);
 
-	tListener = std::thread(&Server::fListener, this);
+	tListener = std::thread(&Server::fCom, this);
+	tListener.detach();
+}
+
+Server::Server(unsigned long _ipAddress, unsigned short port, std::string _defaultGateway, std::string _publicIP) {
+	udp.Bind(_ipAddress, port);
+
+	tListener = std::thread(&Server::fCom, this);
 	tListener.detach();
 }
 
@@ -20,24 +28,26 @@ Server::~Server()
 {
 }
 
-void Server::fListener()
-{
-	while (true)
-	{
-		unsigned int _clientID = tcp.WaitClientConnection();
-		clientsThreads.emplace_back(&Server::fCom, this, _clientID);
-		clientsThreads.back().detach();
-	}
+//void Server::fListener()
+//{
+//	while (true)
+//	{
+//		Packet _packet;
+//
+//		unsigned int _clientID = udp.WaitReceive(_packet);
+//		clientsThreads.emplace_back(&Server::fCom, this, _clientID);
+//		clientsThreads.back().detach();
+//	}
+//
+//	//listener.close();
+//}
 
-	//listener.close();
-}
-
-void Server::fCom(unsigned int _clientID)
+void Server::fCom()
 {
 	while (true)
 	{
 		Packet _recvPacket;
-		tcp.WaitReceive(_recvPacket, _clientID);
+		unsigned int _clientID = udp.WaitReceive(_recvPacket);
 		analysePacket(_recvPacket, _clientID);
 	}
 }
@@ -59,8 +69,8 @@ void Server::analysePacket(Packet& _packet, unsigned int _clientId)
 		bool present = FindRoomId("nom") >= 0;
 		if (present) reponse << false;
 		else {
-			listeRoom.push_back(Room_server(nom, this));
-			listeRoom.back().pTCP = &tcp;
+			listeRoom.push_back(Room_server(nom, this, &udp));
+			//listeRoom.back().pTCP = &tcp;
 			reponse << true;
 		}
 		lRoom.unlock();
@@ -124,12 +134,12 @@ void Server::analysePacket(Packet& _packet, unsigned int _clientId)
 	reponse << true;
 	//tcp.Send(_clientId, reponse);
 	break;
-	case ServerCommand::serverInfo:
-	{
-		_packet >> myAddress;
-		_packet >> myPort;
-	}
-	break;
+	//case ServerCommand::serverInfo:
+	//{
+	//	_packet >> myAddress;
+	//	_packet >> myPort;
+	//}
+	//break;
 	default:
 		reponse << false;
 		//tcp.Send(_clientId, reponse);
