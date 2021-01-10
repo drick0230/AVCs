@@ -1,6 +1,7 @@
 #pragma once
-#include <string>
-#include <vector>
+#include <string> //std::string
+#include <vector> //std::vector
+#include <codecvt> //std::wstring_convert
 
 
 std::vector <std::string> split(std::string chaine, const char separateur, bool separateurMultiple = false);
@@ -42,3 +43,19 @@ enum ClientCommand : unsigned char
 	username = 1,
 	removeUser = 2
 };
+
+static std::wstring ToWstring(std::string str)
+{
+	std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> strconverter;
+	return strconverter.from_bytes(str);
+}
+
+template <class T>
+void SafeRelease(T** ppT)
+{
+	if (*ppT)
+	{
+		(*ppT)->Release();
+		*ppT = NULL;
+	}
+}

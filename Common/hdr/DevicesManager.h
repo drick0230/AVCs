@@ -1,29 +1,28 @@
 #pragma once
-#include <locale>
-#include <codecvt>
-#include <string>
+//#include <locale>
+//#include <codecvt>
+//#include <string>
 
 #include "Console.h"
+#include "general.h"
 
 #include <mfapi.h> // Media Foundation function
-#include <mfidl.h> // IMFMediaSource
-#include <mfreadwrite.h> // IMFSourceReader
+#include <mfidl.h> // MF_DEVSOURCE_ATTRIBUTE
+//#include <mfreadwrite.h> // IMFSourceReader
 #include <mmdeviceapi.h> // IMMDevice
 #include <Functiondiscoverykeys_devpkey.h> // IMMDevice property Ex: PKEY_Device_FriendlyName
-// Core Audio API
-#include <audioclient.h> // WASAPI
-#include <audiopolicy.h> // WASAPI
-#include <AudioSessionTypes.h> // Constants define for Core Audio
+//// Core Audio API
+//#include <audioclient.h> // WASAPI
+//#include <audiopolicy.h> // WASAPI
+//#include <AudioSessionTypes.h> // Constants define for Core Audio
+//
+//#include <initguid.h> // include this for DEFINE_GUID to create definition, not declaration
+//
+//DEFINE_MEDIATYPE_GUID(MFAudioFormat_PCM, WAVE_FORMAT_PCM);
+//DEFINE_MEDIATYPE_GUID(MFAudioFormat_Float, WAVE_FORMAT_IEEE_FLOAT);
+//DEFINE_GUID(MF_MT_SUBTYPE, 0xf7e34c9a, 0x42e8, 0x4714, 0xb7, 0x4b, 0xcb, 0x29, 0xd7, 0x2c, 0x35, 0xe5);
+//#define MF_E_NO_MORE_TYPES 0xc00d36b9
 
-#include <initguid.h> // include this for DEFINE_GUID to create definition, not declaration
-
-DEFINE_MEDIATYPE_GUID(MFAudioFormat_PCM, WAVE_FORMAT_PCM);
-DEFINE_MEDIATYPE_GUID(MFAudioFormat_Float, WAVE_FORMAT_IEEE_FLOAT);
-DEFINE_GUID(MF_MT_SUBTYPE, 0xf7e34c9a, 0x42e8, 0x4714, 0xb7, 0x4b, 0xcb, 0x29, 0xd7, 0x2c, 0x35, 0xe5);
-#define MF_E_NO_MORE_TYPES 0xc00d36b9
-
-// Class Prototype
-// Device
 #pragma region Device
 namespace DevicesTypes {
 	enum DEVICES_TYPES { AUD_CAPT, AUD_REND, VID_CAPT, BOTH_CAPT, BOTH_REND, ALL };
@@ -72,111 +71,36 @@ public:
 };
 #pragma endregion // Device
 
-//Audio API
-#pragma region AudioAPI
-class WASAPI {
-private:
-	IAudioClient* audioClient;
-public:
-	WASAPI();
-	~WASAPI();
-	void PlayAudioCaptureDatas();
-};
-
-class SourceReader_SinkWritter {
-	IMFMediaSource* audioCaptureSource;
-	IMFSourceReader* audioCaptureDatas;
-
-	IMFMediaSink* audioRenderSink;
-	IMFSinkWriter* audioRenderDatas;
-public:
-	//std::vector<std::vector<unsigned char>> audioDatas;
-	//std::vector<long long> audioDatasTime;
-
-	SourceReader_SinkWritter(HRESULT* hr = NULL);
-	~SourceReader_SinkWritter();
-
-	void SetActiveDevice(AudioCaptureDevice& _audioCaptureDevice, HRESULT* hr = NULL);
-	void SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESULT* hr = NULL);
-
-	std::vector<unsigned char> GetAudioCaptureDeviceMediaTypeDatas(HRESULT* hr = NULL);
-	void SetInputMediaType(std::vector<unsigned char> _mediaTypeDatas, HRESULT* hr = NULL);
-
-	void PlayAudioCaptureDatas(HRESULT* hr = NULL);
-
-	void PlayAudioDatas(std::vector<unsigned char> _datas, long long _datasDuration, long long _datasTime, HRESULT* hr = NULL);
-	std::vector<unsigned char> ReadAudioDatas(long long& _returnDuration, long long& _returnTime, HRESULT* hr = NULL);
-};
-
-class MediaSession {
-private:
-	IMFMediaSession *mediaSession; // Control the audio (Play/Pause/Stop)
-	IMFMediaSource *audioCaptureSource;
-
-	IMFActivate* audioRenderSource;
-public:
-	MediaSession(AudioCaptureDevice &_audioCaptureDevice, AudioRenderDevice &_audioRenderDevice, HRESULT* hr = NULL);
-	MediaSession(HRESULT* hr = NULL);
-	~MediaSession();
-	void Initialize(HRESULT* hr = NULL);
-
-	void SetActiveDevice(AudioCaptureDevice& _audioCaptureDevice, HRESULT* hr = NULL);
-	void SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESULT* hr = NULL);
-
-	void PlayAudioCaptureDatas(HRESULT* hr = NULL);
-};
-#pragma endregion //AudioAPI
-
-
 class DevicesManager {
 private:
 	// Windows API
 #if _WIN32
 	// Private Windows API Variables
-	WASAPI wasapi;
-
-	HRESULT hr;
+	static HRESULT hr;
 	// Private Windows API Functions
-	void EnumerateIMFActivates(const unsigned int _devicesType);
-	void EnumerateIMMDevices(const unsigned int _devicesType);
+	static void EnumerateIMFActivates(const unsigned int _devicesType);
+	static void EnumerateIMMDevices(const unsigned int _devicesType);
 #endif //_WIN32
 	// Private Variables
-	unsigned int nbAudioCaptureDevices;
-	unsigned int nbAudioRenderDevices;
-	unsigned int nbVideoCaptureDevices;
+	static unsigned int nbAudioCaptureDevices;
+	static unsigned int nbAudioRenderDevices;
+	static unsigned int nbVideoCaptureDevices;
 
 	// Private Functions
 	//std::wstring GetAudioRenderDevicesName(const unsigned int _deviceID); // Return the name of the audio render device
 
-	void SelectAudioCaptureSource(const unsigned int _deviceID); // Select the audio capture device datas as source for the audio output device
+	static void SelectAudioCaptureSource(const unsigned int _deviceID); // Select the audio capture device datas as source for the audio output device
 public:
 	// Public Variables
-	std::vector<AudioCaptureDevice> audioCaptureDevices;
-	std::vector<AudioRenderDevice> audioRenderDevices;
-	std::vector<VideoCaptureDevice> videoCaptureDevices;
-
-	SourceReader_SinkWritter sr_sw;
-	MediaSession mediaSession;
-
-	// Constructors
-	DevicesManager();
-	// Destructors
-	~DevicesManager();
+	static std::vector<AudioCaptureDevice> audioCaptureDevices;
+	static std::vector<AudioRenderDevice> audioRenderDevices;
+	static std::vector<VideoCaptureDevice> videoCaptureDevices;
 
 	// Public Functions
-	void InitializeDevicesManager();
-	void EnumerateDevices(const unsigned int _devicesType = DevicesTypes::ALL);
-	std::wstring GetDevicesName(const unsigned int _devicesType, const unsigned int _deviceID = 0); // Return the name of the device
+	static void Initialize();
+	static void Uninitialize();
+	static void EnumerateDevices(const unsigned int _devicesType = DevicesTypes::ALL);
+	static std::wstring GetDevicesName(const unsigned int _devicesType, const unsigned int _deviceID = 0); // Return the name of the device
 
-	void ClearDevices(const unsigned int _devicesType = DevicesTypes::ALL);
+	static void ClearDevices(const unsigned int _devicesType = DevicesTypes::ALL);
 };
-
-
-template <class T>
-static void SafeRelease(T** ppT);
-
-static std::wstring ToWstring(std::string str)
-{
-	std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> strconverter;
-	return strconverter.from_bytes(str);
-}

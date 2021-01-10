@@ -1,0 +1,50 @@
+#pragma once
+//#include <locale>
+
+//#include "Console.h"
+
+#include "DevicesManager.h"
+#include <mfreadwrite.h> // IMFSourceReader and IMFSinkWriter
+
+#define MF_E_NO_MORE_TYPES 0xc00d36b9
+
+class SourceReader_SinkWritter {
+	IMFMediaSource* audioCaptureSource;
+	IMFSourceReader* audioCaptureDatas;
+
+	IMFMediaSink* audioRenderSink;
+	IMFSinkWriter* audioRenderDatas;
+public:
+	//std::vector<std::vector<unsigned char>> audioDatas;
+	//std::vector<long long> audioDatasTime;
+
+	SourceReader_SinkWritter(HRESULT* hr = NULL);
+	~SourceReader_SinkWritter();
+
+	void SetActiveDevice(AudioCaptureDevice& _audioCaptureDevice, HRESULT* hr = NULL);
+	void SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESULT* hr = NULL);
+
+	std::vector<unsigned char> GetAudioCaptureDeviceMediaTypeDatas(HRESULT* hr = NULL);
+	void SetInputMediaType(std::vector<unsigned char> _mediaTypeDatas, HRESULT* hr = NULL);
+
+	void PlayAudioDatas(std::vector<unsigned char> _datas, long long _datasDuration, long long _datasTime, HRESULT* hr = NULL);
+	std::vector<unsigned char> ReadAudioDatas(long long& _returnDuration, long long& _returnTime, HRESULT* hr = NULL);
+};
+
+class MediaSession {
+private:
+	IMFMediaSession *mediaSession; // Control the audio (Play/Pause/Stop)
+	IMFMediaSource *audioCaptureSource;
+
+	IMFActivate* audioRenderSource;
+public:
+	MediaSession(AudioCaptureDevice &_audioCaptureDevice, AudioRenderDevice &_audioRenderDevice, HRESULT* hr = NULL);
+	MediaSession(HRESULT* hr = NULL);
+	~MediaSession();
+	void Initialize(HRESULT* hr = NULL);
+
+	void SetActiveDevice(AudioCaptureDevice& _audioCaptureDevice, HRESULT* hr = NULL);
+	void SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESULT* hr = NULL);
+
+	void PlayAudioCaptureDatas(HRESULT* hr = NULL);
+};
