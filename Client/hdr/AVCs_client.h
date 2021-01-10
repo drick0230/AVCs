@@ -16,18 +16,14 @@
 
 class VOIPClient {
 public:
-	VOIPClient(unsigned int _networkID) : networkID(_networkID), audioDatasDuration(0), audioDatasTime(0), receivedMediaType(false) {};
+	VOIPClient(unsigned int _networkID) : networkID(_networkID), audioDatas(), receivedMediaType(false) {};
 	VOIPClient(const VOIPClient& _b) : networkID(_b.networkID) {};
 	unsigned int networkID;
 
-	std::vector<unsigned char> audioDatas;
-	long long audioDatasDuration = 0;
-	long long audioDatasTime = 0;
+	AudioDatas audioDatas;
 
 	std::mutex audioBufferMutex;
-	std::queue<std::vector<unsigned char>> audioDatasBuffer;
-	std::queue<long long> audioDatasTimeBuffer;
-	std::queue<long long> audioDatasDurationBuffer;
+	std::queue<AudioDatas> audioDatasBuffer;
 
 	bool receivedMediaType = false;
 

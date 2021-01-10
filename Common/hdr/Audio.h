@@ -33,12 +33,12 @@ public:
 
 class MediaSession {
 private:
-	IMFMediaSession *mediaSession; // Control the audio (Play/Pause/Stop)
-	IMFMediaSource *audioCaptureSource;
+	IMFMediaSession* mediaSession; // Control the audio (Play/Pause/Stop)
+	IMFMediaSource* audioCaptureSource;
 
 	IMFActivate* audioRenderSource;
 public:
-	MediaSession(AudioCaptureDevice &_audioCaptureDevice, AudioRenderDevice &_audioRenderDevice, HRESULT* hr = NULL);
+	MediaSession(AudioCaptureDevice& _audioCaptureDevice, AudioRenderDevice& _audioRenderDevice, HRESULT* hr = NULL);
 	MediaSession(HRESULT* hr = NULL);
 	~MediaSession();
 	void Initialize(HRESULT* hr = NULL);
@@ -47,4 +47,15 @@ public:
 	void SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESULT* hr = NULL);
 
 	void PlayAudioCaptureDatas(HRESULT* hr = NULL);
+};
+
+class AudioDatas {
+public:
+	std::vector<unsigned char> datas;
+	long long duration;
+	long long time;
+
+	AudioDatas() : datas(), duration(0), time(0) {};
+	AudioDatas(std::vector<unsigned char> _datas, long long _duration, long long _time) : datas(_datas), duration(_duration), time(_time) {};
+	AudioDatas(const AudioDatas& _b) : AudioDatas(_b.datas, _b.duration, _b.time) {};
 };

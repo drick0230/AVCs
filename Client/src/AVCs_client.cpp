@@ -48,17 +48,15 @@ int main()
 			long long _audioDatasTime;
 			std::vector<unsigned char> _audioDatas = Main::sr_sw.ReadAudioDatas(_audioDatasDuration, _audioDatasTime);
 			
-			Main::clients[0].audioDatasBuffer.push(_audioDatas);
-			Main::clients[0].audioDatasDurationBuffer.push(_audioDatasDuration);
-			Main::clients[0].audioDatasTimeBuffer.push(_audioDatasTime);
+			Main::clients[0].audioDatasBuffer.emplace(_audioDatas, _audioDatasDuration, _audioDatasTime);
+			//Main::clients[0].audioDatasDurationBuffer.push(_audioDatasDuration);
+			//Main::clients[0].audioDatasTimeBuffer.push(_audioDatasTime);
 		}
-		while (!Main::clients[0].audioDatasDurationBuffer.empty()) {
-			Main::sr_sw.PlayAudioDatas(Main::clients[0].audioDatasBuffer.front(), Main::clients[0].audioDatasDurationBuffer.front(), Main::clients[0].audioDatasTimeBuffer.front());
+		while (!Main::clients[0].audioDatasBuffer.empty()) {
+			Main::sr_sw.PlayAudioDatas(Main::clients[0].audioDatasBuffer.front().datas, Main::clients[0].audioDatasBuffer.front().duration, Main::clients[0].audioDatasBuffer.front().time);
 
 			//std::this_thread::sleep_for(std::chrono::nanoseconds(Main::audioDatasDurationBuffer.back()));
 			Main::clients[0].audioDatasBuffer.pop();
-			Main::clients[0].audioDatasDurationBuffer.pop();
-			Main::clients[0].audioDatasTimeBuffer.pop();
 		}
 	}
 
@@ -371,16 +369,16 @@ void NetReceive() {
 		{
 		case 3: // Reading Audio Datas
 			for (unsigned int _i = 0; _i < _packet.size(); _i++)
-				_client->audioDatas.push_back(_packet.data()[_i]);
+				_client->audioDatas.datas.push_back(_packet.data()[_i]);
 			break;
 		case 2: // Begin new Audio Datas
 				//Add the actual Audio Data in the queue
-			if (_client->audioDatas.size() > 0 && _client->audioDatasTime != 0) {
+			if (_client->audioDatas.datas.size() > 0 && _client->audioDatas.time != 0) {
 				_client->audioBufferMutex.lock();
 
-				_client->audioDatasBuffer.push(_client->audioDatas);
-				_client->audioDatasDurationBuffer.push(_client->audioDatasDuration);
-				_client->audioDatasTimeBuffer.push(_client->audioDatasTime);
+				_client->audioDatasBuffer.emplace(_client->audioDatas.datas, _client->audioDatas.duration, _client->audioDatas.time);
+				//_client->audioDatasDurationBuffer.push(_client->audioDatas.duration);
+				//_client->audioDatasTimeBuffer.push(_client->audioDatas.time);
 
 				_client->audioBufferMutex.unlock();
 
@@ -392,10 +390,10 @@ void NetReceive() {
 				}
 			}
 
-			_packet >> _client->audioDatasDuration; // Get Audio Datas Duration
-			_packet >> _client->audioDatasTime; // Get Audio Datas Time
+			_packet >> _client->audioDatas.duration; // Get Audio Datas Duration
+			_packet >> _client->audioDatas.time; // Get Audio Datas Time
 
-			_client->audioDatas.clear();
+			_client->audioDatas.datas.clear();
 			break;
 		case 1: // Media Type
 			if (!_client->receivedMediaType) {
@@ -474,12 +472,12 @@ void ProcessAudioDatas(VOIPClient* _client) {
 			_client->audioBufferMutex.lock();
 
 			//Play the actual datas
-			Main::sr_sw.PlayAudioDatas(_client->audioDatasBuffer.front(), _client->audioDatasDurationBuffer.front(), _client->audioDatasTimeBuffer.front());
+			Main::sr_sw.PlayAudioDatas(_client->audioDatasBuffer.front().datas, _client->audioDatasBuffer.front().duration, _client->audioDatasBuffer.front().time);
 
 			// Remove the processed element
 			_client->audioDatasBuffer.pop();
-			_client->audioDatasTimeBuffer.pop();
-			_client->audioDatasDurationBuffer.pop();
+			//_client->audioDatasTimeBuffer.pop();
+			//_client->audioDatasDurationBuffer.pop();
 
 			_client->audioBufferMutex.unlock();
 		}
