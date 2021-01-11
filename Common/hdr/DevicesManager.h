@@ -12,9 +12,22 @@
 #include <Functiondiscoverykeys_devpkey.h> // IMMDevice property Ex: PKEY_Device_FriendlyName
 #include <mfreadwrite.h> // IMFSourceReader and IMFSinkWriter
 
-#pragma region Device
 class AudioDatas;
+class AudioTrack {
+public:
+	IMFMediaSink* mediaSink;
+	IMFSinkWriter* sinkWritter;
 
+	// Create an AudioTrack from the AudioRenderDevice
+	AudioTrack(const std::wstring _deviceID);
+	~AudioTrack() {};
+
+	// Delete/Release the mediaSink and the sinkWritter
+	void Release();
+};
+
+
+#pragma region Device
 namespace DevicesTypes {
 	enum DEVICES_TYPES { AUD_CAPT, AUD_REND, VID_CAPT, BOTH_CAPT, BOTH_REND, ALL };
 }
@@ -39,10 +52,17 @@ public:
 // Childs of Device
 class AudioCaptureDevice : public Device {
 private:
-
+	IMFMediaSource* mediaSource;
+	IMFSourceReader* sourceReader;
 public:
 	AudioCaptureDevice(IMFActivate* _activate = NULL);
 	AudioCaptureDevice(IMMDevice* _device = NULL);
+
+	// Get a Byte array that represent the IMFMediaType of the AudioDatas return by the device
+	std::vector<unsigned char> GetMediaTypeDatas();
+
+	// Read an AudioDatas from the device
+	AudioDatas Read();
 };
 
 class VideoCaptureDevice : public Device {
@@ -56,17 +76,21 @@ public:
 // Childs of RenderDevice
 class AudioRenderDevice : public Device {
 private:
-	IMFMediaSink* mediaSink;
-	IMFSinkWriter* sinkWritter;
+	// Audio Tracks
+	std::vector<AudioTrack> audioTracks;
 
 public:
+	unsigned int nbTracks;
+
 	AudioRenderDevice(IMMDevice* _device = NULL);
 
 	// Set the media type of the datas to be played
-	void SetInputMediaType(std::vector<unsigned char> _mediaTypeDatas);
+	void SetInputMediaType(std::vector<unsigned char> _mediaTypeDatas, unsigned int _track = 0);
 
 	// Call SetInputMediaType once before playing audio datas
-	void Play(AudioDatas _audioDatas);
+	void Play(AudioDatas _audioDatas, unsigned int _track = 0);
+
+	void AddTrack();
 };
 #pragma endregion // Device
 
@@ -86,8 +110,6 @@ private:
 	static unsigned int nbVideoCaptureDevices;
 
 	// Private Functions
-	//std::wstring GetAudioRenderDevicesName(const unsigned int _deviceID); // Return the name of the audio render device
-
 	static void SelectAudioCaptureSource(const unsigned int _deviceID); // Select the audio capture device datas as source for the audio output device
 public:
 	// Public Variables

@@ -1,6 +1,33 @@
 #include "DevicesManager.h"
 #include "Audio.h"
 
+AudioTrack::AudioTrack(const std::wstring _deviceID) : mediaSink(NULL), sinkWritter(NULL) {
+	IMFAttributes* pConfig; // Store the IMMDevice endpoint id
+	HRESULT hr(S_OK);
+
+	// Create the MediaSink from the IMMDevice
+	if (SUCCEEDED(hr)) hr = MFCreateAttributes(&pConfig, 1); // Create an attribute store to hold the Audio Capture Device ID
+	if (SUCCEEDED(hr)) hr = pConfig->SetString(MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ID, _deviceID.c_str()); 	// Request audio capture devices
+	if (SUCCEEDED(hr)) hr = MFCreateAudioRenderer(pConfig, &mediaSink);
+
+	// Create the SinkWritter from the MediaSink
+	if (SUCCEEDED(hr)) hr = MFCreateSinkWriterFromMediaSink(mediaSink, NULL, &sinkWritter);
+
+	if (!SUCCEEDED(hr)) throw hr;
+};
+
+void AudioTrack::Release() {
+	if (sinkWritter != NULL) {
+		sinkWritter->Finalize();
+		SafeRelease(&sinkWritter);
+	}
+	if (mediaSink != NULL) {
+		mediaSink->Shutdown();
+		SafeRelease(&mediaSink);
+	}
+}
+
+
 #pragma region Device
 /////////////////////////// Constructors /////////////////////////////////////
 #pragma region Constructors
@@ -14,26 +41,29 @@ Device::~Device() {
 }
 
 // Childs of Device
-AudioCaptureDevice::AudioCaptureDevice(IMFActivate* _activate) : Device(DevicesTypes::AUD_CAPT, _activate) {}
-AudioCaptureDevice::AudioCaptureDevice(IMMDevice* _device) : Device(DevicesTypes::AUD_CAPT, _device) {}
+AudioCaptureDevice::AudioCaptureDevice(IMFActivate* _activate) : Device(DevicesTypes::AUD_CAPT, _activate), mediaSource(NULL), sourceReader(NULL) {}
+AudioCaptureDevice::AudioCaptureDevice(IMMDevice* _device) : Device(DevicesTypes::AUD_CAPT, _device), mediaSource(NULL), sourceReader(NULL) {
+	IMFAttributes* pConfig; // Store the search criteria for the devices
+	HRESULT hr(S_OK);
+
+	// Create the MediaSource from the IMMDevice
+	if (SUCCEEDED(hr)) hr = MFCreateAttributes(&pConfig, 2); // Create an attribute store to hold the Audio Capture Device ID
+	if (SUCCEEDED(hr)) hr = pConfig->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_GUID); 	// Request audio capture devices
+	if (SUCCEEDED(hr)) hr = pConfig->SetString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_AUDCAP_ENDPOINT_ID, GetId(&hr).c_str()); 	// Request audio capture devices by ID
+	if (SUCCEEDED(hr)) hr = MFCreateDeviceSource(pConfig, &mediaSource);
+
+	// Create the SourceReader from the MediaSource
+	if (SUCCEEDED(hr)) hr = MFCreateSourceReaderFromMediaSource(mediaSource, NULL, &sourceReader);
+
+	SafeRelease(&pConfig);
+
+	if (!SUCCEEDED(hr)) throw hr;
+}
 
 VideoCaptureDevice::VideoCaptureDevice(IMFActivate* _activate) : Device(DevicesTypes::VID_CAPT, _activate) {}
 VideoCaptureDevice::VideoCaptureDevice(IMMDevice* _device) : Device(DevicesTypes::VID_CAPT, _device) {}
 
-AudioRenderDevice::AudioRenderDevice(IMMDevice* _device) : Device(DevicesTypes::AUD_REND, _device){
-	IMFAttributes* pConfig; // Store the IMMDevice endpoint id
-	HRESULT hr(S_OK);
-
-	// Create the MediaSink from the IMMDevice
-	if (SUCCEEDED(hr)) hr = MFCreateAttributes(&pConfig, 1); // Create an attribute store to hold the Audio Capture Device ID
-	if (SUCCEEDED(hr)) hr = pConfig->SetString(MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ID, GetId(&hr).c_str()); 	// Request audio capture devices
-	if (SUCCEEDED(hr)) hr = MFCreateAudioRenderer(pConfig, &mediaSink);
-
-	// Create the SinkWritter from the MediaSink
-	if (SUCCEEDED(hr)) hr = MFCreateSinkWriterFromMediaSink(mediaSink, NULL, &sinkWritter);
-
-	if (!SUCCEEDED(hr)) throw hr;
-}
+AudioRenderDevice::AudioRenderDevice(IMMDevice* _device) : Device(DevicesTypes::AUD_REND, _device), audioTracks(), nbTracks(0) { AddTrack(); /*Create the first track*/ }
 
 
 #pragma endregion // Constructors
@@ -140,7 +170,7 @@ std::wstring Device::GetId(HRESULT* hr) {
 		CoTaskMemFree(_deviceID);
 	}
 	else {
-		_returnDeviceID = L"device is NUL";
+		_returnDeviceID = L"device is NULL";
 		throw device;
 	}
 
@@ -148,7 +178,108 @@ std::wstring Device::GetId(HRESULT* hr) {
 	return _returnDeviceID; // Cant directly return _deviceName or the user will need to manually release it to prevent memory leak
 }
 
-void AudioRenderDevice::SetInputMediaType(std::vector<unsigned char> _mediaTypeDatas) {
+std::vector<unsigned char> AudioCaptureDevice::GetMediaTypeDatas() {
+	HRESULT hr(S_OK);
+
+	std::vector<unsigned char> _returnDatas;
+	IMFMediaType* _mediaType = NULL;
+
+	if (SUCCEEDED(hr)) hr = sourceReader->GetCurrentMediaType(0, &_mediaType); // Get the MediaType
+
+	unsigned char* _datas;
+	unsigned int _datasSize;
+
+	if (SUCCEEDED(hr)) hr = MFGetAttributesAsBlobSize(_mediaType, &_datasSize);
+	if (SUCCEEDED(hr)) _datas = new unsigned char[_datasSize];
+	if (SUCCEEDED(hr)) hr = MFGetAttributesAsBlob(_mediaType, _datas, _datasSize);
+
+	if (SUCCEEDED(hr)) {
+		_returnDatas.reserve(_datasSize);
+		for (unsigned int _i = 0; _i < _datasSize; _i++)
+			_returnDatas.push_back(_datas[_i]);
+	}
+
+	if (SUCCEEDED(hr)) delete[] _datas;
+	SafeRelease(&_mediaType);
+
+	if (!SUCCEEDED(hr)) throw hr;
+	return _returnDatas;
+}
+AudioDatas AudioCaptureDevice::Read() {
+	HRESULT hr(S_OK);
+	AudioDatas _returnAudioDatas;
+
+	IMFSample* pSample = NULL;
+	size_t  cSamples = 0;
+
+	DWORD streamIndex = 0, streamStatus = 0;
+	LONGLONG llTimeStamp = 0;
+
+	if (SUCCEEDED(hr)) hr = sourceReader->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &streamIndex, &streamStatus, &llTimeStamp, &pSample);
+	if (SUCCEEDED(hr))
+	{
+		if (streamStatus & MF_SOURCE_READERF_ENDOFSTREAM)
+		{
+			wprintf(L"\tEnd of stream\n");
+		}
+		if (streamStatus & MF_SOURCE_READERF_NEWSTREAM)
+		{
+			wprintf(L"\tNew stream\n");
+		}
+		if (streamStatus & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
+		{
+			wprintf(L"\tNative type changed\n");
+		}
+		if (streamStatus & MF_SOURCE_READERF_CURRENTMEDIATYPECHANGED)
+		{
+			wprintf(L"\tCurrent type changed\n");
+		}
+		if (streamStatus & MF_SOURCE_READERF_STREAMTICK)
+		{
+			wprintf(L"\tStream tick\n");
+		}
+
+		if (streamStatus & MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED)
+		{
+			// The format changed. Reconfigure the decoder.
+			throw "Format Changed";
+		}
+
+		if (pSample) {
+			++cSamples; // Count how many sample are process (Not NULL)
+
+			unsigned long _captureBufferLength; // How many datas in the buffer
+			if (SUCCEEDED(hr)) hr = pSample->GetTotalLength(&_captureBufferLength);
+
+			_returnAudioDatas.datas.resize(_captureBufferLength, 0); // Resize to the right amount of datas
+
+			IMFMediaBuffer* _captureBuffer; // Copy of the contiguous buffer from the Capture Device Sample
+			if (SUCCEEDED(hr)) hr = MFCreateMemoryBuffer(_captureBufferLength, &_captureBuffer);
+			if (SUCCEEDED(hr)) hr = pSample->CopyToBuffer(_captureBuffer);
+
+			//	Transfer Audio Datas from the buffer to the AudioDatas' datas
+			unsigned char* _bufferPointer;
+
+			if (SUCCEEDED(hr)) hr = _captureBuffer->Lock(&_bufferPointer, NULL, NULL);
+			if (SUCCEEDED(hr)) for (unsigned long _i = 0; _i < _captureBufferLength; _i++)
+				_returnAudioDatas.datas[_i] = _bufferPointer[_i];
+			if (SUCCEEDED(hr)) hr = _captureBuffer->Unlock();
+
+			if (SUCCEEDED(hr)) hr = pSample->GetSampleTime(&_returnAudioDatas.time); // Return the time
+			if (SUCCEEDED(hr)) hr = pSample->GetSampleDuration(&_returnAudioDatas.duration); // Return the duration
+
+			SafeRelease(&_captureBuffer);
+		}
+	}
+	SafeRelease(&pSample);
+
+	if (!SUCCEEDED(hr)) throw hr;
+
+	return _returnAudioDatas;
+
+}
+
+void AudioRenderDevice::SetInputMediaType(std::vector<unsigned char> _mediaTypeDatas, unsigned int _track) {
 	HRESULT hr(S_OK);
 
 	// Vector of Char --> Media Type
@@ -158,15 +289,15 @@ void AudioRenderDevice::SetInputMediaType(std::vector<unsigned char> _mediaTypeD
 	if (SUCCEEDED(hr)) hr = MFInitAttributesFromBlob(_mediaType, _mediaTypeDatas.data(), _mediaTypeDatas.size());
 
 	// Set the Media Type
-	if (SUCCEEDED(hr)) hr = sinkWritter->SetInputMediaType(0, _mediaType, NULL); // Need to send this information at the begining of a Room or when it change (IMPORTANT)
-	if (SUCCEEDED(hr)) hr = sinkWritter->BeginWriting(); // The SinkWriter is ready to receive and write datas
+	if (SUCCEEDED(hr)) hr = audioTracks[_track].sinkWritter->SetInputMediaType(0, _mediaType, NULL); // Need to send this information at the begining of a Room or when it change (IMPORTANT)
+	if (SUCCEEDED(hr)) hr = audioTracks[_track].sinkWritter->BeginWriting(); // The SinkWriter is ready to receive and write datas
 
 	SafeRelease(&_mediaType);
 
 	if (!SUCCEEDED(hr)) throw hr;
 }
 
-void AudioRenderDevice::Play(AudioDatas _audioDatas) {
+void AudioRenderDevice::Play(AudioDatas _audioDatas, unsigned int _track) {
 	HRESULT hr(S_OK);
 
 	if (_audioDatas.datas.size() > 0) {
@@ -190,7 +321,7 @@ void AudioRenderDevice::Play(AudioDatas _audioDatas) {
 		if (SUCCEEDED(hr))hr = _sample->SetSampleTime(_audioDatas.time);
 
 		// Read the sample
-		if (SUCCEEDED(hr))hr = sinkWritter->WriteSample(0, _sample);
+		if (SUCCEEDED(hr))hr = audioTracks[_track].sinkWritter->WriteSample(0, _sample);
 
 		//audioRenderDatas->Finalize();
 
@@ -201,6 +332,10 @@ void AudioRenderDevice::Play(AudioDatas _audioDatas) {
 	if (!SUCCEEDED(hr)) throw hr;
 }
 
+void AudioRenderDevice::AddTrack() {
+	audioTracks.emplace_back(GetId());
+	nbTracks++;
+}
 #pragma endregion // Functions
 #pragma endregion //Device
 
@@ -217,7 +352,7 @@ unsigned int DevicesManager::nbAudioCaptureDevices(0);
 unsigned int DevicesManager::nbAudioRenderDevices(0);
 unsigned int DevicesManager::nbVideoCaptureDevices(0);
 
-void DevicesManager::Initialize(){
+void DevicesManager::Initialize() {
 	if (SUCCEEDED(hr)) hr = MFStartup(MF_VERSION);	// Initialize Media Foundation
 	//if (SUCCEEDED(hr)) mediaSession.Initialize(&hr); 	// Initialize Media Session
 

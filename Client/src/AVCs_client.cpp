@@ -26,6 +26,16 @@ namespace Main {
 	//std::mutex audioIsProcessing;
 }
 
+// Client 1 (Track 1)
+void client1() {
+	std::this_thread::sleep_for(std::chrono::milliseconds(200));
+	while (!Main::clients[1].audioDatasBuffer.empty()) {
+
+		DevicesManager::audioRenderDevices[0].Play(Main::clients[1].audioDatasBuffer.front(), 1);
+		Main::clients[1].audioDatasBuffer.pop();
+	}
+}
+
 int main()
 {
 	////////// AUDIO TEST ////////
@@ -37,20 +47,31 @@ int main()
 	std::wcout << DevicesManager::GetDevicesName(DevicesTypes::AUD_CAPT, 0) << '\n';
 	std::wcout << DevicesManager::GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
 	//std::wcout << Main::devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
-	Main::sr_sw.SetActiveDevice(DevicesManager::audioCaptureDevices[0]);
-	//Main::sr_sw.SetActiveDevice(DevicesManager::audioRenderDevices[0]);
 
-	Main::clients.emplace_back(0);
-	DevicesManager::audioRenderDevices[0].SetInputMediaType(Main::sr_sw.GetAudioCaptureDeviceMediaTypeDatas()); //Set the Media Type
+	DevicesManager::audioRenderDevices[0].AddTrack();
+
+	Main::clients.resize(2, VOIPClient(0));
+	DevicesManager::audioRenderDevices[0].SetInputMediaType(DevicesManager::audioCaptureDevices[0].GetMediaTypeDatas()); //Set the Media Type for the track 0
+	DevicesManager::audioRenderDevices[0].SetInputMediaType(DevicesManager::audioCaptureDevices[0].GetMediaTypeDatas(), 1); //Set the Media Type for the track 1
+
+
+
 	while (1) {
-		for (unsigned int _i = 0; _i < 10; _i++) 
-			Main::clients[0].audioDatasBuffer.emplace(Main::sr_sw.ReadAudioDatas());
+		// Client 0 (Track 0)
+		for (unsigned int _i = 0; _i < 10; _i++) {
+			AudioDatas _audioDatas = DevicesManager::audioCaptureDevices[0].Read();
+			Main::clients[0].audioDatasBuffer.emplace(_audioDatas);
+			Main::clients[1].audioDatasBuffer.emplace(_audioDatas);
+		}
+
+		std::thread tClient1(&client1);
 
 		while (!Main::clients[0].audioDatasBuffer.empty()) {
-			
+
 			DevicesManager::audioRenderDevices[0].Play(Main::clients[0].audioDatasBuffer.front());
 			Main::clients[0].audioDatasBuffer.pop();
 		}
+		tClient1.join();
 	}
 
 	////////// PROGRAM ///////////
@@ -349,7 +370,7 @@ void ProcessAudioDatas(VOIPClient* _client) {
 	if (_client->audioDatasBuffer.size() >= Main::minAudioBuffer) {
 		while (!_client->audioDatasBuffer.empty()) {
 			_client->audioBufferMutex.lock(); // Keep other threads from using the buffer
-			
+
 			Main::sr_sw.PlayAudioDatas(_client->audioDatasBuffer.front()); //Play the actual datas
 			_client->audioDatasBuffer.pop(); // Remove the processed element
 
