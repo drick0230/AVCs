@@ -15,7 +15,7 @@ namespace Main {
 
 	std::vector<VOIPClient> clients;
 
-	SourceReader_SinkWritter sr_sw;
+	//SourceReader_SinkWritter sr_sw;
 
 	//std::queue<std::vector<unsigned char>> audioDatasBuffer;
 	//std::queue<long long> audioDatasTimeBuffer;
@@ -306,7 +306,7 @@ void NetReceive() {
 				_packet >> _str; // Get "MEDIATYPE"
 				_packet >> _mediaTypeDatas; // Get the Media Type Datas
 
-				Main::sr_sw.SetInputMediaType(_mediaTypeDatas); //Set the Media Type
+				DevicesManager::audioRenderDevices[0].SetInputMediaType(_mediaTypeDatas, 0); //Set the Media Type
 
 				_client->receivedMediaType = true;
 			}
@@ -323,7 +323,7 @@ void NetReceive() {
 
 // Send the Audio Datas throught network
 void NetSendAudioDatas(unsigned int _clientID) {
-	AudioDatas _audioDatas = Main::sr_sw.ReadAudioDatas();
+	AudioDatas _audioDatas = DevicesManager::audioCaptureDevices[0].Read();;
 
 	if (_audioDatas.datas.size() > 0) {
 		unsigned int _nbPackets = _audioDatas.datas.size() / 512 + 1;
@@ -358,7 +358,7 @@ void NetSendMediaType(unsigned int _clientID) {
 	Packet _packet;
 
 	_packet << std::string("MEDIATYPE"); // Write the type of datas
-	_packet << Main::sr_sw.GetAudioCaptureDeviceMediaTypeDatas(); // Write the Media Type datas
+	_packet << DevicesManager::audioCaptureDevices[0].GetMediaTypeDatas(); // Write the Media Type datas
 
 	Network::udp[0].Send(_clientID, _packet);
 }
@@ -371,7 +371,7 @@ void ProcessAudioDatas(VOIPClient* _client) {
 		while (!_client->audioDatasBuffer.empty()) {
 			_client->audioBufferMutex.lock(); // Keep other threads from using the buffer
 
-			Main::sr_sw.PlayAudioDatas(_client->audioDatasBuffer.front()); //Play the actual datas
+			DevicesManager::audioRenderDevices[0].Play(_client->audioDatasBuffer.front(), 0);
 			_client->audioDatasBuffer.pop(); // Remove the processed element
 
 			_client->audioBufferMutex.unlock(); // Permit other threads from using the buffer
