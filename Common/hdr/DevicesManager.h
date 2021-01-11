@@ -8,22 +8,13 @@
 
 #include <mfapi.h> // Media Foundation function
 #include <mfidl.h> // MF_DEVSOURCE_ATTRIBUTE
-//#include <mfreadwrite.h> // IMFSourceReader
 #include <mmdeviceapi.h> // IMMDevice
 #include <Functiondiscoverykeys_devpkey.h> // IMMDevice property Ex: PKEY_Device_FriendlyName
-//// Core Audio API
-//#include <audioclient.h> // WASAPI
-//#include <audiopolicy.h> // WASAPI
-//#include <AudioSessionTypes.h> // Constants define for Core Audio
-//
-//#include <initguid.h> // include this for DEFINE_GUID to create definition, not declaration
-//
-//DEFINE_MEDIATYPE_GUID(MFAudioFormat_PCM, WAVE_FORMAT_PCM);
-//DEFINE_MEDIATYPE_GUID(MFAudioFormat_Float, WAVE_FORMAT_IEEE_FLOAT);
-//DEFINE_GUID(MF_MT_SUBTYPE, 0xf7e34c9a, 0x42e8, 0x4714, 0xb7, 0x4b, 0xcb, 0x29, 0xd7, 0x2c, 0x35, 0xe5);
-//#define MF_E_NO_MORE_TYPES 0xc00d36b9
+#include <mfreadwrite.h> // IMFSourceReader and IMFSinkWriter
 
 #pragma region Device
+class AudioDatas;
+
 namespace DevicesTypes {
 	enum DEVICES_TYPES { AUD_CAPT, AUD_REND, VID_CAPT, BOTH_CAPT, BOTH_REND, ALL };
 }
@@ -65,9 +56,17 @@ public:
 // Childs of RenderDevice
 class AudioRenderDevice : public Device {
 private:
+	IMFMediaSink* mediaSink;
+	IMFSinkWriter* sinkWritter;
 
 public:
 	AudioRenderDevice(IMMDevice* _device = NULL);
+
+	// Set the media type of the datas to be played
+	void SetInputMediaType(std::vector<unsigned char> _mediaTypeDatas);
+
+	// Call SetInputMediaType once before playing audio datas
+	void Play(AudioDatas _audioDatas);
 };
 #pragma endregion // Device
 

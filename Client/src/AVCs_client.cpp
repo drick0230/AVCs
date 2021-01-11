@@ -38,16 +38,17 @@ int main()
 	std::wcout << DevicesManager::GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
 	//std::wcout << Main::devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
 	Main::sr_sw.SetActiveDevice(DevicesManager::audioCaptureDevices[0]);
-	Main::sr_sw.SetActiveDevice(DevicesManager::audioRenderDevices[0]);
+	//Main::sr_sw.SetActiveDevice(DevicesManager::audioRenderDevices[0]);
 
 	Main::clients.emplace_back(0);
-	Main::sr_sw.SetInputMediaType(Main::sr_sw.GetAudioCaptureDeviceMediaTypeDatas()); //Set the Media Type
+	DevicesManager::audioRenderDevices[0].SetInputMediaType(Main::sr_sw.GetAudioCaptureDeviceMediaTypeDatas()); //Set the Media Type
 	while (1) {
 		for (unsigned int _i = 0; _i < 10; _i++) 
 			Main::clients[0].audioDatasBuffer.emplace(Main::sr_sw.ReadAudioDatas());
 
 		while (!Main::clients[0].audioDatasBuffer.empty()) {
-			Main::sr_sw.PlayAudioDatas(Main::clients[0].audioDatasBuffer.front());
+			
+			DevicesManager::audioRenderDevices[0].Play(Main::clients[0].audioDatasBuffer.front());
 			Main::clients[0].audioDatasBuffer.pop();
 		}
 	}
@@ -219,119 +220,8 @@ void serverUDP() {
 		Console::Write();
 	}
 }
-/*
-void clientUDP() {
-	std::string _serverIP;
 
-	std::string _str;
-	unsigned short _uShort;
-
-	// Get Server IP
-	Console::Write("IP du Serveur:");
-	Console::Write();
-	//Console::Write("24.212.42.80\n");
-	//Console::Write();
-	_serverIP = GetNextCommand();
-
-
-	// Connect to Server
-	{
-		Packet _packet;
-
-		_packet << std::string("CONNECT_DEMAND");
-
-		Network::udp[0].AddToBook(_serverIP, Main::serverPort);
-		Network::udp[0].Send(0, _packet);
-
-		std::thread tKeepAlive(&KeepAlive, 0, 5000);
-		tKeepAlive.detach();
-	}
-
-	// Establish Connection with other client
-	{
-		Packet _packet;
-
-		Network::udp[0].WaitReceive(_packet);
-		_packet >> _str;
-		_packet >> _uShort;
-
-		Network::udp[0].AddToBook(_str, _uShort);
-
-		std::thread tSendAudioNetwork(&SendAudioNetwork, 1);
-		tSendAudioNetwork.detach();
-
-		Console::Write("Client : "); Console::Write(_str); Console::Write(':'); Console::Write(_uShort); Console::Write('\n');
-		Console::Write();
-	}
-
-	std::vector<unsigned char> _actualAudioDatas;
-	long long _actualAudioDatasDuration;
-	long long _actualAudioDatasTime;
-
-	bool _receivedMediaType = false;
-	// Write received Packet
-	while (1) {
-		unsigned int _clientID;
-		Packet _packet;
-		_clientID = Network::udp[0].WaitReceive(_packet);
-
-		//Read the type of datas
-		if (_packet.Peek("MEDIATYPE")) {
-			if (!_receivedMediaType) {
-				std::string _str;
-				std::vector<unsigned char> _mediaTypeDatas;
-
-				_packet >> _str; // Get "MEDIATYPE"
-				_packet >> _mediaTypeDatas; // Get the Media Type Datas
-
-				Main::devManager.sr_sw.SetInputMediaType(_mediaTypeDatas); //Set the Media Type
-
-				_receivedMediaType = true;
-			}
-		}
-		else if (_receivedMediaType) {
-			if (_packet.Peek("AUDIO_DATAS")) {
-				// We are at the beginning of a new AUDIO_DATAS
-
-				//Add the actual Audio Data in the queue
-				if (_actualAudioDatas.size() > 0 && _actualAudioDatasTime != 0) {
-					Main::audioBufferMutex.lock();
-
-					Main::audioDatasBuffer.push(_actualAudioDatas);
-					Main::audioDatasDurationBuffer.push(_actualAudioDatasDuration);
-					Main::audioDatasTimeBuffer.push(_actualAudioDatasTime);
-
-					Main::audioBufferMutex.unlock();
-
-					// If no  Audio Processing thread is running, create a new one
-					if (Main::audioIsProcessing.try_lock()) {
-						std::thread tProcessAudioDatas(&ProcessAudioDatas);
-						tProcessAudioDatas.detach();
-						Main::audioIsProcessing.unlock();
-					}
-				}
-
-				std::string _str;
-				_packet >> _str; // Get "AUDIO_DATAS"
-				_packet >> _actualAudioDatasDuration; // Get Audio Datas Duration
-				_packet >> _actualAudioDatasTime; // Get Audio Datas Time
-
-				_actualAudioDatas.clear();
-				//Console::Write("New AUDIO_DATAS\n");
-				//Console::Write();
-			}
-			else {
-				// Reading the actual Audio Datas
-				for (unsigned int _i = 0; _i < _packet.size(); _i++)
-					_actualAudioDatas.push_back(_packet.data()[_i]);
-
-				//Console::Write("Get AUDIO_DATAS\n");
-				//Console::Write();
-			}
-		}
-	}
-}
-*/
+// Treat the received Packet
 void NetReceive() {
 	while (true) {
 		unsigned int _clientID;

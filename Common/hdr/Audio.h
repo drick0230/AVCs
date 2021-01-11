@@ -4,7 +4,6 @@
 //#include "Console.h"
 
 #include "DevicesManager.h"
-#include <mfreadwrite.h> // IMFSourceReader and IMFSinkWriter
 
 #define MF_E_NO_MORE_TYPES 0xc00d36b9
 

@@ -1,4 +1,5 @@
 #include "DevicesManager.h"
+#include "Audio.h"
 
 #pragma region Device
 /////////////////////////// Constructors /////////////////////////////////////
@@ -19,7 +20,20 @@ AudioCaptureDevice::AudioCaptureDevice(IMMDevice* _device) : Device(DevicesTypes
 VideoCaptureDevice::VideoCaptureDevice(IMFActivate* _activate) : Device(DevicesTypes::VID_CAPT, _activate) {}
 VideoCaptureDevice::VideoCaptureDevice(IMMDevice* _device) : Device(DevicesTypes::VID_CAPT, _device) {}
 
-AudioRenderDevice::AudioRenderDevice(IMMDevice* _device) : Device(DevicesTypes::AUD_REND, _device) {}
+AudioRenderDevice::AudioRenderDevice(IMMDevice* _device) : Device(DevicesTypes::AUD_REND, _device){
+	IMFAttributes* pConfig; // Store the IMMDevice endpoint id
+	HRESULT hr(S_OK);
+
+	// Create the MediaSink from the IMMDevice
+	if (SUCCEEDED(hr)) hr = MFCreateAttributes(&pConfig, 1); // Create an attribute store to hold the Audio Capture Device ID
+	if (SUCCEEDED(hr)) hr = pConfig->SetString(MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ID, GetId(&hr).c_str()); 	// Request audio capture devices
+	if (SUCCEEDED(hr)) hr = MFCreateAudioRenderer(pConfig, &mediaSink);
+
+	// Create the SinkWritter from the MediaSink
+	if (SUCCEEDED(hr)) hr = MFCreateSinkWriterFromMediaSink(mediaSink, NULL, &sinkWritter);
+
+	if (!SUCCEEDED(hr)) throw hr;
+}
 
 
 #pragma endregion // Constructors
@@ -132,6 +146,59 @@ std::wstring Device::GetId(HRESULT* hr) {
 
 
 	return _returnDeviceID; // Cant directly return _deviceName or the user will need to manually release it to prevent memory leak
+}
+
+void AudioRenderDevice::SetInputMediaType(std::vector<unsigned char> _mediaTypeDatas) {
+	HRESULT hr(S_OK);
+
+	// Vector of Char --> Media Type
+	IMFMediaType* _mediaType;
+
+	if (SUCCEEDED(hr)) hr = MFCreateMediaType(&_mediaType);
+	if (SUCCEEDED(hr)) hr = MFInitAttributesFromBlob(_mediaType, _mediaTypeDatas.data(), _mediaTypeDatas.size());
+
+	// Set the Media Type
+	if (SUCCEEDED(hr)) hr = sinkWritter->SetInputMediaType(0, _mediaType, NULL); // Need to send this information at the begining of a Room or when it change (IMPORTANT)
+	if (SUCCEEDED(hr)) hr = sinkWritter->BeginWriting(); // The SinkWriter is ready to receive and write datas
+
+	SafeRelease(&_mediaType);
+
+	if (!SUCCEEDED(hr)) throw hr;
+}
+
+void AudioRenderDevice::Play(AudioDatas _audioDatas) {
+	HRESULT hr(S_OK);
+
+	if (_audioDatas.datas.size() > 0) {
+		// Create and fill the Buffer
+		unsigned char* _bufferPointer;
+		IMFMediaBuffer* _buffer;
+		IMFSample* _sample;
+		if (SUCCEEDED(hr)) hr = MFCreateMemoryBuffer(_audioDatas.datas.size(), &_buffer);
+
+		if (SUCCEEDED(hr)) hr = _buffer->Lock(&_bufferPointer, NULL, NULL);
+		if (SUCCEEDED(hr)) for (unsigned long _i = 0; _i < _audioDatas.datas.size(); _i++)
+			_bufferPointer[_i] = _audioDatas.datas[_i];
+		if (SUCCEEDED(hr)) hr = _buffer->SetCurrentLength(_audioDatas.datas.size());
+		if (SUCCEEDED(hr)) hr = _buffer->Unlock();
+
+		// Create the sample that will be read on the Audio Render Device
+		if (SUCCEEDED(hr)) hr = MFCreateSample(&_sample);
+		if (SUCCEEDED(hr))hr = _sample->AddBuffer(_buffer);
+
+		if (SUCCEEDED(hr))hr = _sample->SetSampleDuration(_audioDatas.duration);
+		if (SUCCEEDED(hr))hr = _sample->SetSampleTime(_audioDatas.time);
+
+		// Read the sample
+		if (SUCCEEDED(hr))hr = sinkWritter->WriteSample(0, _sample);
+
+		//audioRenderDatas->Finalize();
+
+		SafeRelease(&_buffer);
+		SafeRelease(&_sample);
+	}
+
+	if (!SUCCEEDED(hr)) throw hr;
 }
 
 #pragma endregion // Functions
