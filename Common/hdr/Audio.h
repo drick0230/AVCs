@@ -8,6 +8,18 @@
 
 #define MF_E_NO_MORE_TYPES 0xc00d36b9
 
+// Contain info about an Audio Sample
+class AudioDatas {
+public:
+	std::vector<unsigned char> datas;
+	long long duration;
+	long long time;
+
+	AudioDatas() : datas(), duration(0), time(0) {};
+	AudioDatas(std::vector<unsigned char> _datas, long long _duration, long long _time) : datas(_datas), duration(_duration), time(_time) {};
+	AudioDatas(const AudioDatas& _b) : AudioDatas(_b.datas, _b.duration, _b.time) {};
+};
+
 class SourceReader_SinkWritter {
 	IMFMediaSource* audioCaptureSource;
 	IMFSourceReader* audioCaptureDatas;
@@ -27,8 +39,8 @@ public:
 	std::vector<unsigned char> GetAudioCaptureDeviceMediaTypeDatas(HRESULT* hr = NULL);
 	void SetInputMediaType(std::vector<unsigned char> _mediaTypeDatas, HRESULT* hr = NULL);
 
-	void PlayAudioDatas(std::vector<unsigned char> _datas, long long _datasDuration, long long _datasTime, HRESULT* hr = NULL);
-	std::vector<unsigned char> ReadAudioDatas(long long& _returnDuration, long long& _returnTime, HRESULT* hr = NULL);
+	void PlayAudioDatas(AudioDatas _audioDatas, HRESULT* hr = NULL);
+	AudioDatas ReadAudioDatas(HRESULT* hr = NULL);
 };
 
 class MediaSession {
@@ -47,15 +59,4 @@ public:
 	void SetActiveDevice(AudioRenderDevice& _audioRenderDevice, HRESULT* hr = NULL);
 
 	void PlayAudioCaptureDatas(HRESULT* hr = NULL);
-};
-
-class AudioDatas {
-public:
-	std::vector<unsigned char> datas;
-	long long duration;
-	long long time;
-
-	AudioDatas() : datas(), duration(0), time(0) {};
-	AudioDatas(std::vector<unsigned char> _datas, long long _duration, long long _time) : datas(_datas), duration(_duration), time(_time) {};
-	AudioDatas(const AudioDatas& _b) : AudioDatas(_b.datas, _b.duration, _b.time) {};
 };
