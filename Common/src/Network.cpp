@@ -30,7 +30,7 @@ UDP::UDP() : Protocole(AF_INET, SOCK_DGRAM, IPPROTO_UDP), serverAddr() {} // Soc
 // UDP : Receive packets from everyone. Return the ID of the sender.
 unsigned int Protocole::WaitReceive(Packet& _recvPacket, unsigned int _clientID) {
 	int hr = 0;
-	const unsigned int _recvBufferLength = 512;
+	const unsigned int _recvBufferLength = 20000;
 	char _recvBuffer[_recvBufferLength];
 	int _nbRecvBytes = 0;
 
@@ -256,6 +256,15 @@ unsigned int UDP::AddToBook(std::string _ipAddress, unsigned short _port) {
 	portBook.push_back(_port);
 
 	return sockAddressBook.size() - 1; // Return the clientID
+}
+
+bool UDP::IsInBook(std::string _ipAddress, unsigned short _port) {
+	for (unsigned int _i = 0; _i < addressBook.size(); _i++)
+		if (addressBook[_i] == _ipAddress)
+			if (portBook[_i] == _port)
+				return true;
+
+	return false;
 }
 
 int UDP::udpTcpSend(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength) {

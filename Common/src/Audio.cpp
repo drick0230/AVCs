@@ -1,5 +1,21 @@
 #include "Audio.h"
 
+Packet& Packet::operator << (AudioDatas _audioDatas) {
+	*this << _audioDatas.duration;
+	*this << _audioDatas.time;
+	*this << _audioDatas.datas;
+
+	return *this;
+}
+
+Packet& Packet::operator >> (AudioDatas& _audioDatas) {
+	*this >> _audioDatas.duration;
+	*this >> _audioDatas.time;
+	*this >> _audioDatas.datas;
+
+	return *this;
+}
+
 AudioTrack::AudioTrack(const std::wstring _deviceID) : mediaSink(NULL), sinkWritter(NULL) {
 	IMFAttributes* pConfig; // Store the IMMDevice endpoint id
 	HRESULT hr(S_OK);
@@ -63,6 +79,15 @@ VideoCaptureDevice::VideoCaptureDevice(IMFActivate* _activate) : Device(DevicesT
 VideoCaptureDevice::VideoCaptureDevice(IMMDevice* _device) : Device(DevicesTypes::VID_CAPT, _device) {}
 
 AudioRenderDevice::AudioRenderDevice(IMMDevice* _device) : Device(DevicesTypes::AUD_REND, _device), audioTracks(), nbTracks(0) { AddTrack(); /*Create the first track*/ }
+AudioRenderDevice::~AudioRenderDevice() {
+	// Release the audio tracks
+	for (unsigned int _i = 0; _i < audioTracks.size(); _i++)
+		audioTracks[_i].Release();
+
+	// Call the Device destructor
+	((Device*)this)->~Device();
+}
+
 
 
 #pragma endregion // Constructors
@@ -491,7 +516,7 @@ void DevicesManager::ClearDevices(const unsigned int _devicesType) {
 	// Release Audio Render Devices
 	if (_devicesType == DevicesTypes::AUD_REND || _devicesType == DevicesTypes::BOTH_REND || _devicesType == DevicesTypes::ALL) {
 		for (unsigned int _i = 0; _i < nbAudioRenderDevices; _i++)
-			Device(audioRenderDevices[0]).~Device();
+			audioRenderDevices[0].~AudioRenderDevice();
 		audioRenderDevices.clear();
 	}
 

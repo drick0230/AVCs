@@ -17,7 +17,7 @@
 class VOIPClient {
 public:
 	VOIPClient(unsigned int _networkID) : networkID(_networkID), audioDatas(), receivedMediaType(false) {};
-	VOIPClient(const VOIPClient& _b) : networkID(_b.networkID) {};
+	VOIPClient(const VOIPClient& _b) : VOIPClient(_b.networkID) {};
 	unsigned int networkID;
 
 	AudioDatas audioDatas;
@@ -30,24 +30,20 @@ public:
 	std::mutex audioIsProcessing;
 };
 
-//void ConsoleIO(bool*, bool*, bool*, bool*, VOIP*);
+std::string GetNextCommand(); // Get the next line ending by Enter in the console and write the character during typing
 
+// Treat the received Packet
+void NetServerReceive(std::string _defaultGateway, std::string _publicIP, std::mutex* _programIsExiting); // Server side
+void NetClientReceive(std::vector<VOIPClient>& _clients, std::mutex* _clientsMutex, std::mutex* _programIsExiting); // Client side
 
-void serverTCP();
-void clientTCP();
+void NetClientSend(std::vector<VOIPClient>& _clients, std::mutex* _clientsMutex, std::mutex* _programIsExiting); // Start sending to other clients
 
-void serverUDP();
-//void clientUDP();
+// Send Specific Datas to VOIPClients
+void NetSendAudioDatas(std::vector<VOIPClient>& _clients, std::mutex* _clientsMutex); // Send the Audio Datas 
+void NetSendMediaType(std::vector<VOIPClient>& _clients, std::mutex* _clientsMutex); // Send the Mediatype
 
-void NetSendAudioDatas(unsigned int _clientID);
-void NetReceive();
+void ProcessAudioDatas(std::vector<VOIPClient>& _clients, unsigned int _clientID, std::mutex* _clientsMutex);
 
-void ProcessAudioDatas(VOIPClient* _client);
-
-
-// Send a Packet to be able to receive Packet from distant connection
-void KeepAlive(unsigned int _clientID, unsigned int _ms);
-
-// TODO: Référencez ici les en-têtes supplémentaires nécessaires à votre programme.
+void KeepAlive(unsigned int _clientID, unsigned int _ms, std::mutex* _programIsExiting); // Send a Packet to maintain a connection (Hole Punching)
 
 

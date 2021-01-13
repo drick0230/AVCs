@@ -83,6 +83,30 @@ Packet& Packet::operator = (const Packet& _b) {
 	return *this;
 }
 
+Packet& Packet::operator << (std::string data)
+{
+	const size_t bytesNbr = data.size() + 1;
+
+	char* cdata = (char*)data.c_str();
+
+	add(cdata, bytesNbr);
+	return *this;
+}
+
+Packet& Packet::operator >> (std::string& data)
+{
+	size_t bytesNbr = 0;
+	const size_t virtSize = _size - 1;
+	while (*(_data + _cursor + bytesNbr) != 0)
+	{
+		bytesNbr++;
+		if ((_cursor + bytesNbr) > virtSize)throw "depassement lors de la lecture";
+	}
+
+	data = std::string(_data + _cursor);
+	_cursor += bytesNbr + 1;
+	return *this;
+}
 
 void Packet::popBack(size_t nbr)
 {

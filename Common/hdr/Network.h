@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 
-#include "Packet.h"
+#include "NetPacket.hpp"
 #include "general.h"
 
 namespace ProtocoleTypes {
@@ -35,7 +35,7 @@ public:
 
 	~Protocole();
 	SOCKET mySocket;
-
+	
 	// TCP : Receive packets from a specific Client
 	// UDP : Receive packets from everyone. Return the ID of the sender.
 	unsigned int WaitReceive(Packet& _recvPacket, unsigned int _clientID = -1);
@@ -85,6 +85,7 @@ public:
 	bool Bind(std::string _ipAddress, unsigned short _port);
 	bool Bind(unsigned long _ipAddress, unsigned short _port);
 	unsigned int AddToBook(std::string _ipAddress, unsigned short _port);
+	bool IsInBook(std::string _ipAddress, unsigned short _port);
 
 	std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID);
 };

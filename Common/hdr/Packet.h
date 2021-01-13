@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 
+class AudioDatas;
+
 namespace PacketConst
 {
 	const size_t INIT_PACKET_SIZE = 512;
@@ -52,10 +54,14 @@ public:
 
 	Packet& operator = (const Packet& _b);
 
+	Packet& operator << (AudioDatas _audioDatas);
+	Packet& operator >> (AudioDatas& _audioDatas);
+
+	Packet& operator << (std::string data);
+	Packet& operator >> (std::string& data);
+
 	template <typename T>
 	Packet& operator << (T data);
-	template <>
-	Packet& operator << (std::string data);
 	template <typename T>
 	Packet& operator << (std::vector<T> data);
 
@@ -66,11 +72,8 @@ public:
 
 	template <typename T>
 	Packet& operator >> (T& data);
-	template <>
-	Packet& operator >> (std::string& data);
 	template <typename T>
 	Packet& operator >> (std::vector<T>& data);
-
 };
 
 #pragma region << operator
@@ -80,17 +83,6 @@ inline Packet& Packet::operator << (T data)
 	const size_t bytesNbr = sizeof(T);
 
 	char* cdata = (char*)&data;
-	add(cdata, bytesNbr);
-	return *this;
-}
-
-template <>
-inline Packet& Packet::operator << (std::string data)
-{
-	const size_t bytesNbr = data.size() + 1;
-
-	char* cdata = (char*)data.c_str();
-
 	add(cdata, bytesNbr);
 	return *this;
 }
@@ -122,22 +114,6 @@ inline Packet& Packet::operator >> (T& data)
 	return *this;
 }
 
-template <>
-inline Packet& Packet::operator >> (std::string& data)
-{
-	size_t bytesNbr = 0;
-	const size_t virtSize = _size - 1;
-	while (*(_data + _cursor + bytesNbr) != 0)
-	{
-		bytesNbr++;
-		if ((_cursor + bytesNbr) > virtSize)throw "depassement lors de la lecture";
-	}
-
-	data = std::string(_data + _cursor);
-	_cursor += bytesNbr + 1;
-	return *this;
-}
-
 template <typename T>
 inline Packet& Packet::operator >> (std::vector<T>& data)
 {
@@ -161,5 +137,4 @@ inline Packet& Packet::operator >> (std::vector<T>& data)
 
 	return *this;
 }
-
 #pragma endregion

@@ -5,6 +5,7 @@
 
 #include "Console.h"
 #include "general.h"
+#include "Packet.h"
 
 #include <mfapi.h> // Media Foundation function
 #include <mfidl.h> // MF_DEVSOURCE_ATTRIBUTE
@@ -93,6 +94,7 @@ public:
 	unsigned int nbTracks;
 
 	AudioRenderDevice(IMMDevice* _device = NULL);
+	~AudioRenderDevice();
 
 	// Set the media type of the datas to be played
 	void SetInputMediaType(std::vector<unsigned char> _mediaTypeDatas, unsigned int _track = 0);
