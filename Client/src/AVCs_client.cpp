@@ -355,7 +355,7 @@ void NetSendAudioDatas(std::vector<VOIPClient>& _clients, std::mutex* _clientsMu
 		//unsigned int _nbPackets = _audioDatas.datas.size() / 511 + 1; // 511 is the size of a Packet - the msgType
 		//unsigned int _actualData = 0;
 
-		Packet _packet;
+		NetPacket _packet;
 		_packet << unsigned char(2); // Write Start new Audio Datas
 		_packet << _audioDatas;
 
@@ -389,7 +389,7 @@ void NetSendAudioDatas(std::vector<VOIPClient>& _clients, std::mutex* _clientsMu
 	}
 }
 void NetSendMediaType(std::vector<VOIPClient>& _clients, std::mutex* _clientsMutex) {
-	Packet _packet;
+	NetPacket _packet;
 
 	_packet << unsigned char(1); // Write the type of datas
 	_packet << DevicesManager::audioCaptureDevices[0].GetMediaTypeDatas(); // Write the Media Type datas
@@ -419,7 +419,7 @@ void ProcessAudioDatas(std::vector<VOIPClient>& _clients, unsigned int _clientID
 
 void KeepAlive(unsigned int _clientID, unsigned int _ms, std::mutex* _programIsExiting) {
 	while (!_programIsExiting->try_lock()) { // Exit when _programIsExiting is Unlock
-		Packet _packet;
+		NetPacket _packet;
 		_packet << unsigned char(0);
 		Network::udp[0].Send(_clientID, _packet);
 		std::this_thread::sleep_for(std::chrono::milliseconds(_ms));

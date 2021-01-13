@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <queue>
 
 #include "NetPacket.h"
 #include "general.h"
@@ -14,78 +15,87 @@ namespace ProtocoleTypes {
 }
 
 #pragma region Protocole
-class Protocole {
-protected:
-	struct addrinfo clientInfo;
-	struct addrinfo serverInfo;
+//class Protocole {
+//protected:
+//	struct addrinfo clientInfo;
+//	struct addrinfo serverInfo;
+//
+//	Protocole(int _family, int _sockType, int _protocol);
+//
+//	virtual void tcpListen() {};
+//	virtual int udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _recvBufferLength) { return -2; };
+//	virtual int udpTcpSend(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength) { return -2; };
+//	virtual int udpTcpSend(sockaddr_in _sendToAddr, char* _bufferToSend, const int _bufferToSendLength) { return -2; };
+//
+//	void Send(SOCKET _clientSocket, std::string _ipAddress, unsigned short _port, char* _bufferToSend, const int _bufferToSendLength);
+//public:
+//	std::vector<std::string> addressBook;
+//	std::vector<unsigned short> portBook;
+//
+//	unsigned int protocoleType;
+//
+//	~Protocole();
+//	SOCKET mySocket;
+//	
+//	// TCP : Receive packets from a specific Client
+//	// UDP : Receive packets from everyone. Return the ID of the sender.
+//	unsigned int WaitReceive(Packet& _recvPacket, unsigned int _clientID = -1);
+//
+//	void Send(std::string _str);
+//	void Send(unsigned int _clientID, std::string _str);
+//	void Send(Packet& _packetToSend);
+//	void Send(unsigned int _clientID, Packet& _packetToSend);
+//	void Send(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength);
+//
+//	virtual std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID) { return "ERROR"; };
+//};
 
-	Protocole(int _family, int _sockType, int _protocol);
-
-	virtual void tcpListen() {};
-	virtual int udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _recvBufferLength) { return -2; };
-	virtual int udpTcpSend(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength) { return -2; };
-	virtual int udpTcpSend(sockaddr_in _sendToAddr, char* _bufferToSend, const int _bufferToSendLength) { return -2; };
-
-	void Send(SOCKET _clientSocket, std::string _ipAddress, unsigned short _port, char* _bufferToSend, const int _bufferToSendLength);
-public:
-	std::vector<std::string> addressBook;
-	std::vector<unsigned short> portBook;
-
-	unsigned int protocoleType;
-
-	~Protocole();
+class UDP {
+private:
 	SOCKET mySocket;
-	
-	// TCP : Receive packets from a specific Client
-	// UDP : Receive packets from everyone. Return the ID of the sender.
-	unsigned int WaitReceive(Packet& _recvPacket, unsigned int _clientID = -1);
-
-	void Send(std::string _str);
-	void Send(unsigned int _clientID, std::string _str);
-	void Send(Packet& _packetToSend);
-	void Send(unsigned int _clientID, Packet& _packetToSend);
-	void Send(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength);
-
-	virtual std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID) { return "ERROR"; };
-};
-
-class TCP : public Protocole {
-private:
-	std::vector<SOCKET> clientsSocket;
-
-	void tcpListen();
-
-	int udpTcpSend(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength);
-	int udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _recvBufferLength);
-public:
-	TCP();
-
-	bool Host(unsigned short _port);
-	bool Host(std::string _port);
-
-	unsigned int WaitClientConnection();
-	unsigned int Connect(std::string _ipAddress, unsigned short _port);
-
-	std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID);
-};
-
-class UDP : public Protocole {
-private:
 	struct sockaddr_in serverAddr;
-
 	std::vector<sockaddr_in> sockAddressBook;
 
-	int udpTcpSend(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength);
-	int udpTcpSend(sockaddr_in _sendToAddr, char* _bufferToSend, const int _bufferToSendLength);
+	// NetPacket Buffer
+	static const size_t netPacketBufferSize = 10;
+	NetPacket* netPacketBuffer[netPacketBufferSize];
 
-	int udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _recvBufferLength);
+	size_t first; // Represent the first element
+	size_t end; // Represent the end of the buffer ( last element + 1 )
+
+	std::thread tReceiving;
+	bool isReceiving;
+
+	void Send(unsigned int _clientID, NetPacket& _netPacket);
+
+	bool IsInNetPacketBuffer(unsigned int _clientID, unsigned int _packetID);
+	void Emplace_back(unsigned int _packetID, unsigned int _clientID, size_t _packetSize);
+
+	// Return the first NetPacket if it receive all his datagram or return NULL (The caller must manually delete it)
+	NetPacket* Pop_front();
+
+	void MoveFirst(); // Move first by 1 and overlap it at netPacketBufferSize
+	void MoveEnd(); // Move last by 1 and overlap it at netPacketBufferSize
+
 public:
+	std::vector<std::string> addressBook; // Address of the clients
+	std::vector<unsigned short> portBook; // Ports of the clients
+
 	UDP();
+	~UDP();
 
 	bool Bind(std::string _ipAddress, unsigned short _port);
 	bool Bind(unsigned long _ipAddress, unsigned short _port);
-	unsigned int AddToBook(std::string _ipAddress, unsigned short _port);
+
 	bool IsInBook(std::string _ipAddress, unsigned short _port);
+	unsigned int AddToBook(std::string _ipAddress, unsigned short _port);
+
+	// Receive packets from everyone.
+	// Return the ID of the sender and the received NetPacket.
+	void BeginReceiving();
+	NetPacket* GetNetPacket();	// Return the first NetPacket if it receive all his datagram or return NULL (The caller must manually delete it)
+
+	void Send(unsigned int _clientID, NetPacket& _netPacket);
 
 	std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID);
 };
@@ -96,17 +106,10 @@ private:
 
 
 public:
-	// Windows API
+	// Public Variables
 	static int hr;
 
-	static std::vector<TCP> tcp;
 	static std::vector<UDP> udp;
-	// Public Variables
-
-	//// Constructors
-	//Network();
-	//// Destructors
-	//~Network();
 
 	// Public Functions
 	static void Initialize();
