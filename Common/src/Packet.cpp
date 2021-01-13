@@ -70,6 +70,19 @@ void Packet::add(char* newData, size_t dataSize)
 	}
 }
 
+void Packet::emplace(const char _newData, size_t _nbData) {
+	//modification de la taille et de la capacité
+	size_t newSize = _cursor + _nbData;
+	if (newSize > _capacity) setCapacity(newSize);
+	if (newSize > _size) _size = newSize;
+	//ajout des données
+	for (size_t i = 0; i < _nbData; i++)
+	{
+		_data[_cursor] = _newData;
+		_cursor++;
+	}
+}
+
 Packet& Packet::operator = (const Packet& _b) {
 	delete[] _data;
 	_data = new char[_capacity];

@@ -52,13 +52,15 @@ namespace ProtocoleTypes {
 
 class UDP {
 private:
+	std::mutex inUse;
+
 	SOCKET mySocket;
 	struct sockaddr_in serverAddr;
 	std::vector<sockaddr_in> sockAddressBook;
 
 	// NetPacket Buffer
 	static const size_t netPacketBufferSize = 10;
-	NetPacket* netPacketBuffer[netPacketBufferSize];
+	RcvNetPacket* netPacketBuffer[netPacketBufferSize];
 
 	size_t first; // Represent the first element
 	size_t end; // Represent the end of the buffer ( last element + 1 )
@@ -66,13 +68,10 @@ private:
 	std::thread tReceiving;
 	bool isReceiving;
 
-	void Send(unsigned int _clientID, NetPacket& _netPacket);
+	size_t UDP::FoundNetPacket(unsigned int _clientID, unsigned int _packetID); // If the packet is in the buffer, Return his position in the buffer. In other case, return the size of the buffer.
+	void UDP::Emplace_back(unsigned int _packetID, unsigned int _clientID, size_t _DGRAMSize);
 
-	bool IsInNetPacketBuffer(unsigned int _clientID, unsigned int _packetID);
-	void Emplace_back(unsigned int _packetID, unsigned int _clientID, size_t _packetSize);
-
-	// Return the first NetPacket if it receive all his datagram or return NULL (The caller must manually delete it)
-	NetPacket* Pop_front();
+	RcvNetPacket* UDP::Pop_front();	// Return the first NetPacket, if it receive all his datagram, or return NULL (The caller must manually delete it)
 
 	void MoveFirst(); // Move first by 1 and overlap it at netPacketBufferSize
 	void MoveEnd(); // Move last by 1 and overlap it at netPacketBufferSize
@@ -84,20 +83,18 @@ public:
 	UDP();
 	~UDP();
 
-	bool Bind(std::string _ipAddress, unsigned short _port);
-	bool Bind(unsigned long _ipAddress, unsigned short _port);
+	bool Bind(std::string _ipAddress, unsigned short _port); // Bind to an IPV4 address represent by a string 0.0.0.0 format and a port
+	bool Bind(unsigned long _ipAddress, unsigned short _port); // Bind to an IPV4 address represent by a ulong and a port. Ex: 	INADDR_ANY and 0 for an auto ip and port
 
 	bool IsInBook(std::string _ipAddress, unsigned short _port);
 	unsigned int AddToBook(std::string _ipAddress, unsigned short _port);
 
-	// Receive packets from everyone.
-	// Return the ID of the sender and the received NetPacket.
-	void BeginReceiving();
-	NetPacket* GetNetPacket();	// Return the first NetPacket if it receive all his datagram or return NULL (The caller must manually delete it)
+	void BeginReceiving(); // Start Async operation to receive packets from everyone and store them
+	RcvNetPacket* UDP::GetNetPacket() { return Pop_front(); } // Return the first NetPacket if it receive all his datagram or return NULL (The caller must manually delete it)
 
-	void Send(unsigned int _clientID, NetPacket& _netPacket);
+	void UDP::Send(unsigned int _clientID, SendNetPacket& _netPacket); // Send the SendNetPacket to a client
 
-	std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID);
+	std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID); // Deprecate use addressBook and portBook instead
 };
 #pragma endregion
 

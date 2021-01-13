@@ -24,10 +24,12 @@ Protocole::~Protocole() {}
 TCP::TCP() : Protocole(AF_INET, SOCK_STREAM, IPPROTO_TCP) {} // Socket as IPV4 and TCP
 */
 
-UDP::UDP() : mySocket(INVALID_SOCKET), serverAddr(), tReceiving(), isReceiving(false), first(0), end(0) {
+UDP::UDP() : mySocket(INVALID_SOCKET), serverAddr(), netPackeBufferM(), tReceiving(), isReceiving(false), first(0), end(0) {
 	// Initialize netPacketBuffer with empty NetPacket
+	netPackeBufferM.lock();
 	for (size_t _i = 0; _i < netPacketBufferSize; _i++)
 		netPacketBuffer[0] = NULL;
+	netPackeBufferM.unlock();
 }
 
 UDP::~UDP() {
@@ -46,6 +48,7 @@ UDP::~UDP() {
 	tReceiving.join();
 
 	// Delete netPacketBuffer's NetPackets
+	netPackeBufferM.lock();
 	for (size_t _i; _i < netPacketBufferSize; _i++) {
 		if (netPacketBuffer[_i] != NULL)
 		{
@@ -53,6 +56,7 @@ UDP::~UDP() {
 			netPacketBuffer[_i] = NULL;
 		}
 	}
+	netPackeBufferM.unlock();
 }
 
 //#pragma region Protocole
@@ -246,6 +250,60 @@ std::string TCP::GetClientInfo(unsigned short& _returnPort, unsigned int _client
 #pragma endregion //TCP
 */
 #pragma region UDP
+/// Private
+size_t UDP::FoundNetPacket(unsigned int _clientID, unsigned int _packetID) {
+	unsigned int _posInBuf;
+	for (_posInBuf = 0; _posInBuf < netPacketBufferSize; _posInBuf++)
+		if (netPacketBuffer[_posInBuf]->capacity() != 0)
+			if (netPacketBuffer[_posInBuf]->clientID == _clientID)
+				if (netPacketBuffer[_posInBuf]->packetID == _packetID)
+					return _posInBuf;
+
+	return netPacketBufferSize;
+}
+
+void UDP::Emplace_back(unsigned int _packetID, unsigned int _clientID, size_t _DGRAMSize) {
+	MoveEnd();
+
+	if (end == first) {
+		// first data is too old, delete it
+		if (netPacketBuffer[first] != NULL)
+			delete netPacketBuffer[first];
+		MoveFirst();
+	}
+
+	netPacketBuffer[end - 1] = new RcvNetPacket(_packetID, _clientID, _DGRAMSize); // Create a new NetPacket at last position
+}
+
+RcvNetPacket* UDP::Pop_front() {
+	std::lock_guard<std::mutex> netPacketBufferM_LG(inUse);  // Lock the use of UDP in other threads and unlock it at end of current task (return)
+
+	RcvNetPacket* _return = NULL;
+
+	if (first != end) // The buffer is not empty
+		if (netPacketBuffer[first]->rcvDGRAM == netPacketBuffer[first]->rcvDGRAMSize) {
+			// the NetPacket is ready to be pop (Received all his Datagram)
+			_return = netPacketBuffer[first]; // Return the NetPacket pointer
+			netPacketBuffer[first] = NULL; // Prevent the NetPacket from being delete automatically
+
+			MoveFirst();
+		}
+
+	return _return;
+}
+
+void UDP::MoveFirst() {
+	first++;
+	if (first > netPacketBufferSize)
+		first = 0;
+}
+void UDP::MoveEnd() {
+	end++;
+	if (end == netPacketBufferSize)
+		end = 0;
+}
+
+/// Public
 bool UDP::Bind(std::string _ipAddress, unsigned short _port) {
 	// Convert from String to Ip Address as ULONG
 	unsigned long _ipBuffer;
@@ -304,69 +362,72 @@ void UDP::BeginReceiving() {
 	}
 
 	tReceiving = std::thread([this] {
-		int hr = 0;
+		while (isReceiving) {
+			std::lock_guard<std::mutex> LG_inUse(inUse); // Lock the use of UDP in other threads and unlock it at end of current task (while loop)
+			int hr = 0;
 
-		char _recvBuffer[NetPacket::maxDGRAMSize];
-		int _nbRecvBytes = 0;
+			char _rcvDGRAM[NetPacket::DGRAM_SIZE];
+			int _nbRecvBytes = 0;
 
-		struct sockaddr_in _senderAddr; // Store sender informations
-		int _senderAddrSize = sizeof(_senderAddr);
+			struct sockaddr_in _senderAddr; // Store sender informations
+			int _senderAddrSize = sizeof(_senderAddr);
 
-		_nbRecvBytes = recvfrom(mySocket, _recvBuffer, NetPacket::maxDGRAMSize, 0, (SOCKADDR*)&_senderAddr, &_senderAddrSize);
+			_nbRecvBytes = recvfrom(mySocket, _rcvDGRAM, NetPacket::DGRAM_SIZE, 0, (SOCKADDR*)&_senderAddr, &_senderAddrSize);
 
-		if (_nbRecvBytes != SOCKET_ERROR) {
-			// If the address is not store, add it
-			unsigned int _clientID;
-			bool _alreadyInVector = false;
-			for (_clientID = 0; _clientID < sockAddressBook.size(); _clientID++) {
-				if (Network::Compare(sockAddressBook[_clientID], _senderAddr)) {
-					_alreadyInVector = true;
-					break;
+			if (_nbRecvBytes != SOCKET_ERROR) {
+				// If the address is not store, add it
+				unsigned int _clientID;
+				bool _alreadyInVector = false;
+				for (_clientID = 0; _clientID < sockAddressBook.size(); _clientID++) {
+					if (Network::Compare(sockAddressBook[_clientID], _senderAddr)) {
+						_alreadyInVector = true;
+						break;
+					}
+				}
+				if (!_alreadyInVector) {
+					unsigned short _senderPort;
+					sockAddressBook.push_back(_senderAddr);
+					addressBook.push_back(Network::GetSocketInfo(_senderPort, _senderAddr));
+					portBook.push_back(_senderPort);
+
+					int test = sizeof(_senderAddr);
+					test = test;
+				}
+
+				const unsigned char _packetID = _rcvDGRAM[0];
+				const unsigned char _DGRAMid = _rcvDGRAM[1];
+				const unsigned char _DGRAMsize = _rcvDGRAM[2];
+
+				size_t _posInBuf = FoundNetPacket(_clientID, _packetID);
+				if (_posInBuf != netPacketBufferSize) {
+					// The NetPacket already exist. Add the DGRAM
+					netPacketBuffer[_posInBuf]->AddDGRAM(_rcvDGRAM, _nbRecvBytes);
+				}
+				else {
+					// Create New NetPacket in Buffer at last position and add the DGRAM
+					Emplace_back(_packetID, _clientID, _DGRAMsize);
+					netPacketBuffer[end - 1]->AddDGRAM(_rcvDGRAM, _nbRecvBytes);
 				}
 			}
-			if (!_alreadyInVector) {
-				unsigned short _senderPort;
-				sockAddressBook.push_back(_senderAddr);
-				addressBook.push_back(Network::GetSocketInfo(_senderPort, _senderAddr));
-				portBook.push_back(_senderPort);
+			else hr = SOCKET_ERROR; // Error
 
-				int test = sizeof(_senderAddr);
-				test = test;
+			if (hr != 0) {
+				std::cerr << "\n ERROR at unsigned int Protocole::WaitReceive(Packet& _recvPacket, unsigned int _clientID) :\n"
+					<< WSAGetLastError();
+				throw hr;
 			}
-
-			if (IsInNetPacketBuffer(_clientID, _recvBuffer[1])) {
-
-			}
-			else {
-				// Create New NetPacket in Buffer
-				Emplace_back(_recvBuffer[0], _clientID, _recvBuffer[2]);
-
-			}
-
-			// Return the received datas in the NetPacket
-			_recvPacket = Packet(_nbRecvBytes);
-			_recvPacket.add(_recvBuffer, _nbRecvBytes);
-			_recvPacket.move(0);
-		}
-		else hr = SOCKET_ERROR; // Error
-
-		if (hr != 0) {
-			std::cerr << "\n ERROR at unsigned int Protocole::WaitReceive(Packet& _recvPacket, unsigned int _clientID) :\n"
-				<< WSAGetLastError();
-			throw hr;
 		}
 		});
 }
-NetPacket* UDP::GetNetPacket() { return Pop_front(); }
 
-void UDP::Send(unsigned int _clientID, NetPacket& _netPacket) {
+void UDP::Send(unsigned int _clientID, SendNetPacket& _netPacket) {
 	int _hr = 0;
 	int _nbSendBytes = 0;
 	static const unsigned char _custmHeaderSize = 2; // Size in byte of the custom header
 	char* _datasToSend;
 	int _datasToSendLength;
 
-	if (_netPacket.size() < (NetPacket::maxDGRAMSize - 3)) {
+	if (_netPacket.size() < (NetPacket::DGRAM_SIZE_WO_HEAD)) {
 		// Can send directly the NetPacket
 		_datasToSendLength = 3 + _netPacket.size();
 		_datasToSend = new char[_datasToSendLength];
@@ -404,100 +465,6 @@ void UDP::Send(unsigned int _clientID, NetPacket& _netPacket) {
 	//}
 
 }
-
-bool UDP::IsInNetPacketBuffer(unsigned int _clientID, unsigned int _packetID) {
-	for (unsigned int _i = 0; _i < netPacketBufferSize; _i++)
-		if (netPacketBuffer[_i]->capacity() != 0)
-			if (netPacketBuffer[_i]->clientID == _clientID)
-				if (netPacketBuffer[_i]->packetID == _packetID)
-					return true;
-
-	return false;
-
-}
-
-void UDP::Emplace_back(unsigned int _packetID, unsigned int _clientID, size_t _packetSize) {
-	MoveEnd();
-
-	if (end == first) {
-		// first data is too old
-		if (netPacketBuffer[first] != NULL)
-			delete netPacketBuffer[first];
-		MoveFirst();
-	}
-
-	netPacketBuffer[end - 1] = new NetPacket(_packetID, _clientID, _packetSize); // Create a new NetPacket at last position
-}
-
-NetPacket* UDP::Pop_front() {
-	NetPacket* _return = NULL;
-
-	if (first != end) // The buffer is not empty
-		if (netPacketBuffer[first]->rcvDGRAM == netPacketBuffer[first]->rcvDGRAMSize) {
-			// the NetPacket is ready to be pop (Received all his Datagram)
-			_return = netPacketBuffer[first]; // Return the NetPacket pointer
-			netPacketBuffer[first] = NULL; // Prevent the NetPacket from being delete automatically
-
-			MoveFirst();
-		}
-
-	return _return;
-}
-
-void UDP::MoveFirst() {
-	first++;
-	if (first > netPacketBufferSize)
-		first = 0;
-}
-void UDP::MoveEnd() {
-	end++;
-	if (end == netPacketBufferSize)
-		end = 0;
-}
-
-
-//int UDP::udpTcpSend(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength) {
-//	return sendto(mySocket, _bufferToSend, _bufferToSendLength, 0, (SOCKADDR*)&sockAddressBook[_clientID], sizeof(sockAddressBook[_clientID]));
-//}
-//
-//int UDP::udpTcpSend(sockaddr_in _sendToAddr, char* _bufferToSend, const int _bufferToSendLength) {
-//	return sendto(mySocket, _bufferToSend, _bufferToSendLength, 0, (SOCKADDR*)&_sendToAddr, sizeof(_sendToAddr));
-//}
-//
-//int UDP::udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _recvBufferLength) {
-//	int _nbRecvBytes = 0;
-//
-//	struct sockaddr_in _senderAddr; // Store sender informations
-//	int _senderAddrSize = sizeof(_senderAddr);
-//
-//	_nbRecvBytes = recvfrom(mySocket, _recvBuffer, _recvBufferLength, 0, (SOCKADDR*)&_senderAddr, &_senderAddrSize);
-//
-//	if (_nbRecvBytes != SOCKET_ERROR) {
-//		// If the address is not store, add it
-//		unsigned int _i;
-//		bool _alreadyInVector = false;
-//		for (_i = 0; _i < sockAddressBook.size(); _i++) {
-//			if (Network::Compare(sockAddressBook[_i], _senderAddr)) {
-//				_alreadyInVector = true;
-//				break;
-//			}
-//		}
-//		if (!_alreadyInVector) {
-//			unsigned short _senderPort;
-//			sockAddressBook.push_back(_senderAddr);
-//			addressBook.push_back(Network::GetSocketInfo(_senderPort, _senderAddr));
-//			portBook.push_back(_senderPort);
-//
-//			int test = sizeof(_senderAddr);
-//			test = test;
-//		}
-//
-//		_clientID = _i; // Return the clientID
-//	}
-//
-//	return _nbRecvBytes;
-//}
-
 
 std::string UDP::GetClientInfo(unsigned short& _returnPort, unsigned int _clientID) { return Network::GetSocketInfo(_returnPort, sockAddressBook[_clientID]); }
 #pragma endregion //UDP
