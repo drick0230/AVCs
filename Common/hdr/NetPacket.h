@@ -34,7 +34,7 @@ public:
 	SendNetPacket(const SendNetPacket& _netPacket) : Packet((Packet)_netPacket), packetID(_netPacket.packetID) {}
 };
 
-// Use by Network, not suppose to be use in other case
+// Construct by Network, not suppose to be construct in other case (use pointer instead)
 class RcvNetPacket : public Packet {
 public:
 	unsigned int clientID; // IDof the client that send this packet
