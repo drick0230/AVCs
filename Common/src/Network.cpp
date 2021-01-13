@@ -24,15 +24,28 @@ Protocole::~Protocole() {}
 TCP::TCP() : Protocole(AF_INET, SOCK_STREAM, IPPROTO_TCP) {} // Socket as IPV4 and TCP
 */
 
-UDP::UDP() : mySocket(INVALID_SOCKET), serverAddr(), netPackeBufferM(), tReceiving(), isReceiving(false), first(0), end(0) {
+UDP::UDP() : first(0), end(0), mySocket(INVALID_SOCKET), serverAddr(), inUse(), tReceiving(), isReceiving(false) {
+	std::lock_guard<std::mutex> LG_inUse(inUse);  // Lock the use of UDP in other threads and unlock it at end of current task
+
 	// Initialize netPacketBuffer with empty NetPacket
-	netPackeBufferM.lock();
 	for (size_t _i = 0; _i < netPacketBufferSize; _i++)
-		netPacketBuffer[0] = NULL;
-	netPackeBufferM.unlock();
+		netPacketBuffer[_i] = NULL;
 }
 
+UDP::UDP(UDP&& _udp) : first(_udp.first), end(_udp.end), mySocket(INVALID_SOCKET), serverAddr(), inUse(), tReceiving(), isReceiving(false) {
+	std::lock_guard<std::mutex> LG_inUse2(_udp.inUse);  // Lock the use of UDP in other threads and unlock it at end of current task
+	std::lock_guard<std::mutex> LG_inUse(inUse);  // Lock the use of UDP in other threads and unlock it at end of current task
+
+	// Initialize netPacketBuffer with the other UDP NetPacketBuffer
+	for (size_t _i = 0; _i < netPacketBufferSize; _i++) {
+		netPacketBuffer[_i] = _udp.netPacketBuffer[_i];
+		_udp.netPacketBuffer[_i] = NULL; // prevent them from beiing delete by the destructor of _udp
+	}
+}
+
+
 UDP::~UDP() {
+	std::lock_guard<std::mutex> LG_inUse(inUse);  // Lock the use of UDP in other threads and unlock it at end of current task
 	int _hr = 0;
 
 	// Completely close and stop operation on the Socket
@@ -45,18 +58,16 @@ UDP::~UDP() {
 		throw _hr;
 	}
 
+	isReceiving = false;
 	tReceiving.join();
 
 	// Delete netPacketBuffer's NetPackets
-	netPackeBufferM.lock();
-	for (size_t _i; _i < netPacketBufferSize; _i++) {
+	for (size_t _i = 0; _i < netPacketBufferSize; _i++)
 		if (netPacketBuffer[_i] != NULL)
 		{
 			delete netPacketBuffer[_i];
 			netPacketBuffer[_i] = NULL;
 		}
-	}
-	netPackeBufferM.unlock();
 }
 
 //#pragma region Protocole
@@ -262,7 +273,7 @@ size_t UDP::FoundNetPacket(unsigned int _clientID, unsigned int _packetID) {
 	return netPacketBufferSize;
 }
 
-void UDP::Emplace_back(unsigned int _packetID, unsigned int _clientID, size_t _DGRAMSize) {
+void UDP::Emplace_back(unsigned int _packetID, unsigned int _clientID, unsigned char _DGRAMSize_T) {
 	MoveEnd();
 
 	if (end == first) {
@@ -272,16 +283,16 @@ void UDP::Emplace_back(unsigned int _packetID, unsigned int _clientID, size_t _D
 		MoveFirst();
 	}
 
-	netPacketBuffer[end - 1] = new RcvNetPacket(_packetID, _clientID, _DGRAMSize); // Create a new NetPacket at last position
+	netPacketBuffer[end - 1] = new RcvNetPacket(_packetID, _clientID, _DGRAMSize_T); // Create a new NetPacket at last position
 }
 
 RcvNetPacket* UDP::Pop_front() {
-	std::lock_guard<std::mutex> netPacketBufferM_LG(inUse);  // Lock the use of UDP in other threads and unlock it at end of current task (return)
+	std::lock_guard<std::mutex> LG_inUse(inUse);  // Lock the use of UDP in other threads and unlock it at end of current task (return)
 
 	RcvNetPacket* _return = NULL;
 
 	if (first != end) // The buffer is not empty
-		if (netPacketBuffer[first]->rcvDGRAM == netPacketBuffer[first]->rcvDGRAMSize) {
+		if (netPacketBuffer[first]->nbRcvDGRAM == netPacketBuffer[first]->nbRcvDGRAM_T) {
 			// the NetPacket is ready to be pop (Received all his Datagram)
 			_return = netPacketBuffer[first]; // Return the NetPacket pointer
 			netPacketBuffer[first] = NULL; // Prevent the NetPacket from being delete automatically
@@ -423,13 +434,12 @@ void UDP::BeginReceiving() {
 void UDP::Send(unsigned int _clientID, SendNetPacket& _netPacket) {
 	int _hr = 0;
 	int _nbSendBytes = 0;
-	static const unsigned char _custmHeaderSize = 2; // Size in byte of the custom header
 	char* _datasToSend;
 	int _datasToSendLength;
 
 	if (_netPacket.size() < (NetPacket::DGRAM_SIZE_WO_HEAD)) {
 		// Can send directly the NetPacket
-		_datasToSendLength = 3 + _netPacket.size();
+		_datasToSendLength = NetPacket::HEAD_SIZE + _netPacket.size();
 		_datasToSend = new char[_datasToSendLength];
 
 		// Header of the NetPacket
@@ -439,7 +449,7 @@ void UDP::Send(unsigned int _clientID, SendNetPacket& _netPacket) {
 
 		// Datas of the NetPacket
 		size_t _iNetPacketData = 0; // Increments of the NetPacket data
-		for (size_t _iDataToSend = 3; _iDataToSend < _netPacket.size() + 3; _iDataToSend++, _iNetPacketData++)
+		for (size_t _iDataToSend = NetPacket::HEAD_SIZE; _iDataToSend < _netPacket.size() + NetPacket::HEAD_SIZE; _iDataToSend++, _iNetPacketData++)
 			_datasToSend[_iDataToSend] = _netPacket.data()[_iNetPacketData];
 
 		_nbSendBytes = sendto(mySocket, _datasToSend, _datasToSendLength, 0, (SOCKADDR*)&sockAddressBook[_clientID], sizeof(sockAddressBook[_clientID]));

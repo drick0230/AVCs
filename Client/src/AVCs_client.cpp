@@ -169,164 +169,165 @@ std::string GetNextCommand() {
 }
 
 void NetServerReceive(std::string _defaultGateway, std::string _publicIP, std::mutex* _programIsExiting) {
-	unsigned int _rcvPacketClientID; // Received packet's client ID
 	unsigned char _rcvPacketMsgType; // Received packet's message type
 
 	// Wait the connection of a client
 	while (!_programIsExiting->try_lock()) {
-		Packet _rcvPacket; // Received packet
+		RcvNetPacket* _rcvPacket; // Received packet
 
-		_rcvPacketClientID = Network::udp[0].WaitReceive(_rcvPacket);
-		_rcvPacket >> _rcvPacketMsgType; // MessageType 
+		if ((_rcvPacket = Network::udp[0].GetNetPacket()) != NULL) {
+			*_rcvPacket >> _rcvPacketMsgType; // MessageType 
 
-		// Wait a bit to be sure the client are ready to receive packets
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+			// Wait a bit to be sure the client are ready to receive packets
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-		// Send ip and port of each clients to other clients
-		for (unsigned int _from = 0; _from < Network::udp[0].addressBook.size(); _from++) {
-			Packet _packet;
-			_packet << unsigned char(0); // Msg Type
-			_packet << (Network::udp[0].addressBook[_from] == _defaultGateway ? _publicIP : Network::udp[0].addressBook[_from]); // Public IP of the client
-			_packet << Network::udp[0].portBook[_from]; // Port of the client
+			// Send ip and port of each clients to other clients
+			for (unsigned int _from = 0; _from < Network::udp[0].addressBook.size(); _from++) {
+				SendNetPacket _packet;
+				_packet << unsigned char(0); // Msg Type
+				_packet << (Network::udp[0].addressBook[_from] == _defaultGateway ? _publicIP : Network::udp[0].addressBook[_from]); // Public IP of the client
+				_packet << Network::udp[0].portBook[_from]; // Port of the client
 
-			for (unsigned int _to = 0; _to < Network::udp[0].addressBook.size(); _to++) {
-				if (_from != _to) {
-					Network::udp[0].Send(_to, _packet);
+				for (unsigned int _to = 0; _to < Network::udp[0].addressBook.size(); _to++) {
+					if (_from != _to) {
+						Network::udp[0].Send(_to, _packet);
+					}
 				}
 			}
-		}
 
-		Console::Write((int)_rcvPacketClientID);
-		Console::Write(":");
-		Console::Write(_rcvPacketMsgType);
-		Console::Write('\n');
-		Console::Write();
+			Console::Write((int)_rcvPacket->clientID);
+			Console::Write(":");
+			Console::Write(_rcvPacketMsgType);
+			Console::Write('\n');
+			Console::Write();
+		}
 	}
 
 	_programIsExiting->unlock();
 }
 void NetClientReceive(std::vector<VOIPClient>& _clients, std::mutex* _clientsMutex, std::mutex* _programIsExiting) {
 	while (!_programIsExiting->try_lock()) {
-		unsigned int _rcvPacketClientID; // Received packet's client ID
 		unsigned char _rcvPacketMsgType; // Received packet's message type
-		Packet _rcvPacket; // Received packet
+		RcvNetPacket* _rcvPacket; // Received packet
 
-		_rcvPacketClientID = Network::udp[0].WaitReceive(_rcvPacket);
-		_rcvPacket >> _rcvPacketMsgType; // MessageType 
+		if ((_rcvPacket = Network::udp[0].GetNetPacket()) != NULL) {
 
-		if (_rcvPacketClientID == 0) { // Packet from the server
-			std::string _ipAddress; // Received IP Address in case 0
-			unsigned short _port; // Received Port in case 0
-			unsigned int _clientID; // Returned Client ID in case 0
+			*_rcvPacket >> _rcvPacketMsgType; // MessageType 
 
-			// Treat the message type
-			switch (_rcvPacketMsgType)
-			{
-			case 0: // Client's connection  information
-				_rcvPacket >> _ipAddress;
-				_rcvPacket >> _port;
+			if (_rcvPacket->clientID == 0) { // Packet from the server
+				std::string _ipAddress; // Received IP Address in case 0
+				unsigned short _port; // Received Port in case 0
+				unsigned int _clientID; // Returned Client ID in case 0
 
-				if (!Network::udp[0].IsInBook(_ipAddress, _port)) {
-					_clientID = Network::udp[0].AddToBook(_ipAddress, _port);
-
-					_clientsMutex->lock();
-					_clients.emplace_back(_clientID); // Add new client
-					_clientsMutex->unlock();
-					DevicesManager::audioRenderDevices[0].AddTrack(); // Add a track for the client
-
-					Console::Write(_ipAddress + ':');
-					Console::Write(_port);
-					Console::Write(" added as Client\n");
-					Console::Write();
-				}
-				break;
-			default:
-				Console::Write("Received an invalid Packet from ");
-				Console::Write((int)_rcvPacketClientID);
-				Console::Write('\n');
-				Console::Write();
-				break;
-			}
-		}
-		else { // Packet from a client
-			std::lock_guard<std::mutex> _clientsMutexLG(*_clientsMutex); // Lock _clientsMutex and unlock it at destruct
-			unsigned int _clientID; // VOIPClient's ID
-
-			// Get the VOIPClient's ID by the network ID
-			for (_clientID = 0; _clientID < _clients.size(); _clientID++)
-				if (_clients[_clientID].networkID == _rcvPacketClientID)
-					break;
-			if (_clientID < _clients.size()) {
 				// Treat the message type
 				switch (_rcvPacketMsgType)
 				{
-				case 3: // Reading Audio Datas
-					// _client->audioDatas.datas.resize(_client->audioDatas.datas.size() + _rcvPacket.size()); // for optimisation LATER
-					for (unsigned int _i = 1; _i < _rcvPacket.size(); _i++)
-						_clients[_clientID].audioDatas.datas.push_back(_rcvPacket.data()[_i]);
-					break;
-				case 2: // Begin new Audio Datas
-						//Add the actual Audio Data in the queue
-					//if (_clients[_clientID].audioDatas.datas.size() > 0 && _clients[_clientID].audioDatas.time != 0) {
-					//	//_clients[_clientID].audioBufferMutex.lock();
+				case 0: // Client's connection  information
+					*_rcvPacket >> _ipAddress;
+					*_rcvPacket >> _port;
 
-					//	//_clients[_clientID].audioDatasBuffer.emplace(_clients[_clientID].audioDatas.datas, _clients[_clientID].audioDatas.duration, _clients[_clientID].audioDatas.time);
+					if (!Network::udp[0].IsInBook(_ipAddress, _port)) {
+						_clientID = Network::udp[0].AddToBook(_ipAddress, _port);
 
-					//	//_clients[_clientID].audioBufferMutex.unlock();
+						_clientsMutex->lock();
+						_clients.emplace_back(_clientID); // Add new client
+						_clientsMutex->unlock();
+						DevicesManager::audioRenderDevices[0].AddTrack(); // Add a track for the client
 
-					//	//// If no  Audio Processing thread is running, create a new one
-					//	//if (_clients[_clientID].audioIsProcessing.try_lock()) {
-					//	//	_clients[_clientID].audioIsProcessing.unlock();
-					//	//	std::thread tProcessAudioDatas(&ProcessAudioDatas, std::ref(_clients), _clientID, _clientsMutex);
-					//	//	tProcessAudioDatas.detach();
-					//	//}
-					//	DevicesManager::audioRenderDevices[0].Play(_clients[_clientID].audioDatas, _clientID);
-					//}
-
-					//_rcvPacket >> _clients[_clientID].audioDatas.duration; // Get Audio Datas Duration
-					//_rcvPacket >> _clients[_clientID].audioDatas.time; // Get Audio Datas Time
-
-					//_clients[_clientID].audioDatas.datas.clear();
-					_rcvPacket >> _clients[_clientID].audioDatas;
-					DevicesManager::audioRenderDevices[0].Play(_clients[_clientID].audioDatas, _clientID);
-					Console::Write("Received new Audio Datas from ");
-					Console::Write((int)_rcvPacketClientID);
-					Console::Write('\n');
-					Console::Write();
-					break;
-				case 1: // Media Type
-					if (!_clients[_clientID].receivedMediaType) {
-						std::vector<unsigned char> _mediaTypeDatas;
-
-						_rcvPacket >> _mediaTypeDatas; // Get the Media Type Datas
-
-						DevicesManager::audioRenderDevices[0].SetInputMediaType(_mediaTypeDatas, _clientID); //Set the Media Type
-
-						_clients[_clientID].receivedMediaType = true;
-
-						Console::Write("Received media type for ");
-						Console::Write((int)_rcvPacketClientID);
-						Console::Write('\n');
+						Console::Write(_ipAddress + ':');
+						Console::Write(_port);
+						Console::Write(" added as Client\n");
 						Console::Write();
 					}
 					break;
-				case 0: // Keep Alive
-					Console::Write((int)_rcvPacketClientID);
-					Console::Write(" : Keep Alive\n");
-					break;
 				default:
 					Console::Write("Received an invalid Packet from ");
-					Console::Write((int)_rcvPacketClientID);
+					Console::Write((int)_rcvPacket->clientID);
 					Console::Write('\n');
 					Console::Write();
 					break;
 				}
 			}
-			else {
-				Console::Write("Received a Packet from the invalid Client ");
-				Console::Write((int)_rcvPacketClientID);
-				Console::Write('\n');
-				Console::Write();
+			else { // Packet from a client
+				std::lock_guard<std::mutex> _clientsMutexLG(*_clientsMutex); // Lock _clientsMutex and unlock it at destruct
+				unsigned int _clientID; // VOIPClient's ID
+
+				// Get the VOIPClient's ID by the network ID
+				for (_clientID = 0; _clientID < _clients.size(); _clientID++)
+					if (_clients[_clientID].networkID == _rcvPacket->clientID)
+						break;
+				if (_clientID < _clients.size()) {
+					// Treat the message type
+					switch (_rcvPacketMsgType)
+					{
+					case 3: // Reading Audio Datas
+						// _client->audioDatas.datas.resize(_client->audioDatas.datas.size() + _rcvPacket.size()); // for optimisation LATER
+						for (unsigned int _i = 1; _i < _rcvPacket->size(); _i++)
+							_clients[_clientID].audioDatas.datas.push_back(_rcvPacket->data()[_i]);
+						break;
+					case 2: // Begin new Audio Datas
+							//Add the actual Audio Data in the queue
+						//if (_clients[_clientID].audioDatas.datas.size() > 0 && _clients[_clientID].audioDatas.time != 0) {
+						//	//_clients[_clientID].audioBufferMutex.lock();
+
+						//	//_clients[_clientID].audioDatasBuffer.emplace(_clients[_clientID].audioDatas.datas, _clients[_clientID].audioDatas.duration, _clients[_clientID].audioDatas.time);
+
+						//	//_clients[_clientID].audioBufferMutex.unlock();
+
+						//	//// If no  Audio Processing thread is running, create a new one
+						//	//if (_clients[_clientID].audioIsProcessing.try_lock()) {
+						//	//	_clients[_clientID].audioIsProcessing.unlock();
+						//	//	std::thread tProcessAudioDatas(&ProcessAudioDatas, std::ref(_clients), _clientID, _clientsMutex);
+						//	//	tProcessAudioDatas.detach();
+						//	//}
+						//	DevicesManager::audioRenderDevices[0].Play(_clients[_clientID].audioDatas, _clientID);
+						//}
+
+						//_rcvPacket >> _clients[_clientID].audioDatas.duration; // Get Audio Datas Duration
+						//_rcvPacket >> _clients[_clientID].audioDatas.time; // Get Audio Datas Time
+
+						//_clients[_clientID].audioDatas.datas.clear();
+						*_rcvPacket >> _clients[_clientID].audioDatas;
+						DevicesManager::audioRenderDevices[0].Play(_clients[_clientID].audioDatas, _clientID);
+						Console::Write("Received new Audio Datas from ");
+						Console::Write((int)_rcvPacket->clientID);
+						Console::Write('\n');
+						Console::Write();
+						break;
+					case 1: // Media Type
+						if (!_clients[_clientID].receivedMediaType) {
+							std::vector<unsigned char> _mediaTypeDatas;
+
+							*_rcvPacket >> _mediaTypeDatas; // Get the Media Type Datas
+
+							DevicesManager::audioRenderDevices[0].SetInputMediaType(_mediaTypeDatas, _clientID); //Set the Media Type
+
+							_clients[_clientID].receivedMediaType = true;
+
+							Console::Write("Received media type for ");
+							Console::Write((int)_rcvPacket->clientID);
+							Console::Write('\n');
+							Console::Write();
+						}
+						break;
+					case 0: // Keep Alive
+						Console::Write((int)_rcvPacket->clientID);
+						Console::Write(" : Keep Alive\n");
+						break;
+					default:
+						Console::Write("Received an invalid Packet from ");
+						Console::Write((int)_rcvPacket->clientID);
+						Console::Write('\n');
+						Console::Write();
+						break;
+					}
+				}
+				else {
+					Console::Write("Received a Packet from the invalid Client ");
+					Console::Write((int)_rcvPacket->clientID);
+					Console::Write('\n');
+					Console::Write();
+				}
 			}
 		}
 	}
@@ -355,7 +356,7 @@ void NetSendAudioDatas(std::vector<VOIPClient>& _clients, std::mutex* _clientsMu
 		//unsigned int _nbPackets = _audioDatas.datas.size() / 511 + 1; // 511 is the size of a Packet - the msgType
 		//unsigned int _actualData = 0;
 
-		NetPacket _packet;
+		SendNetPacket _packet;
 		_packet << unsigned char(2); // Write Start new Audio Datas
 		_packet << _audioDatas;
 
@@ -389,7 +390,7 @@ void NetSendAudioDatas(std::vector<VOIPClient>& _clients, std::mutex* _clientsMu
 	}
 }
 void NetSendMediaType(std::vector<VOIPClient>& _clients, std::mutex* _clientsMutex) {
-	NetPacket _packet;
+	SendNetPacket _packet;
 
 	_packet << unsigned char(1); // Write the type of datas
 	_packet << DevicesManager::audioCaptureDevices[0].GetMediaTypeDatas(); // Write the Media Type datas
@@ -419,7 +420,7 @@ void ProcessAudioDatas(std::vector<VOIPClient>& _clients, unsigned int _clientID
 
 void KeepAlive(unsigned int _clientID, unsigned int _ms, std::mutex* _programIsExiting) {
 	while (!_programIsExiting->try_lock()) { // Exit when _programIsExiting is Unlock
-		NetPacket _packet;
+		SendNetPacket _packet;
 		_packet << unsigned char(0);
 		Network::udp[0].Send(_clientID, _packet);
 		std::this_thread::sleep_for(std::chrono::milliseconds(_ms));

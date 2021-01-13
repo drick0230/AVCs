@@ -14,42 +14,6 @@ namespace ProtocoleTypes {
 	enum PROTOCOLE_TYPES { TCP, UDP, BOTH };
 }
 
-#pragma region Protocole
-//class Protocole {
-//protected:
-//	struct addrinfo clientInfo;
-//	struct addrinfo serverInfo;
-//
-//	Protocole(int _family, int _sockType, int _protocol);
-//
-//	virtual void tcpListen() {};
-//	virtual int udpTcpReceive(unsigned int& _clientID, char* _recvBuffer, const int _recvBufferLength) { return -2; };
-//	virtual int udpTcpSend(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength) { return -2; };
-//	virtual int udpTcpSend(sockaddr_in _sendToAddr, char* _bufferToSend, const int _bufferToSendLength) { return -2; };
-//
-//	void Send(SOCKET _clientSocket, std::string _ipAddress, unsigned short _port, char* _bufferToSend, const int _bufferToSendLength);
-//public:
-//	std::vector<std::string> addressBook;
-//	std::vector<unsigned short> portBook;
-//
-//	unsigned int protocoleType;
-//
-//	~Protocole();
-//	SOCKET mySocket;
-//	
-//	// TCP : Receive packets from a specific Client
-//	// UDP : Receive packets from everyone. Return the ID of the sender.
-//	unsigned int WaitReceive(Packet& _recvPacket, unsigned int _clientID = -1);
-//
-//	void Send(std::string _str);
-//	void Send(unsigned int _clientID, std::string _str);
-//	void Send(Packet& _packetToSend);
-//	void Send(unsigned int _clientID, Packet& _packetToSend);
-//	void Send(unsigned int _clientID, char* _bufferToSend, const int _bufferToSendLength);
-//
-//	virtual std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID) { return "ERROR"; };
-//};
-
 class UDP {
 private:
 	std::mutex inUse;
@@ -69,7 +33,7 @@ private:
 	bool isReceiving;
 
 	size_t UDP::FoundNetPacket(unsigned int _clientID, unsigned int _packetID); // If the packet is in the buffer, Return his position in the buffer. In other case, return the size of the buffer.
-	void UDP::Emplace_back(unsigned int _packetID, unsigned int _clientID, size_t _DGRAMSize);
+	void UDP::Emplace_back(unsigned int _packetID, unsigned int _clientID, unsigned char _DGRAMSize_T);
 
 	RcvNetPacket* UDP::Pop_front();	// Return the first NetPacket, if it receive all his datagram, or return NULL (The caller must manually delete it)
 
@@ -81,6 +45,7 @@ public:
 	std::vector<unsigned short> portBook; // Ports of the clients
 
 	UDP();
+	UDP(UDP&& _udp);
 	~UDP();
 
 	bool Bind(std::string _ipAddress, unsigned short _port); // Bind to an IPV4 address represent by a string 0.0.0.0 format and a port
@@ -96,7 +61,6 @@ public:
 
 	std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID); // Deprecate use addressBook and portBook instead
 };
-#pragma endregion
 
 class Network {
 private:
