@@ -1,8 +1,4 @@
 #pragma once
-//#include <locale>
-//#include <codecvt>
-//#include <string>
-
 #include "Console.h"
 #include "general.h"
 #include "Packet.h"

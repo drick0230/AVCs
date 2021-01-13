@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 
-#include "NetPacket.hpp"
+#include "NetPacket.h"
 #include "general.h"
 
 namespace ProtocoleTypes {
