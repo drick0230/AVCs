@@ -40,6 +40,8 @@ private:
 	void MoveFirst(); // Move first by 1 and overlap it at netPacketBufferSize
 	void MoveEnd(); // Move last by 1 and overlap it at netPacketBufferSize
 
+	void UDP::Send(unsigned int _clientID, char* _bytes, const size_t _bytesSize, const unsigned char _packetID, const unsigned char _DGRAMid, const unsigned char _nbDGRAM_T); // Send a DGRAM with a head. _bytesSize should not exceed NetPacket::DGRAM_SIZE_WO_HEAD
+
 public:
 	std::vector<std::string> addressBook; // Address of the clients
 	std::vector<unsigned short> portBook; // Ports of the clients

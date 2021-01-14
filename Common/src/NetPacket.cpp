@@ -1,7 +1,15 @@
 #pragma once
 #include "NetPacket.h"
 
-// SendNetPacket
+#pragma region NetPacket
+
+char* NetPacket::GetDGRAM(unsigned char _DGRAMid) {
+	return _data + (size_t)_DGRAMid * NetPacket::DGRAM_SIZE_WO_HEAD;
+}
+#pragma endregion
+
+
+#pragma region SendNetPacket
 // Static Variables
 unsigned char SendNetPacket::iPacket = 0;
 std::mutex SendNetPacket::iPacketM;
@@ -16,17 +24,18 @@ void SendNetPacket::GenerateID() {
 	packetID = SendNetPacket::iPacket;
 	SendNetPacket::iPacketM.unlock();
 }
+#pragma endregion //SendNetPacket
 
-// RcvNetPacket
-RcvNetPacket::RcvNetPacket(unsigned char _packetID, unsigned int _clientID, unsigned char _nbRcvDGRAM_T) :
-	Packet((size_t)_nbRcvDGRAM_T * NetPacket::DGRAM_SIZE_WO_HEAD),
+#pragma region RcvNetPacket
+RcvNetPacket::RcvNetPacket(unsigned char _packetID, unsigned int _clientID, unsigned char _nbDGRAM_T) :
+	Packet((size_t)_nbDGRAM_T* NetPacket::DGRAM_SIZE_WO_HEAD),
 	clientID(_clientID),
 	packetID(_packetID),
-	nbRcvDGRAM(0),
-	nbRcvDGRAM_T(_nbRcvDGRAM_T) {
+	nbDGRAM(0),
+	nbDGRAM_T(_nbDGRAM_T) {
 	emplace(0, capacity());
-	b_rcvDGRAM = new bool[nbRcvDGRAM_T];
-	for (unsigned char _i = 0; _i < nbRcvDGRAM_T; _i++)
+	b_rcvDGRAM = new bool[nbDGRAM_T];
+	for (unsigned char _i = 0; _i < nbDGRAM_T; _i++)
 		b_rcvDGRAM[_i] = false;
 }
 
@@ -37,15 +46,18 @@ RcvNetPacket::~RcvNetPacket() {
 void RcvNetPacket::AddDGRAM(char* _bytes, size_t _bytesSize) {
 	const unsigned char _packetID = _bytes[0];
 	const unsigned char _DGRAMid = _bytes[1];
-	const unsigned char _DGRAMsize = _bytes[2];
+	const unsigned char _nbDGRAM_T = _bytes[2];
 
 	if (!b_rcvDGRAM[_DGRAMid]) { // Didn't already receive the DGRAM
 		// Mark the DGRAM as received
 		b_rcvDGRAM[_DGRAMid] = true;
-		nbRcvDGRAM++;
+		nbDGRAM++;
+
+		char* _toWriteDatas = GetDGRAM(_DGRAMid); // Get the pointer to the first element of the coresponding DGRAM in _data
 
 		// Write the datas byte of the DGRAM in the Packet (not the head)
-		for (unsigned int _iBytes = NetPacket::HEAD_SIZE, _iData = _DGRAMid * NetPacket::DGRAM_SIZE_WO_HEAD; _iBytes < _bytesSize; _iBytes++, _iData++)
-			_data[_iData] = _bytes[_iBytes];
+		for (unsigned int _iData = 0, _iBytes = NetPacket::HEAD_SIZE; _iBytes < _bytesSize; _iData++, _iBytes++)
+			_toWriteDatas[_iData] = _bytes[_iBytes];
 	}
 }
+#pragma endregion //RcvNetPacket

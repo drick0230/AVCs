@@ -105,6 +105,41 @@ void UDP::MoveEnd() {
 		end = 0;
 }
 
+void UDP::Send(unsigned int _clientID, char* _bytes, const size_t _bytesSize, const unsigned char _packetID, const unsigned char _DGRAMid, const unsigned char _nbDGRAM_T) {
+	int _hr = 0;
+
+	const int _DGRAMSize = NetPacket::HEAD_SIZE + _bytesSize; // Size of Datagram to send
+	char* _DGRAM = new char[_DGRAMSize]; // Datagram to send
+	memset(_DGRAM, 0, _DGRAMSize);// Init _DGRAM with zeros
+
+	int _sentDGRAMSize;  // Size of Datagram to sent (May not be equal to _DGRAMSize)
+
+	// Write NetPacket's custom head
+	_DGRAM[0] = _packetID;
+	_DGRAM[1] = _DGRAMid;
+	_DGRAM[2] = _nbDGRAM_T;
+
+	// Write NetPacket's datas 
+	for (size_t _iDGRAM = NetPacket::HEAD_SIZE, _iNetPacket = 0; _iNetPacket < _bytesSize; _iDGRAM++, _iNetPacket++)
+		_DGRAM[_iDGRAM] = _bytes[_iNetPacket];
+
+	// Send DGRAM
+	_sentDGRAMSize = sendto(mySocket, _DGRAM, _DGRAMSize, 0, (SOCKADDR*)&sockAddressBook[_clientID], sizeof(sockAddressBook[_clientID]));
+
+	// Check if errors are detected
+	if (_sentDGRAMSize == SOCKET_ERROR)
+		_hr = SOCKET_ERROR;
+	else if (_sentDGRAMSize != _DGRAMSize) {
+		std::cerr << "Only " << _sentDGRAMSize << " Bytes was send and not " << _DGRAMSize << "Bytes\n";
+	}
+
+	if (_hr != 0) {
+		std::cerr << "\n ERROR at void Protocole::Send(unsigned int _clientID, char* _bufferToSend, int _bufferToSendLength) :\n"
+			<< WSAGetLastError();
+		throw _hr;
+	}
+}
+
 /// Public
 bool UDP::Bind(std::string _ipAddress, unsigned short _port) {
 	// Convert from String to Ip Address as ULONG
@@ -165,7 +200,7 @@ void UDP::BeginReceiving() {
 
 	tReceiving = std::thread([this] {
 		while (isReceiving) {
-			std::lock_guard<std::mutex> LG_inUse(inUse); // Lock the use of UDP in other threads and unlock it at end of current task (while loop)
+			std::lock_guard<std::mutex> LG_inUse(inUse);  // Lock the use of UDP in other threads and unlock it at end of current task
 			int hr = 0;
 
 			char _rcvDGRAM[NetPacket::DGRAM_SIZE];
@@ -173,6 +208,7 @@ void UDP::BeginReceiving() {
 
 			struct sockaddr_in _senderAddr; // Store sender informations
 			int _senderAddrSize = sizeof(_senderAddr);
+
 
 			_nbRecvBytes = recvfrom(mySocket, _rcvDGRAM, NetPacket::DGRAM_SIZE, 0, (SOCKADDR*)&_senderAddr, &_senderAddrSize);
 
@@ -223,39 +259,13 @@ void UDP::BeginReceiving() {
 }
 
 void UDP::Send(unsigned int _clientID, SendNetPacket& _netPacket) {
-	int _hr = 0;
-	int _nbSendBytes = 0;
-	char* _datasToSend;
-	int _datasToSendLength;
+	if (_netPacket.size() < (NetPacket::DGRAM_SIZE_WO_HEAD)) // The NetPacket can be send in one DGRAM
+		Send(_clientID, _netPacket.data(), _netPacket.size(), _netPacket.packetID, 0, 1);
+	else { // The NetPacket need to be send in multiple DGRAMs
+		unsigned char _nbDGRAM_T = _netPacket.size() / NetPacket::DGRAM_SIZE_WO_HEAD + 1; // Number of DGRAMs to send
 
-	if (_netPacket.size() < (NetPacket::DGRAM_SIZE_WO_HEAD)) {
-		// Can send directly the NetPacket
-		_datasToSendLength = NetPacket::HEAD_SIZE + _netPacket.size();
-		_datasToSend = new char[_datasToSendLength];
-
-		// Header of the NetPacket
-		_datasToSend[0] = _netPacket.packetID;  // NetPacket ID
-		_datasToSend[1] = 0; // iDGRAM
-		_datasToSend[2] = _netPacket.size(); // NetPacket size in byte
-
-		// Datas of the NetPacket
-		size_t _iNetPacketData = 0; // Increments of the NetPacket data
-		for (size_t _iDataToSend = NetPacket::HEAD_SIZE; _iDataToSend < _netPacket.size() + NetPacket::HEAD_SIZE; _iDataToSend++, _iNetPacketData++)
-			_datasToSend[_iDataToSend] = _netPacket.data()[_iNetPacketData];
-
-		_nbSendBytes = sendto(mySocket, _datasToSend, _datasToSendLength, 0, (SOCKADDR*)&sockAddressBook[_clientID], sizeof(sockAddressBook[_clientID]));
-
-		// Check if error are detected
-		if (_nbSendBytes == SOCKET_ERROR)
-			_hr = SOCKET_ERROR;
-		else if (_nbSendBytes != _datasToSendLength) {
-			std::cerr << "Only " << _nbSendBytes << " Bytes was send and not " << _datasToSendLength << "Bytes\n";
-		}
-
-		if (_hr != 0) {
-			std::cerr << "\n ERROR at void Protocole::Send(unsigned int _clientID, char* _bufferToSend, int _bufferToSendLength) :\n"
-				<< WSAGetLastError();
-			throw _hr;
+		for (unsigned char _DGRAMid; _DGRAMid < _nbDGRAM_T; _DGRAMid++) {
+			Send(_clientID, _netPacket.data(_DGRAMid * ), _netPacket.size(), _netPacket.packetID, 0, 1);
 		}
 	}
 
