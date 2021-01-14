@@ -58,8 +58,6 @@ public:
 	RcvNetPacket* UDP::GetNetPacket() { return Pop_front(); } // Return the first NetPacket if it receive all his datagram or return NULL (The caller must manually delete it)
 
 	void UDP::Send(unsigned int _clientID, SendNetPacket& _netPacket); // Send the SendNetPacket to a client
-
-	std::string GetClientInfo(unsigned short& _returnPort, unsigned int _clientID); // Deprecate use addressBook and portBook instead
 };
 
 class Network {
@@ -68,8 +66,6 @@ private:
 
 public:
 	// Public Variables
-	static int hr;
-
 	static std::vector<UDP> udp;
 
 	// Public Functions

@@ -3,7 +3,7 @@
 
 // SendNetPacket
 // Static Variables
-static unsigned char iPacket = 0;
+unsigned char SendNetPacket::iPacket = 0;
 std::mutex SendNetPacket::iPacketM;
 
 SendNetPacket::SendNetPacket(size_t beginCapacity) : Packet(beginCapacity) { GenerateID(); }
@@ -25,7 +25,9 @@ RcvNetPacket::RcvNetPacket(unsigned char _packetID, unsigned int _clientID, unsi
 	nbRcvDGRAM(0),
 	nbRcvDGRAM_T(_nbRcvDGRAM_T) {
 	emplace(0, capacity());
-	b_rcvDGRAM = new bool[_nbRcvDGRAM_T];
+	b_rcvDGRAM = new bool[nbRcvDGRAM_T];
+	for (unsigned char _i = 0; _i < nbRcvDGRAM_T; _i++)
+		b_rcvDGRAM[_i] = false;
 }
 
 RcvNetPacket::~RcvNetPacket() {
