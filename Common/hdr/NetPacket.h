@@ -8,7 +8,8 @@ public:
 	static const unsigned int HEAD_SIZE = 3;							   // Size of the custom Head
 	static const unsigned int DGRAM_SIZE_WO_HEAD = DGRAM_SIZE - HEAD_SIZE; // Maximum Datagram size minus the Head for the Network in Byte
 
-	virtual char* GetDGRAM(unsigned char _DGRAMid);			// Get a pointer to the first element of the datas of a DGRAM
+	virtual char* GetDGRAM(unsigned char _DGRAMid);		// Get a pointer to datas' first element of a DGRAM
+	virtual size_t GetDGRAMpos(unsigned char _DGRAMid); // Get the position of datas' first element of a DGRAM
 };
 
 // Use by User to send Packet throught Network

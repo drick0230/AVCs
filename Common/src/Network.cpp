@@ -265,16 +265,14 @@ void UDP::Send(unsigned int _clientID, SendNetPacket& _netPacket) {
 		unsigned char _nbDGRAM_T = _netPacket.size() / NetPacket::DGRAM_SIZE_WO_HEAD + 1; // Number of DGRAMs to send
 
 		for (unsigned char _DGRAMid; _DGRAMid < _nbDGRAM_T; _DGRAMid++) {
-			Send(_clientID, _netPacket.data(_DGRAMid * ), _netPacket.size(), _netPacket.packetID, 0, 1);
+			char* _DGRAMdata = _netPacket.GetDGRAM(_DGRAMid); // Datas of the DGRAM
+
+			if (_DGRAMdata - _netPacket.data() + NetPacket::DGRAM_SIZE_WO_HEAD < _netPacket.size()) // Can send a DGRAM of NetPacket::DGRAM_SIZE
+				Send(_clientID, _DGRAMdata, NetPacket::DGRAM_SIZE_WO_HEAD, _netPacket.packetID, 0, 1);
+			else
+				Send(_clientID, _DGRAMdata, _netPacket.size() - (_DGRAMdata - _netPacket.data()), _netPacket.packetID, 0, 1);
 		}
 	}
-
-	//unsigned char _nbDGRAM = _netPacket.size() / (NetPacket::maxDGRAMSize - _custmHeaderSize) + 1; // Number of datagram to send
-
-	//for (unsigned char _iDGRAM = 0; _iDGRAM < _nbDGRAM; _iDGRAM++) {
-
-	//}
-
 }
 #pragma endregion //UDP
 

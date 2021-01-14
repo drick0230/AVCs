@@ -2,9 +2,13 @@
 #include "NetPacket.h"
 
 #pragma region NetPacket
-
+// Functions
 char* NetPacket::GetDGRAM(unsigned char _DGRAMid) {
-	return _data + (size_t)_DGRAMid * NetPacket::DGRAM_SIZE_WO_HEAD;
+	return _data + GetDGRAMpos(_DGRAMid);
+}
+
+size_t NetPacket::GetDGRAMpos(unsigned char _DGRAMid){
+	return (size_t)_DGRAMid * NetPacket::DGRAM_SIZE_WO_HEAD;
 }
 #pragma endregion
 
@@ -14,10 +18,12 @@ char* NetPacket::GetDGRAM(unsigned char _DGRAMid) {
 unsigned char SendNetPacket::iPacket = 0;
 std::mutex SendNetPacket::iPacketM;
 
+// Constructors
 SendNetPacket::SendNetPacket(size_t beginCapacity) : Packet(beginCapacity) { GenerateID(); }
 SendNetPacket::SendNetPacket(const Packet& base) : Packet(base) { GenerateID(); }
 SendNetPacket::SendNetPacket(const SendNetPacket& _netPacket) : Packet((Packet)_netPacket), packetID(_netPacket.packetID) {}
 
+// Functions
 void SendNetPacket::GenerateID() {
 	SendNetPacket::iPacketM.lock();
 	SendNetPacket::iPacket++;
@@ -27,6 +33,7 @@ void SendNetPacket::GenerateID() {
 #pragma endregion //SendNetPacket
 
 #pragma region RcvNetPacket
+// Constructors/Destructors
 RcvNetPacket::RcvNetPacket(unsigned char _packetID, unsigned int _clientID, unsigned char _nbDGRAM_T) :
 	Packet((size_t)_nbDGRAM_T* NetPacket::DGRAM_SIZE_WO_HEAD),
 	clientID(_clientID),
@@ -43,6 +50,7 @@ RcvNetPacket::~RcvNetPacket() {
 	delete[] b_rcvDGRAM;
 }
 
+// Functions
 void RcvNetPacket::AddDGRAM(char* _bytes, size_t _bytesSize) {
 	const unsigned char _packetID = _bytes[0];
 	const unsigned char _DGRAMid = _bytes[1];
