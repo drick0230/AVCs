@@ -30,15 +30,17 @@ private:
 	size_t end; // Represent the end of the buffer ( last element + 1 )
 
 	std::thread tReceiving;
-	bool isReceiving;
+	std::mutex isReceiving; // Prevent tReceiving from being call multiple times and stop his execution
 
+	bool IsEmpty(); // Return true if the buffer is empty
 	size_t UDP::FoundNetPacket(unsigned int _clientID, unsigned int _packetID); // If the packet is in the buffer, Return his position in the buffer. In other case, return the size of the buffer.
 	void UDP::Emplace_back(unsigned int _packetID, unsigned int _clientID, unsigned char _DGRAMSize_T);
 
 	RcvNetPacket* UDP::Pop_front();	// Return the first NetPacket, if it receive all his datagram, or return NULL (The caller must manually delete it)
 
 	void MoveFirst(); // Move first by 1 and overlap it at netPacketBufferSize
-	void MoveEnd(); // Move last by 1 and overlap it at netPacketBufferSize
+	void MoveEnd(); // Move end by 1 and overlap it at netPacketBufferSize
+	size_t UDP::GetLast(); // Get the last element
 
 	void UDP::Send(unsigned int _clientID, char* _bytes, const size_t _bytesSize, const unsigned char _packetID, const unsigned char _DGRAMid, const unsigned char _nbDGRAM_T); // Send a DGRAM with a head. _bytesSize should not exceed NetPacket::DGRAM_SIZE_WO_HEAD
 
@@ -57,9 +59,9 @@ public:
 	unsigned int AddToBook(std::string _ipAddress, unsigned short _port);
 
 	void BeginReceiving(); // Start Async operation to receive packets from everyone and store them
-	RcvNetPacket* UDP::GetNetPacket() { return Pop_front(); } // Return the first NetPacket if it receive all his datagram or return NULL (The caller must manually delete it)
 
-	void UDP::Send(unsigned int _clientID, SendNetPacket& _netPacket); // Send the SendNetPacket to a client
+	RcvNetPacket* GetNetPacket(); // Return the first NetPacket if it receive all his datagram or return NULL (The caller must manually delete it)
+	void Send(unsigned int _clientID, SendNetPacket& _netPacket); // Send the SendNetPacket to a client
 };
 
 class Network {

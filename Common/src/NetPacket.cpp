@@ -41,6 +41,7 @@ RcvNetPacket::RcvNetPacket(unsigned char _packetID, unsigned int _clientID, unsi
 	nbDGRAM(0),
 	nbDGRAM_T(_nbDGRAM_T) {
 	emplace(0, capacity());
+	move(0);
 	b_rcvDGRAM = new bool[nbDGRAM_T];
 	for (unsigned char _i = 0; _i < nbDGRAM_T; _i++)
 		b_rcvDGRAM[_i] = false;

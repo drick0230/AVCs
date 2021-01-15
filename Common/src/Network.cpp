@@ -6,7 +6,7 @@ std::vector <UDP> Network::udp;
 
 #pragma region UDP
 /// Constructor/Destructor
-UDP::UDP() : first(0), end(0), mySocket(INVALID_SOCKET), serverAddr(), inUse(), tReceiving(), isReceiving(false) {
+UDP::UDP() : first(0), end(0), mySocket(INVALID_SOCKET), serverAddr(), inUse(), tReceiving(), isReceiving() {
 	std::lock_guard<std::mutex> LG_inUse(inUse);  // Lock the use of UDP in other threads and unlock it at end of current task
 
 	// Initialize netPacketBuffer with empty NetPacket
@@ -14,7 +14,7 @@ UDP::UDP() : first(0), end(0), mySocket(INVALID_SOCKET), serverAddr(), inUse(), 
 		netPacketBuffer[_i] = NULL;
 }
 
-UDP::UDP(UDP&& _udp) : first(_udp.first), end(_udp.end), mySocket(INVALID_SOCKET), serverAddr(), inUse(), tReceiving(), isReceiving(false) {
+UDP::UDP(UDP&& _udp) : first(_udp.first), end(_udp.end), mySocket(INVALID_SOCKET), serverAddr(), inUse(), tReceiving(), isReceiving() {
 	std::lock_guard<std::mutex> LG_inUse2(_udp.inUse);  // Lock the use of UDP in other threads and unlock it at end of current task
 	std::lock_guard<std::mutex> LG_inUse(inUse);  // Lock the use of UDP in other threads and unlock it at end of current task
 
@@ -40,7 +40,7 @@ UDP::~UDP() {
 		throw _hr;
 	}
 
-	isReceiving = false;
+	isReceiving.unlock();
 	tReceiving.join();
 
 	// Delete netPacketBuffer's NetPackets
@@ -53,13 +53,22 @@ UDP::~UDP() {
 }
 
 /// Private
+bool UDP::IsEmpty() {
+	return first == end;
+}
+
 size_t UDP::FoundNetPacket(unsigned int _clientID, unsigned int _packetID) {
-	unsigned int _posInBuf;
-	for (_posInBuf = 0; _posInBuf < netPacketBufferSize; _posInBuf++)
-		if (netPacketBuffer[_posInBuf]->capacity() != 0)
-			if (netPacketBuffer[_posInBuf]->clientID == _clientID)
-				if (netPacketBuffer[_posInBuf]->packetID == _packetID)
-					return _posInBuf;
+	if (!IsEmpty())
+		for (unsigned int _posInBuf = first; _posInBuf != end;) {
+			if (netPacketBuffer[_posInBuf] != NULL)
+				if (netPacketBuffer[_posInBuf]->capacity() != 0)
+					if (netPacketBuffer[_posInBuf]->clientID == _clientID)
+						if (netPacketBuffer[_posInBuf]->packetID == _packetID)
+							return _posInBuf;
+
+			_posInBuf++;
+			if (_posInBuf == netPacketBufferSize) _posInBuf = 0;
+		}
 
 	return netPacketBufferSize;
 }
@@ -74,7 +83,7 @@ void UDP::Emplace_back(unsigned int _packetID, unsigned int _clientID, unsigned 
 		MoveFirst();
 	}
 
-	netPacketBuffer[end - 1] = new RcvNetPacket(_packetID, _clientID, _DGRAMSize_T); // Create a new NetPacket at last position
+	netPacketBuffer[GetLast()] = new RcvNetPacket(_packetID, _clientID, _DGRAMSize_T); // Create a new NetPacket at last position
 }
 
 RcvNetPacket* UDP::Pop_front() {
@@ -82,8 +91,8 @@ RcvNetPacket* UDP::Pop_front() {
 
 	RcvNetPacket* _return = NULL;
 
-	if (first != end) // The buffer is not empty
-		if (netPacketBuffer[first]->nbRcvDGRAM == netPacketBuffer[first]->nbRcvDGRAM_T) {
+	if (!IsEmpty())
+		if (netPacketBuffer[first]->nbDGRAM == netPacketBuffer[first]->nbDGRAM_T) {
 			// the NetPacket is ready to be pop (Received all his Datagram)
 			_return = netPacketBuffer[first]; // Return the NetPacket pointer
 			netPacketBuffer[first] = NULL; // Prevent the NetPacket from being delete automatically
@@ -96,13 +105,16 @@ RcvNetPacket* UDP::Pop_front() {
 
 void UDP::MoveFirst() {
 	first++;
-	if (first > netPacketBufferSize)
+	if (first == netPacketBufferSize)
 		first = 0;
 }
 void UDP::MoveEnd() {
 	end++;
 	if (end == netPacketBufferSize)
 		end = 0;
+}
+size_t UDP::GetLast() {
+	return end == 0 ? 9 : end - 1;
 }
 
 void UDP::Send(unsigned int _clientID, char* _bytes, const size_t _bytesSize, const unsigned char _packetID, const unsigned char _DGRAMid, const unsigned char _nbDGRAM_T) {
@@ -192,15 +204,14 @@ bool UDP::IsInBook(std::string _ipAddress, unsigned short _port) {
 }
 
 void UDP::BeginReceiving() {
-	if (isReceiving) {
+	if (!isReceiving.try_lock()) {
 		std::cerr << "\nvoid UDP::BeginReceiving() Already called\n";
 		throw "void UDP::BeginReceiving() Already called";
 		return;
 	}
 
 	tReceiving = std::thread([this] {
-		while (isReceiving) {
-			std::lock_guard<std::mutex> LG_inUse(inUse);  // Lock the use of UDP in other threads and unlock it at end of current task
+		while (!isReceiving.try_lock()) {
 			int hr = 0;
 
 			char _rcvDGRAM[NetPacket::DGRAM_SIZE];
@@ -212,6 +223,7 @@ void UDP::BeginReceiving() {
 
 			_nbRecvBytes = recvfrom(mySocket, _rcvDGRAM, NetPacket::DGRAM_SIZE, 0, (SOCKADDR*)&_senderAddr, &_senderAddrSize);
 
+			std::lock_guard<std::mutex> LG_inUse(inUse);  // Lock the use of UDP in other threads and unlock it at end of current task
 			if (_nbRecvBytes != SOCKET_ERROR) {
 				// If the address is not store, add it
 				unsigned int _clientID;
@@ -227,9 +239,6 @@ void UDP::BeginReceiving() {
 					sockAddressBook.push_back(_senderAddr);
 					addressBook.push_back(Network::GetSocketInfo(_senderPort, _senderAddr));
 					portBook.push_back(_senderPort);
-
-					int test = sizeof(_senderAddr);
-					test = test;
 				}
 
 				const unsigned char _packetID = _rcvDGRAM[0];
@@ -244,7 +253,7 @@ void UDP::BeginReceiving() {
 				else {
 					// Create New NetPacket in Buffer at last position and add the DGRAM
 					Emplace_back(_packetID, _clientID, _DGRAMsize);
-					netPacketBuffer[end - 1]->AddDGRAM(_rcvDGRAM, _nbRecvBytes);
+					netPacketBuffer[GetLast()]->AddDGRAM(_rcvDGRAM, _nbRecvBytes);
 				}
 			}
 			else hr = SOCKET_ERROR; // Error
@@ -255,7 +264,13 @@ void UDP::BeginReceiving() {
 				throw hr;
 			}
 		}
+
+		isReceiving.unlock();
 		});
+}
+
+RcvNetPacket* UDP::GetNetPacket() {
+	return Pop_front();
 }
 
 void UDP::Send(unsigned int _clientID, SendNetPacket& _netPacket) {
@@ -265,12 +280,17 @@ void UDP::Send(unsigned int _clientID, SendNetPacket& _netPacket) {
 		unsigned char _nbDGRAM_T = _netPacket.size() / NetPacket::DGRAM_SIZE_WO_HEAD + 1; // Number of DGRAMs to send
 
 		for (unsigned char _DGRAMid; _DGRAMid < _nbDGRAM_T; _DGRAMid++) {
-			char* _DGRAMdata = _netPacket.GetDGRAM(_DGRAMid); // Datas of the DGRAM
+			const size_t _DGRAMpos = _netPacket.GetDGRAMpos(_DGRAMid); // DGRAM's pos in packet datas
 
-			if (_DGRAMdata - _netPacket.data() + NetPacket::DGRAM_SIZE_WO_HEAD < _netPacket.size()) // Can send a DGRAM of NetPacket::DGRAM_SIZE
-				Send(_clientID, _DGRAMdata, NetPacket::DGRAM_SIZE_WO_HEAD, _netPacket.packetID, 0, 1);
-			else
-				Send(_clientID, _DGRAMdata, _netPacket.size() - (_DGRAMdata - _netPacket.data()), _netPacket.packetID, 0, 1);
+			if (_DGRAMpos + NetPacket::DGRAM_SIZE_WO_HEAD < _netPacket.size())
+				Send(_clientID, &_netPacket.data()[_DGRAMpos], NetPacket::DGRAM_SIZE_WO_HEAD, _netPacket.packetID, _DGRAMid, _nbDGRAM_T); // send a DGRAM of NetPacket::DGRAM_SIZE
+			else if (_netPacket.size() - _DGRAMpos > 0)
+				Send(_clientID, &_netPacket.data()[_DGRAMpos], _netPacket.size() - _DGRAMpos, _netPacket.packetID, _DGRAMid, _nbDGRAM_T); // Send a DGRAM with the remaining datas
+			else {
+				Send(_clientID, 0, 0, _netPacket.packetID, _DGRAMid, _nbDGRAM_T);														  // Send an empty DGRAM
+				throw "\n Send an empty DGRAM:\n";
+				std::cerr << "\n Send an empty DGRAM:\n";
+			}
 		}
 	}
 }

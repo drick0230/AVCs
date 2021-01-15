@@ -38,41 +38,6 @@ int main()
 	Network::Add(ProtocoleTypes::UDP, 1);
 	Console::InitializeConsole();
 
-	// Test NetPacket
-	{
-		const unsigned char _DGRAMsizeT = 4;
-
-		unsigned char _DGRAM[_DGRAMsizeT][NetPacket::DGRAM_SIZE];
-		// Initialize at 0
-		for (unsigned int _iDGRAM = 0; _iDGRAM < _DGRAMsizeT; _iDGRAM++) {
-			for (unsigned int _iByte = 0; _iByte < NetPacket::DGRAM_SIZE; _iByte++) {
-				_DGRAM[_iDGRAM][_iByte] = 0;
-			}
-		}
-
-		// Set Header
-		for (unsigned int _iDGRAM = 0; _iDGRAM < _DGRAMsizeT; _iDGRAM++) {
-			_DGRAM[_iDGRAM][0] = 0;
-			_DGRAM[_iDGRAM][1] = _iDGRAM;
-			_DGRAM[_iDGRAM][2] = _DGRAMsizeT;
-		}
-
-		// Fill datas with _iDGRAM
-		for (unsigned int _iDGRAM = 0; _iDGRAM < _DGRAMsizeT; _iDGRAM++) {
-			for (unsigned int _iByte = NetPacket::HEAD_SIZE; _iByte < NetPacket::DGRAM_SIZE; _iByte++) {
-				_DGRAM[_iDGRAM][_iByte] = _iDGRAM;
-			}
-		}
-
-
-		RcvNetPacket rcvNetPacket(0, 0, _DGRAMsizeT);
-		rcvNetPacket.AddDGRAM((char*)&_DGRAM[0][0], NetPacket::DGRAM_SIZE);
-		rcvNetPacket.AddDGRAM((char*)&_DGRAM[2][0], NetPacket::DGRAM_SIZE);
-		rcvNetPacket.AddDGRAM((char*)&_DGRAM[2][0], NetPacket::DGRAM_SIZE);
-		rcvNetPacket.AddDGRAM((char*)&_DGRAM[1][0], NetPacket::DGRAM_SIZE);
-		rcvNetPacket.AddDGRAM((char*)&_DGRAM[3][0], NetPacket::DGRAM_SIZE);
-	}
-
 	std::string userInput = "";
 	do {
 		Console::Write("[0] Client\n[1] Server\n");
@@ -140,7 +105,8 @@ int main()
 		Console::Write("Serveur ouvert sur le port "); Console::Write(Main::serverPort); Console::Write('\n');
 		Console::Write();
 
-		std::thread tNetServerReceive(&NetServerReceive, _defaultGateway, _publicIP, &programIsExiting); // Start a thread to receive and treat Packets
+		Network::udp[0].BeginReceiving();
+		std::thread tNetServerReceive(&NetServerReceive, _defaultGateway, _publicIP, &programIsExiting); // Start a thread to get and treat Packets
 		tNetServerReceive.detach();
 
 		Console::Write("[0] Exit\n");
@@ -236,6 +202,7 @@ void NetServerReceive(std::string _defaultGateway, std::string _publicIP, std::m
 			Console::Write('\n');
 			Console::Write();
 		}
+		else { std::this_thread::sleep_for(std::chrono::milliseconds(20)); /* Reduce CPU Usage */ }
 	}
 
 	_programIsExiting->unlock();
