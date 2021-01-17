@@ -150,6 +150,8 @@ void UDP::Send(unsigned int _clientID, char* _bytes, const size_t _bytesSize, co
 			<< WSAGetLastError();
 		throw _hr;
 	}
+
+	delete[] _DGRAM;
 }
 
 /// Public
@@ -184,6 +186,8 @@ bool UDP::Bind(unsigned long _ipAddress, unsigned short _port) {
 }
 
 unsigned int UDP::AddToBook(std::string _ipAddress, unsigned short _port) {
+	std::unique_lock<std::mutex> UL_inUse(inUse, std::try_to_lock); // If not did in this thread, lock the use of UDP in other threads and unlock it at end of current task (return)
+
 	// Create the sockaddr of the destination
 	struct sockaddr_in _sendToAddr = Network::CreateSockaddr_in(AF_INET, _ipAddress, _port);
 
@@ -195,12 +199,25 @@ unsigned int UDP::AddToBook(std::string _ipAddress, unsigned short _port) {
 	return sockAddressBook.size() - 1; // Return the clientID
 }
 bool UDP::IsInBook(std::string _ipAddress, unsigned short _port) {
+	std::unique_lock<std::mutex> UL_inUse(inUse, std::try_to_lock); // If not did in this thread, lock the use of UDP in other threads and unlock it at end of current task (return)
+
 	for (unsigned int _i = 0; _i < addressBook.size(); _i++)
 		if (addressBook[_i] == _ipAddress)
 			if (portBook[_i] == _port)
 				return true;
 
 	return false;
+}
+
+unsigned int UDP::PosInBook(std::string _ipAddress, unsigned short _port) {
+	std::unique_lock<std::mutex> UL_inUse(inUse, std::try_to_lock); // If not did in this thread, lock the use of UDP in other threads and unlock it at end of current task (return)
+
+	for (unsigned int _i = 0; _i < addressBook.size(); _i++)
+		if (addressBook[_i] == _ipAddress)
+			if (portBook[_i] == _port)
+				return _i;
+
+	return addressBook.size();
 }
 
 void UDP::BeginReceiving() {
@@ -259,9 +276,11 @@ void UDP::BeginReceiving() {
 			else hr = SOCKET_ERROR; // Error
 
 			if (hr != 0) {
-				std::cerr << "\n ERROR at unsigned int Protocole::WaitReceive(Packet& _recvPacket, unsigned int _clientID) :\n"
-					<< WSAGetLastError();
-				throw hr;
+				if (WSAGetLastError() != 10054) {
+					std::cerr << "\n ERROR at unsigned int Protocole::WaitReceive(Packet& _recvPacket, unsigned int _clientID) :\n"
+						<< WSAGetLastError();
+					throw hr;
+				}
 			}
 		}
 
@@ -279,7 +298,7 @@ void UDP::Send(unsigned int _clientID, SendNetPacket& _netPacket) {
 	else { // The NetPacket need to be send in multiple DGRAMs
 		unsigned char _nbDGRAM_T = _netPacket.size() / NetPacket::DGRAM_SIZE_WO_HEAD + 1; // Number of DGRAMs to send
 
-		for (unsigned char _DGRAMid; _DGRAMid < _nbDGRAM_T; _DGRAMid++) {
+		for (unsigned char _DGRAMid = 0; _DGRAMid < _nbDGRAM_T; _DGRAMid++) {
 			const size_t _DGRAMpos = _netPacket.GetDGRAMpos(_DGRAMid); // DGRAM's pos in packet datas
 
 			if (_DGRAMpos + NetPacket::DGRAM_SIZE_WO_HEAD < _netPacket.size())

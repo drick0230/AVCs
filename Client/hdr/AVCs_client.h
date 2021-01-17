@@ -16,8 +16,6 @@
 
 class VOIPClient {
 public:
-	VOIPClient(unsigned int _networkID) : networkID(_networkID), audioDatas(), receivedMediaType(false) {};
-	VOIPClient(const VOIPClient& _b) : VOIPClient(_b.networkID) {};
 	unsigned int networkID;
 
 	AudioDatas audioDatas;
@@ -25,9 +23,12 @@ public:
 	std::mutex audioBufferMutex;
 	std::queue<AudioDatas> audioDatasBuffer;
 
-	bool receivedMediaType = false;
+	bool receivedMediaType;
 
 	std::mutex audioIsProcessing;
+
+	VOIPClient(unsigned int _networkID, bool _receivedMediaType = false) : networkID(_networkID), audioDatas(), receivedMediaType(_receivedMediaType) {};
+	VOIPClient(const VOIPClient& _b) : VOIPClient(_b.networkID, _b.receivedMediaType) {};
 };
 
 std::string GetNextCommand(); // Get the next line ending by Enter in the console and write the character during typing
@@ -46,4 +47,6 @@ void ProcessAudioDatas(std::vector<VOIPClient>& _clients, unsigned int _clientID
 
 void KeepAlive(unsigned int _clientID, unsigned int _ms, std::mutex* _programIsExiting); // Send a Packet to maintain a connection (Hole Punching)
 
+ // Get the VOIPClient's ID by the network ID or return the size of VOIPClient's vector
+size_t GetVOIPClient(std::vector<VOIPClient> _clients, unsigned int _networkID);
 

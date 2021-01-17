@@ -16,8 +16,6 @@ namespace ProtocoleTypes {
 
 class UDP {
 private:
-	std::mutex inUse;
-
 	SOCKET mySocket;
 	struct sockaddr_in serverAddr;
 	std::vector<sockaddr_in> sockAddressBook;
@@ -43,25 +41,47 @@ private:
 	size_t UDP::GetLast(); // Get the last element
 
 	void UDP::Send(unsigned int _clientID, char* _bytes, const size_t _bytesSize, const unsigned char _packetID, const unsigned char _DGRAMid, const unsigned char _nbDGRAM_T); // Send a DGRAM with a head. _bytesSize should not exceed NetPacket::DGRAM_SIZE_WO_HEAD
-
 public:
-	std::vector<std::string> addressBook; // Address of the clients
-	std::vector<unsigned short> portBook; // Ports of the clients
+	// Prevent the UDP from being used in other threads
+	std::mutex inUse;
+
+	// Address of the clients
+	std::vector<std::string> addressBook;
+
+	// Ports of the clients
+	std::vector<unsigned short> portBook;
 
 	UDP();
 	UDP(UDP&& _udp);
 	~UDP();
 
-	bool Bind(std::string _ipAddress, unsigned short _port); // Bind to an IPV4 address represent by a string 0.0.0.0 format and a port
-	bool Bind(unsigned long _ipAddress, unsigned short _port); // Bind to an IPV4 address represent by a ulong and a port. Ex: 	INADDR_ANY and 0 for an auto ip and port
+	// Bind to an IPV4 address represent by a string 0.0.0.0 format and a port
+	bool Bind(std::string _ipAddress, unsigned short _port);
 
+	// Bind to an IPV4 address represent by a ulong and a port. Ex: 	INADDR_ANY and 0 for an auto ip and port
+	bool Bind(unsigned long _ipAddress, unsigned short _port);
+
+
+
+	// Return true if the corresponding IP and Port are in book. Lock inUse by default
 	bool IsInBook(std::string _ipAddress, unsigned short _port);
+
+	// Return the position in book of the corresponding IP and Port or the size of the book.
+	unsigned int PosInBook(std::string _ipAddress, unsigned short _port);
+
+	// Add the IP and Port to the book if not already in. Return the ClientID of the added one or -1.
 	unsigned int AddToBook(std::string _ipAddress, unsigned short _port);
 
-	void BeginReceiving(); // Start Async operation to receive packets from everyone and store them
 
-	RcvNetPacket* GetNetPacket(); // Return the first NetPacket if it receive all his datagram or return NULL (The caller must manually delete it)
-	void Send(unsigned int _clientID, SendNetPacket& _netPacket); // Send the SendNetPacket to a client
+	// Start Async operation to receive packets from everyone and store them
+	void BeginReceiving();
+
+
+	// Return the first NetPacket if it receive all his datagram or return NULL (The caller must manually delete it)
+	RcvNetPacket* GetNetPacket();
+
+	// Send the SendNetPacket to a client
+	void Send(unsigned int _clientID, SendNetPacket& _netPacket);
 };
 
 class Network {
