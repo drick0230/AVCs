@@ -23,9 +23,10 @@
 
 #include <iostream>
 #include <vector>
+#include "general.h"
 
 namespace KEYS {
-	enum KEYS { DEL = 127, U_ARROW = 256, D_ARROW, L_ARROW, R_ARROW, HOME, END,  };
+	enum KEYS { DEL = 127, U_ARROW = 256, D_ARROW, L_ARROW, R_ARROW, HOME, END, SHIFT };
 }
 
 // Class Prototype
@@ -89,6 +90,7 @@ public:
 	static unsigned short GetInKeys(size_t _index);
 
 	static void Write(std::string _s);
+	static void Write(std::wstring _s);
 	static void Write(char _c);
 	static void Write(unsigned char _c, bool _hex = false);
 	static void Write(int _int, bool _hex = false);

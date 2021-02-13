@@ -50,6 +50,12 @@ static std::wstring ToWstring(std::string str)
 	return strconverter.from_bytes(str);
 }
 
+static std::string ToString(std::wstring str)
+{
+	std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> strconverter;
+	return strconverter.to_bytes(str);
+}
+
 template <class T>
 void SafeRelease(T** ppT)
 {

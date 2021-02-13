@@ -112,7 +112,7 @@ bool Console::Read() {
 	unsigned int _nbKeyEvent = 0;
 
 #if _WIN32
-	KEY_EVENT_RECORD _keyEvents[3];
+	KEY_EVENT_RECORD _keyEvents[20];
 
 	GetNumberOfConsoleInputEvents(hIn, &_nbEventAvailale);
 	ReadConsoleInput(hIn, inRecord, _nbEventAvailale, &_nbEventRead);
@@ -150,12 +150,17 @@ bool Console::Read() {
 			}
 		}
 		break;
-	case 2:
 
+	case 2:
 		break;
+
 	case 1:
-		inKeys.push_back(_keyEvents[0].uChar.AsciiChar);
+		if (_keyEvents[0].wVirtualKeyCode == 0x10) 
+			inKeys.push_back(KEYS::SHIFT);
+		else 
+			inKeys.push_back(_keyEvents[0].uChar.AsciiChar);
 		break;
+
 	default:
 		break;
 	}
@@ -192,6 +197,7 @@ unsigned short Console::GetInKeys(size_t _index) {
 
 
 void Console::Write(std::string _s) { outCommands.append(_s); }
+void Console::Write(std::wstring _s) { outCommands.append(ToString(_s)); }
 void Console::Write(char _c) { outCommands.push_back(_c); }
 void Console::Write(unsigned char _c, bool _hex) { 
 	char _intStr[5];

@@ -11,6 +11,8 @@ namespace Main {
 	//DevicesManager devManager;
 
 	const unsigned int minAudioBuffer = 0;
+
+	size_t _audioRenderID, _audioCaptureID;
 }
 
 int main()
@@ -26,9 +28,6 @@ int main()
 
 	DevicesManager::EnumerateDevices(DevicesTypes::AUD_CAPT);
 	DevicesManager::EnumerateDevices(DevicesTypes::AUD_REND);
-
-	std::wcout << DevicesManager::GetDevicesName(DevicesTypes::AUD_CAPT, 0) << '\n';
-	std::wcout << DevicesManager::GetDevicesName(DevicesTypes::AUD_REND, 0) << '\n';
 	//std::wcout << Main::devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
 
 	//DevicesManager::audioRenderDevices[0].AddTrack();
@@ -49,6 +48,43 @@ int main()
 	if (userInput == "0") {
 		// Is Client
 		std::string _serverIP;
+
+		// Select Mic
+		do {
+			Console::Write("Select your Microphone :\n");
+			for (int _i = 0; _i < DevicesManager::audioCaptureDevices.size(); _i++) {
+				Console::Write('[');
+				Console::Write(_i);
+				Console::Write("] : ");
+				Console::Write(DevicesManager::audioCaptureDevices[_i].GetName());
+				Console::Write('\n');
+			}
+			Console::Write('\n');
+			Console::Write();
+
+			userInput = GetNextCommand();
+		} while (myParse<size_t>(userInput) < 0 || myParse<size_t>(userInput) >= DevicesManager::audioCaptureDevices.size());
+
+		Main::_audioCaptureID = myParse<size_t>(userInput);
+
+		// Select Speaker
+		do {
+			Console::Write("Select your Speaker/Headphone :\n");
+			for (int _i = 0; _i < DevicesManager::audioRenderDevices.size(); _i++) {
+				Console::Write('[');
+				Console::Write(_i);
+				Console::Write("] : ");
+				Console::Write(DevicesManager::audioRenderDevices[_i].GetName());
+				Console::Write('\n');
+			}
+			Console::Write('\n');
+			Console::Write();
+
+			userInput = GetNextCommand();
+		} while (myParse<size_t>(userInput) < 0 || myParse<size_t>(userInput) >= DevicesManager::audioRenderDevices.size());
+
+		Main::_audioRenderID = myParse<size_t>(userInput);
+
 
 		Network::udp[0].Bind(INADDR_ANY, 0);
 
@@ -153,7 +189,7 @@ std::string GetNextCommand() {
 						consoleIn.pop_back();
 					}
 				}
-				else {
+				else if (Console::inKeys[_i] != KEYS::SHIFT) {
 					consoleIn.push_back((char)Console::inKeys[_i]);
 					Console::Write((char)Console::inKeys[_i]);
 					Console::Write();
@@ -242,7 +278,7 @@ void NetClientReceive(std::vector<VOIPClient>& _clients, std::mutex* _clientsMut
 					_clientsMutex->lock();
 					if ((_clientID = GetVOIPClient(_clients, _networkID)) == _clients.size()) { // Not added as client
 						_clients.emplace_back(_networkID); // Add new client
-						DevicesManager::audioRenderDevices[0].AddTrack(); // Add a track for the client
+						DevicesManager::audioRenderDevices[Main::_audioRenderID].AddTrack(); // Add a track for the client
 
 						Console::Write(_ipAddress + ':');
 						Console::Write(_port);
@@ -276,7 +312,7 @@ void NetClientReceive(std::vector<VOIPClient>& _clients, std::mutex* _clientsMut
 					case 2: // Begin new Audio Datas
 						if (_clients[_clientID].receivedMediaType) {
 							*_rcvPacket >> _clients[_clientID].audioDatas;
-							DevicesManager::audioRenderDevices[0].Play(_clients[_clientID].audioDatas, _clientID);
+							DevicesManager::audioRenderDevices[Main::_audioRenderID].Play(_clients[_clientID].audioDatas, _clientID);
 							Console::Write("Received new Audio Datas from ");
 							Console::Write((int)_rcvPacket->clientID);
 							Console::Write('\n');
@@ -289,7 +325,7 @@ void NetClientReceive(std::vector<VOIPClient>& _clients, std::mutex* _clientsMut
 
 							*_rcvPacket >> _mediaTypeDatas; // Get the Media Type Datas
 
-							DevicesManager::audioRenderDevices[0].SetInputMediaType(_mediaTypeDatas, _clientID); //Set the Media Type
+							DevicesManager::audioRenderDevices[Main::_audioRenderID].SetInputMediaType(_mediaTypeDatas, _clientID); //Set the Media Type
 
 							_clients[_clientID].receivedMediaType = true;
 
@@ -343,7 +379,7 @@ void NetClientSend(std::vector<VOIPClient>& _clients, std::mutex* _clientsMutex,
 void NetSendAudioDatas(std::vector<VOIPClient>& _clients, std::mutex* _clientsMutex) {
 	std::lock_guard<std::mutex> _clientsMutexLG(*_clientsMutex); // Lock _clientsMutex and unlock it at destruct
 
-	AudioDatas _audioDatas = DevicesManager::audioCaptureDevices[0].Read();;
+	AudioDatas _audioDatas = DevicesManager::audioCaptureDevices[Main::_audioCaptureID].Read();;
 
 	if (_audioDatas.datas.size() > 0) {
 		//unsigned int _nbPackets = _audioDatas.datas.size() / 511 + 1; // 511 is the size of a Packet - the msgType
@@ -386,7 +422,7 @@ void NetSendMediaType(std::vector<VOIPClient>& _clients, std::mutex* _clientsMut
 	SendNetPacket _packet;
 
 	_packet << unsigned char(1); // Write the type of datas
-	_packet << DevicesManager::audioCaptureDevices[0].GetMediaTypeDatas(); // Write the Media Type datas
+	_packet << DevicesManager::audioCaptureDevices[Main::_audioCaptureID].GetMediaTypeDatas(); // Write the Media Type datas
 
 	// Send Packet to all clients
 	std::lock_guard<std::mutex> _clientsMutexLG(*_clientsMutex); // Lock _clientsMutex and unlock it at destruct
@@ -403,7 +439,7 @@ void ProcessAudioDatas(std::vector<VOIPClient>& _clients, unsigned int _clientID
 		while (!_clients[_clientID].audioDatasBuffer.empty()) {
 			_clients[_clientID].audioBufferMutex.lock(); // Keep other threads from using the buffer
 
-			DevicesManager::audioRenderDevices[0].Play(_clients[_clientID].audioDatasBuffer.front(), _clientID);
+			DevicesManager::audioRenderDevices[Main::_audioRenderID].Play(_clients[_clientID].audioDatasBuffer.front(), _clientID);
 			_clients[_clientID].audioDatasBuffer.pop(); // Remove the processed element
 
 			_clients[_clientID].audioBufferMutex.unlock(); // Permit other threads to use the buffer
