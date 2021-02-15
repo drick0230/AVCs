@@ -1,3 +1,9 @@
+/**
+ * @file	Network.h
+ * @author	Dérick Gagnon
+ * @date	2021-02-14
+ */
+
 #pragma once
 #include <WinSock2.h>
 #include <WS2tcpip.h>

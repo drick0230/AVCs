@@ -1,3 +1,9 @@
+/**
+ * @file	general.cpp
+ * @author	Dérick Gagnon
+ * @date	2021-02-14
+ */
+
 #include "general.h"
 
 std::vector <std::string> split(std::string chaine, const char separateur, bool separateurMultiple)

@@ -1,3 +1,9 @@
+/**
+ * @file	NetPacket.h
+ * @author	Dérick Gagnon
+ * @date	2021-02-14
+ */
+
 #pragma once
 #include "Packet.h"
 #include <mutex>

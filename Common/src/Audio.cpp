@@ -1,3 +1,9 @@
+/**
+ * @file	Audio.cpp
+ * @author	Dérick Gagnon
+ * @date	2021-02-14
+ */
+
 #include "Audio.h"
 
 Packet& Packet::operator << (AudioDatas _audioDatas) {

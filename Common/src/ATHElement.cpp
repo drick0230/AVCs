@@ -1,3 +1,9 @@
+/**
+ * @file	ATHElement.cpp
+ * @author	Dérick Gagnon
+ * @date	2021-02-14
+ */
+
 #include "ATHElement.h"
 using namespace ATH;
 /////////////////////////// Constructors /////////////////////////////////////

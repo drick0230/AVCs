@@ -1,6 +1,10 @@
-﻿# CMakeList.txt : projet CMake pour AVCs, incluez la source et définissez
-# la logique spécifique au projet ici.
-#
+﻿ ############################
+ # @file	CMakeList.txt	#
+ # @author	Philippe Warren	#
+ #			Dérick Gagnon	#
+ # @date	2021-02-14		#
+ ############################
+
 cmake_minimum_required (VERSION 3.8)
 
 project ("AVCs_client")

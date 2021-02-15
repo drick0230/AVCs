@@ -1,3 +1,9 @@
+/**
+ * @file	Audio.h
+ * @author	Dérick Gagnon
+ * @date	2021-02-14
+ */
+
 #pragma once
 #include "Console.h"
 #include "general.h"

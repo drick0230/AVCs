@@ -1,3 +1,10 @@
+/**
+ * @file	general.h
+ * @author	Keven Gagnon
+ *			Dérick Gagnon
+ * @date	2021-02-14
+ */
+
 #pragma once
 #include <string> //std::string
 #include <vector> //std::vector

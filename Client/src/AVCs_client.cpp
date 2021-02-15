@@ -1,5 +1,9 @@
-﻿// AVCs_5.cpp : définit le point d'entrée de l'application.
-//
+﻿/**
+ * @file   AVCs_client.cpp
+ * @author Dérick Gagnon
+ * @date   2021-02-14
+ */
+
 #include "AVCs_client.h"
 
 // Global constant

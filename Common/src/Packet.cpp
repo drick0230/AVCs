@@ -1,3 +1,9 @@
+/**
+ * @file	Packet.cpp
+ * @author	Keven Gagnon
+ * @date	2021-02-14
+ */
+
 #include "Packet.h"
 
 #pragma region méthode

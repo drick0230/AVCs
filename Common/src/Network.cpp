@@ -1,3 +1,9 @@
+/**
+ * @file	Network.cpp
+ * @author	Dérick Gagnon
+ * @date	2021-02-14
+ */
+
 #include "Network.h"
 
 // Static Variables

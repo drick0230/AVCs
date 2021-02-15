@@ -1,3 +1,9 @@
+/**
+ * @file	Packet.h
+ * @author	Keven Gagnon
+ * @date	2021-02-14
+ */
+
 #pragma once
 #include <string>
 #include <vector>

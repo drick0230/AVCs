@@ -1,3 +1,9 @@
+/**
+ * @file	NetPacket.cpp
+ * @author	Dérick Gagnon
+ * @date	2021-02-14
+ */
+
 #pragma once
 #include "NetPacket.h"
 

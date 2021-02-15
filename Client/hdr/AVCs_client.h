@@ -1,5 +1,8 @@
-﻿// AVCs_5.h : fichier Include pour les fichiers Include système standard,
-// ou les fichiers Include spécifiques aux projets.
+﻿/**
+ * @file   AVCs_client.h
+ * @author Dérick Gagnon
+ * @date   2021-02-14
+ */
 
 #pragma once
 

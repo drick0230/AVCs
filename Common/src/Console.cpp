@@ -1,4 +1,11 @@
+/**
+ * @file	Console.çpp
+ * @author	Dérick Gagnon
+ * @date	2021-02-14
+ */
+
 #include "Console.h"
+
 
 Vector2_int::Vector2_int(int _x, int _y) : x(_x), y(_y) {}
 Vector2_uint::Vector2_uint(unsigned int _x, unsigned int _y) : x(_x), y(_y) {}
