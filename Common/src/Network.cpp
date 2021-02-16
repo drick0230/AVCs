@@ -6,13 +6,14 @@
 
 #include "Network.h"
 
-// Static Variables
+ // Static Variables
 std::vector <UDP> Network::udp;
+std::vector<struct NetworkInterface> Network::netInterfaces;
 
 
 #pragma region UDP
 /// Constructor/Destructor
-UDP::UDP() : first(0), end(0), mySocket(INVALID_SOCKET), serverAddr(), inUse(), tReceiving(), isReceiving() {
+UDP::UDP() : first(0), end(0), mySocket(INVALID_SOCKET), serverAddr(), inUse(), tReceiving(), isReceiving(), netInterface(){
 	std::lock_guard<std::mutex> LG_inUse(inUse);  // Lock the use of UDP in other threads and unlock it at end of current task
 
 	// Initialize netPacketBuffer with empty NetPacket
@@ -161,6 +162,10 @@ void UDP::Send(unsigned int _clientID, char* _bytes, const size_t _bytesSize, co
 }
 
 /// Public
+bool UDP::Bind(struct NetworkInterface _netInterface, unsigned short _port) {
+	netInterface = _netInterface;
+	return Bind(_netInterface.ip_ulong, _port);
+};
 bool UDP::Bind(std::string _ipAddress, unsigned short _port) {
 	// Convert from String to Ip Address as ULONG
 	unsigned long _ipBuffer;
@@ -190,6 +195,7 @@ bool UDP::Bind(unsigned long _ipAddress, unsigned short _port) {
 
 	return true;
 }
+
 
 unsigned int UDP::AddToBook(std::string _ipAddress, unsigned short _port) {
 	std::unique_lock<std::mutex> UL_inUse(inUse, std::try_to_lock); // If not did in this thread, lock the use of UDP in other threads and unlock it at end of current task (return)
@@ -225,6 +231,49 @@ unsigned int UDP::PosInBook(std::string _ipAddress, unsigned short _port) {
 
 	return addressBook.size();
 }
+//
+//bool UDP::GenerateEthInfo() {
+//	char _sBuff[30]; // For conversion from sock_addrin to readable IPV4
+//	unsigned long _sBuffSize = sizeof(_sBuff);
+//
+//	std::unique_lock<std::mutex> UL_inUse(inUse, std::try_to_lock); // If not did in this thread, lock the use of UDP in other threads and unlock it at end of current task (return)
+//	int hr = 0;
+//
+//	// Get the the IPV4 of the ethernet interface used by the socket
+//	sockaddr_in _socketAddr;
+//	int _socketAddrSize = sizeof(_socketAddr);
+//
+//	if (hr == 0) hr = getsockname(mySocket, (SOCKADDR*)&_socketAddr, &_socketAddrSize);
+//
+//	if (hr == 0) {
+//		ip_ = inet_ntoa(_socketAddr.sin_addr);
+//		ip_ = ip_ == "0.0.0.0" ? "127.0.0.1" : ip_; // LocalHost Connection
+//	}
+//
+//	// Get the ethernet interface used by the socket
+//	INTERFACE_INFO _eths[10];
+//	unsigned long _ethsReturnSize;
+//
+//	if (hr == 0) hr = WSAIoctl(mySocket, SIO_GET_INTERFACE_LIST, 0, 0, _eths, sizeof(_eths), &_ethsReturnSize, 0, 0);
+//	if (hr == 0) for (unsigned long _i = 0; _i < _ethsReturnSize / sizeof(INTERFACE_INFO); _i++) {
+//		if (_eths[_i].iiAddress.AddressIn.sin_addr.S_un.S_addr == _socketAddr.sin_addr.S_un.S_addr) { // Is the ethernet interface used by the socket
+//			// Get the IPV4 Subnet Mask of the ethernet interface used by the socket
+//			if (hr == 0) hr = WSAAddressToStringA((SOCKADDR*)&_eths[_i].iiNetmask.AddressIn, sizeof(_eths[_i].iiNetmask.AddressIn), NULL, _sBuff, &_sBuffSize);
+//			if (hr == 0) mask_ = std::string(_sBuff);
+//
+//			// Get the IPV4 Default Gateway of the ethernet interface used by the socket
+//		}
+//	}
+//
+//
+//	if (hr != 0) {
+//		std::cerr << "\n ERROR at std::string Network::GetSocketInfo(unsigned short& _returnPort, SOCKET _socket) :\n"
+//			<< WSAGetLastError();
+//		return false;
+//	}
+//
+//	return true;
+//}
 
 void UDP::BeginReceiving() {
 	if (!isReceiving.try_lock()) {
@@ -337,6 +386,42 @@ void Network::Initialize() {
 
 void Network::Destruct() {
 	WSACleanup();
+}
+
+void Network::EnumerateInterfaces() {
+	int _hr = 0;
+
+	SOCKET _socket;
+	INTERFACE_INFO _eths[20];
+	unsigned long _ethsReturnSize;
+	unsigned long _nbEths;
+
+	if (_hr == 0) _hr = (_socket = WSASocketA(AF_INET, SOCK_DGRAM, 0, 0, 0, 0)) == SOCKET_ERROR ? SOCKET_ERROR : 0;
+
+	if (_hr == 0) _hr = WSAIoctl(_socket, SIO_GET_INTERFACE_LIST, 0, 0, _eths, sizeof(_eths), &_ethsReturnSize, 0, 0);
+	if (_hr == 0) {
+		_nbEths = _ethsReturnSize / sizeof(INTERFACE_INFO);
+		netInterfaces.resize(_nbEths);
+
+		for (unsigned long _i = 0; _i < _nbEths; _i++) {
+			// Get the the IPV4 of the ethernet interface
+			netInterfaces[_i].ip = inet_ntoa(_eths[_i].iiAddress.AddressIn.sin_addr);
+			netInterfaces[_i].ip_ulong = _eths[_i].iiAddress.AddressIn.sin_addr.S_un.S_addr;
+
+			// Get the IPV4 Subnet Mask of the ethernet interface
+			netInterfaces[_i].mask = inet_ntoa(_eths[_i].iiNetmask.AddressIn.sin_addr);
+			netInterfaces[_i].mask_ulong = _eths[_i].iiNetmask.AddressIn.sin_addr.S_un.S_addr;
+
+
+			// Get the IPV4 Default Gateway of the ethernet interface used by the socket
+		}
+	}
+
+	netInterfaces;
+	if (_hr != 0) {
+		std::cerr << "\n ERROR at void Network::EnumerateInterfaces() :\n"
+			<< WSAGetLastError();
+	}
 }
 
 void Network::Add(const unsigned int _protocoleType, const unsigned char _nbToAdd) {

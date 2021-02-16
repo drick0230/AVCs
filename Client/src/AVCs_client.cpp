@@ -16,7 +16,7 @@ namespace Main {
 
 	const unsigned int minAudioBuffer = 0;
 
-	size_t _audioRenderID, _audioCaptureID;
+	size_t _audioRenderID, _audioCaptureID, _netInterfaceID;
 }
 
 int main()
@@ -27,18 +27,17 @@ int main()
 	static std::mutex programIsExiting;
 	programIsExiting.lock();
 
-	////////// AUDIO TEST ////////
+	////////// Initialisation ////////
 	DevicesManager::Initialize();
 
 	DevicesManager::EnumerateDevices(DevicesTypes::AUD_CAPT);
 	DevicesManager::EnumerateDevices(DevicesTypes::AUD_REND);
-	//std::wcout << Main::devManager.GetDevicesName(DevicesTypes::VID_CAPT, 0) << '\n';
 
-	//DevicesManager::audioRenderDevices[0].AddTrack();
-
-	////////// PROGRAM ///////////
 	Network::Initialize();
+
+	Network::EnumerateInterfaces();
 	Network::Add(ProtocoleTypes::UDP, 1);
+
 	Console::InitializeConsole();
 
 	std::string userInput = "";
@@ -89,15 +88,33 @@ int main()
 
 		Main::_audioRenderID = myParse<size_t>(userInput);
 
+		// Select Network Interface
+		do {
+			Console::Write("Select your Network Interface :\n");
+			for (int _i = 0; _i < Network::netInterfaces.size(); _i++) {
+				Console::Write('[');
+				Console::Write(_i);
+				Console::Write("] : ");
+				Console::Write(Network::netInterfaces[_i].ip);
+				Console::Write('\n');
+			}
+			Console::Write('\n');
+			Console::Write();
 
-		Network::udp[0].Bind(INADDR_ANY, 0);
+			userInput = GetNextCommand();
+		} while (myParse<size_t>(userInput) < 0 || myParse<size_t>(userInput) >= Network::netInterfaces.size());
+
+		Main::_netInterfaceID = myParse<size_t>(userInput);
+
+		//Network::udp[0].Bind(INADDR_ANY, 0);
+		Network::udp[0].Bind(Network::netInterfaces[Main::_netInterfaceID], 0);
 
 		// Connect to Server
 		Console::Write("IP du Serveur:");
 		Console::Write();
 		_serverIP = GetNextCommand();
 
-		if (_serverIP == "0") _serverIP = "127.0.0.1"; // Localhost 
+		if (_serverIP == "0") _serverIP = Network::udp[0].netInterface.ip; // Localhost 
 
 		Network::udp[0].AddToBook(_serverIP, Main::serverPort);
 
@@ -456,6 +473,7 @@ void KeepAlive(unsigned int _clientID, unsigned int _ms, std::mutex* _programIsE
 		SendNetPacket _packet;
 		_packet << unsigned char(0);
 		Network::udp[0].Send(_clientID, _packet);
+		//Network::udp[0].GenerateEthInfo();
 		std::this_thread::sleep_for(std::chrono::milliseconds(_ms));
 	}
 

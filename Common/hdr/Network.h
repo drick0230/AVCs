@@ -6,7 +6,7 @@
 
 #pragma once
 #include <WinSock2.h>
-#include <WS2tcpip.h>
+#include <WS2tcpip.h> // inet_pton
 
 #include <string>
 #include <iostream>
@@ -19,6 +19,26 @@
 namespace ProtocoleTypes {
 	enum PROTOCOLE_TYPES { TCP, UDP, BOTH };
 }
+
+struct NetworkInterface {
+	// IPV4 of the ethernet interface
+	std::string ip;
+
+	// IPV4 as unsigned long of the ethernet interface
+	unsigned long ip_ulong;
+
+	// IPV4 Subnet Mask of the ethernet interface
+	std::string mask;
+
+	// IPV4 Subnet Mask as unsigned long of the ethernet interface
+	unsigned long mask_ulong;
+
+	// IPV4 Default Gateway of the ethernet interface
+	std::string gateway;
+
+	// IPV4 Default Gateway as unsigned long of the ethernet interface
+	unsigned long gateway_ulong;
+};
 
 class UDP {
 private:
@@ -51,6 +71,9 @@ public:
 	// Prevent the UDP from being used in other threads
 	std::mutex inUse;
 
+	// Network Interface used by the socket
+	struct NetworkInterface netInterface;
+
 	// Address of the clients
 	std::vector<std::string> addressBook;
 
@@ -61,12 +84,14 @@ public:
 	UDP(UDP&& _udp);
 	~UDP();
 
+	// Bind to the IPV4 address of an interface, a port and set the interface as the Network Interface for the socket
+	bool Bind(NetworkInterface _netInterface, unsigned short _port);
+
 	// Bind to an IPV4 address represent by a string 0.0.0.0 format and a port
 	bool Bind(std::string _ipAddress, unsigned short _port);
 
 	// Bind to an IPV4 address represent by a ulong and a port. Ex: 	INADDR_ANY and 0 for an auto ip and port
 	bool Bind(unsigned long _ipAddress, unsigned short _port);
-
 
 
 	// Return true if the corresponding IP and Port are in book. Lock inUse by default
@@ -77,6 +102,19 @@ public:
 
 	// Add the IP and Port to the book if not already in. Return the ClientID of the added one or -1.
 	unsigned int AddToBook(std::string _ipAddress, unsigned short _port);
+
+
+	// Generate the ethernet interface info. Must be used after sending or receiving packets
+	// bool GenerateEthInfo();
+
+	//// Return the IPV4 of the ethernet interface used by the socket
+	//std::string ip() { return ip_; };
+
+	//// Return the IPV4 Subnet Mask of the ethernet interface used by the socket
+	//std::string mask() { return mask_; };
+
+	//// Return the IPV4 Default Gateway of the ethernet interface used by the socket
+	//std::string gateway() { return gateway_; };
 
 
 	// Start Async operation to receive packets from everyone and store them
@@ -93,14 +131,16 @@ public:
 class Network {
 private:
 
-
 public:
 	// Public Variables
 	static std::vector<UDP> udp;
+	static std::vector<struct NetworkInterface> netInterfaces;
 
 	// Public Functions
 	static void Initialize();
 	static void Destruct();
+
+	static void EnumerateInterfaces();
 
 	static void Add(const unsigned int _protocoleType, const unsigned char _nbToAdd = 1);
 
