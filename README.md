@@ -7,11 +7,12 @@ système (Win32 et Linux kernel user-space API) permet d'éviter les dépendance
 Ce logiciel devrait être le premier d'une série de quatre logiciels. Ces quatre logiciels devraient permettre la
 communication Audio, la communication Video (webcam), la messagerie (Chatting) et le partage d'écran (Screen sharing).
 
-## Utilisation (version 0.5)
-*	Seul l'exécutable "AVCs_client.exe" est utilisé.
-*	L'exécutable est téléchargeable via la section "Releases", en haut à droite de la page.
+## Téléchargement
+*	Seul l'exécutable [AVCs_client.exe](https://github.com/drick0230/AVCs/releases/download/v0.5a/AVCs_client.exe) est utilisé.
+*	L'exécutable est téléchargeable via la section "Releases", en haut à droite de la page ou  en cliquant sur [AVCs_client.exe](https://github.com/drick0230/AVCs/releases/download/v0.5a/AVCs_client.exe).
 *	L'exécutable est aussi disponible, après la compilation, dans "AVCs\out\build\x64-Release\Client" pour le "Release" et dans "AVCs\out\build\x64-Debug (par défaut)\Client" pour le "Debug".
 
+## Utilisation (version 0.5)
 ### Client
 1.	Inscrire <0> dans la console et appuyer sur Entrer
 2.	Inscrire le numéro correspondant à son périphérique d'entrée audio et appuyer sur Entrer
