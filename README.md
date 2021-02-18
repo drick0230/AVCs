@@ -40,3 +40,8 @@ Le port utilisé par le serveur de l'application est <11111>.
 *	[Microsoft Media Foundation](https://docs.microsoft.com/en-us/windows/win32/medfound/microsoft-media-foundation-sdk)
 	*	[Source Reader](https://docs.microsoft.com/en-us/windows/win32/medfound/source-reader)
 	*	[Sink Writter](https://docs.microsoft.com/en-us/windows/win32/medfound/sink-writer)
+	
+## Problèmes
+*	La communication en LAN n'est pas fonctionnelle
+*	Pour utiliser le logiciel en LocalHost, il ne faut pas inscrire de passerelle par défaut en tant que serveur. Cela pourrait être utile pour le déverminage.
+*	Il n'est pas possible de coller le contenu du presse-papier. Cela pourrait être utile pour ne pas avoir à inscrire les IPV4 à la main.
