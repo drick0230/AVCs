@@ -98,16 +98,26 @@ int main()
 				Console::Write(Network::netInterfaces[_i].ip);
 				Console::Write('\n');
 			}
+
+			Console::Write('[');
+			Console::Write((int)Network::netInterfaces.size());
+			Console::Write("] : ANY");
+			Console::Write('\n');
+
 			Console::Write('\n');
 			Console::Write();
 
 			userInput = GetNextCommand();
-		} while (myParse<size_t>(userInput) < 0 || myParse<size_t>(userInput) >= Network::netInterfaces.size());
+		} while (myParse<size_t>(userInput) < 0 || myParse<size_t>(userInput) >= Network::netInterfaces.size() + 1);
 
+		
 		Main::_netInterfaceID = myParse<size_t>(userInput);
 
 		//Network::udp[0].Bind(INADDR_ANY, 0);
-		Network::udp[0].Bind(Network::netInterfaces[Main::_netInterfaceID], 0);
+		if (Main::_netInterfaceID < Network::netInterfaces.size())
+			Network::udp[0].Bind(Network::netInterfaces[Main::_netInterfaceID], 0);
+		else
+			Network::udp[0].Bind(ADDR_ANY, 0);
 
 		// Connect to Server
 		Console::Write("IP du Serveur:");
