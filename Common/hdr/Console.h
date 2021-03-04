@@ -62,9 +62,11 @@ class Console {
 private:
 	// Variables
 #if _WIN32
+	static const size_t inRecordSize = 100;
+
 	static HANDLE hOut;
 	static HANDLE hIn;
-	static INPUT_RECORD inRecord[30];
+	static INPUT_RECORD inRecord[inRecordSize];
 #endif
 
 	static std::string outCommands; // Commands buffer to output in the console

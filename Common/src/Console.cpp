@@ -17,7 +17,7 @@ Color::Color(unsigned char _r, unsigned char _g, unsigned char _b) : r(_r), g(_g
 #if _WIN32
 HANDLE Console::hOut;
 HANDLE Console::hIn;
-INPUT_RECORD Console::inRecord[30];
+INPUT_RECORD Console::inRecord[Console::inRecordSize];
 #endif // _WIN32
 
 std::vector<unsigned short> Console::inKeys;
@@ -63,6 +63,9 @@ void Console::SetScreenColor(unsigned char _r, unsigned char _g, unsigned char _
 bool Console::InitializeConsole()
 {
 #if _WIN32
+	inKeys.clear();
+	inKeys.resize(0);
+
 	// Set output mode to handle virtual terminal sequences
 	hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	if (hOut == INVALID_HANDLE_VALUE)
@@ -114,17 +117,28 @@ bool Console::InitializeConsole()
 
 // Read the next inputs (Non Blocking)
 bool Console::Read() {
+	bool _hr = true;
+
 	unsigned long _nbEventAvailale = 0;
 	unsigned long _nbEventRead = 0;
 	unsigned int _nbKeyEvent = 0;
+	const unsigned int _keyEventsSize = 20;
 
-#if _WIN32
 	KEY_EVENT_RECORD _keyEvents[20];
 
-	GetNumberOfConsoleInputEvents(hIn, &_nbEventAvailale);
-	ReadConsoleInput(hIn, inRecord, _nbEventAvailale, &_nbEventRead);
+	if (_hr) _hr = GetNumberOfConsoleInputEvents(hIn, &_nbEventAvailale);
+	if (_nbEventAvailale > inRecordSize) return false;
 
-	for (unsigned int _i = 0; _i < _nbEventRead; _i++)
+	if (_hr) _hr = ReadConsoleInput(hIn, inRecord, _nbEventAvailale, &_nbEventRead);
+
+	if (!_hr) {
+		std::cerr << "\n ERROR at bool Console::Read() :\n"
+			<< GetLastError();
+		throw _hr;
+		return false;
+	}
+
+	for (unsigned int _i = 0; _i < _nbEventRead && _nbKeyEvent < _keyEventsSize; _i++)
 	{
 		if (inRecord[_i].EventType == KEY_EVENT) {
 			if (inRecord[_i].Event.KeyEvent.bKeyDown)
@@ -161,35 +175,21 @@ bool Console::Read() {
 	case 2:
 		break;
 
-	case 1:
-		if (_keyEvents[0].wVirtualKeyCode == 0x10) 
-			inKeys.push_back(KEYS::SHIFT);
-		else 
-			inKeys.push_back(_keyEvents[0].uChar.AsciiChar);
+	case 0:
 		break;
 
 	default:
+		for (unsigned int _i = 0; _i < _nbKeyEvent; _i++) {
+			if (_keyEvents[_i].wVirtualKeyCode == 0x10) // Shift
+				inKeys.push_back(KEYS::SHIFT);
+			else
+				inKeys.push_back(_keyEvents[_i].uChar.AsciiChar);
+		}
+
 		break;
 	}
 
-	//for (unsigned int _i = 0; _i < _nbEventRead; _i++)
-	//	if (inRecord[_i].EventType == KEY_EVENT)
-	//		if (inRecord[_i].Event.KeyEvent.bKeyDown)
-	//		{
-	//			char _input = inRecord[_i].Event.KeyEvent.uChar.AsciiChar;
-	//			// Si le caractère est imprimable
-	//			if (_input >= (char)32 && _input <= (char)126) {
-	//				// L'inclure dans le text
-	//				inText.content.push_back(inRecord[_i].Event.KeyEvent.uChar.AsciiChar);
-	//			}
-	//			else {
-	//				// L'inclure dans les touches de clavier
-	//				inKeys.push_back(inRecord[_i].Event.KeyEvent.uChar.AsciiChar);
-	//			}
-	//		}
-#endif // _WIN32
-
-	if (_nbEventRead != 0)
+	if (_nbKeyEvent != 0)
 		return true;
 	return false;
 }
@@ -206,9 +206,9 @@ unsigned short Console::GetInKeys(size_t _index) {
 void Console::Write(std::string _s) { outCommands.append(_s); }
 void Console::Write(std::wstring _s) { outCommands.append(ToString(_s)); }
 void Console::Write(char _c) { outCommands.push_back(_c); }
-void Console::Write(unsigned char _c, bool _hex) { 
+void Console::Write(unsigned char _c, bool _hex) {
 	char _intStr[5];
-	if(_hex)
+	if (_hex)
 		sprintf(_intStr, "%x", _c);
 	else
 		sprintf(_intStr, "%u", _c);
