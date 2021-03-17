@@ -71,6 +71,8 @@ public:
 	AudioCaptureDevice(IMFActivate* _activate = NULL);
 	AudioCaptureDevice(IMMDevice* _device = NULL);
 
+	~AudioCaptureDevice() { ((Device*)this)->~Device(); /* Call the Device destructor */ }
+
 	// Get a Byte array that represent the IMFMediaType of the AudioDatas return by the device
 	std::vector<unsigned char> GetMediaTypeDatas();
 
@@ -84,6 +86,8 @@ private:
 public:
 	VideoCaptureDevice(IMFActivate* _activate = NULL);
 	VideoCaptureDevice(IMMDevice* _device = NULL);
+
+	~VideoCaptureDevice() { ((Device*)this)->~Device(); /* Call the Device destructor */ }
 };
 
 // Childs of RenderDevice

@@ -515,7 +515,7 @@ void DevicesManager::ClearDevices(const unsigned int _devicesType) {
 	// Release Audio Capture Devices
 	if (_devicesType == DevicesTypes::AUD_CAPT || _devicesType == DevicesTypes::BOTH_CAPT || _devicesType == DevicesTypes::ALL) {
 		for (unsigned int _i = 0; _i < nbAudioCaptureDevices; _i++)
-			Device(audioCaptureDevices[0]).~Device();
+			audioCaptureDevices[0].~AudioCaptureDevice();
 		audioCaptureDevices.clear();
 	}
 
@@ -529,7 +529,7 @@ void DevicesManager::ClearDevices(const unsigned int _devicesType) {
 	// Release Video Capture Devices
 	if (_devicesType == DevicesTypes::AUD_CAPT || _devicesType == DevicesTypes::BOTH_CAPT || _devicesType == DevicesTypes::ALL) {
 		for (unsigned int _i = 0; _i < nbVideoCaptureDevices; _i++)
-			Device(videoCaptureDevices[0]).~Device();
+			videoCaptureDevices[0].~VideoCaptureDevice();
 		videoCaptureDevices.clear();
 	}
 #endif //_WIN32

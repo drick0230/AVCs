@@ -11,6 +11,8 @@
 #include <chrono>			// std::chrono::seconds
 #include <queue>			// std::queue
 #include <mutex>			// Protected varaible for multithreading
+#include <fstream>			// OFStream and IFStream
+#include <filesystem>		// Directory management
 
 #include "ATHElement.h"
 #include "Audio.h"
@@ -53,3 +55,11 @@ void KeepAlive(unsigned int _clientID, unsigned int _ms, std::mutex* _programIsE
  // Get the VOIPClient's ID by the network ID or return the size of VOIPClient's vector
 size_t GetVOIPClient(std::vector<VOIPClient> _clients, unsigned int _networkID);
 
+
+// Save the connection settings of the client in a file
+void SaveClientSetting(std::string _fileName, size_t _audioRenderID, size_t _audioCaptureID, size_t _netInterfaceID, std::string _serverIP);
+
+// Load the connection settings of the client from a file
+void LoadClientSetting(std::wstring _fileName, size_t& _audioRenderID, size_t& _audioCaptureID, size_t& _netInterfaceID, std::string& _serverIP);
+void LoadClientSetting(std::string _fileName, size_t& _audioRenderID, size_t& _audioCaptureID, size_t& _netInterfaceID, std::string& _serverIP);
+void LoadClientSetting(std::ifstream& _file, size_t& _audioRenderID, size_t& _audioCaptureID, size_t& _netInterfaceID, std::string& _serverIP);

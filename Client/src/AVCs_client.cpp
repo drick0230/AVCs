@@ -52,79 +52,145 @@ int main()
 		// Is Client
 		std::string _serverIP;
 
-		// Select Mic
+
+		// Load Setting or New Setting
 		do {
-			Console::Write("Select your Microphone :\n");
-			for (int _i = 0; _i < DevicesManager::audioCaptureDevices.size(); _i++) {
-				Console::Write('[');
-				Console::Write(_i);
-				Console::Write("] : ");
-				Console::Write(DevicesManager::audioCaptureDevices[_i].GetName());
-				Console::Write('\n');
-			}
-			Console::Write('\n');
+			Console::Write("[0] Load Setting\n");
+			Console::Write("[1] New Setting\n");
 			Console::Write();
 
 			userInput = GetNextCommand();
-		} while (myParse<size_t>(userInput) < 0 || myParse<size_t>(userInput) >= DevicesManager::audioCaptureDevices.size());
+		} while (userInput != "0" && userInput != "1");
 
-		Main::_audioCaptureID = myParse<size_t>(userInput);
+		if (userInput == "0") {	// Load Setting
+			std::vector<std::wstring> _settingFiles;
 
-		// Select Speaker
-		do {
-			Console::Write("Select your Speaker/Headphone :\n");
-			for (int _i = 0; _i < DevicesManager::audioRenderDevices.size(); _i++) {
-				Console::Write('[');
-				Console::Write(_i);
-				Console::Write("] : ");
-				Console::Write(DevicesManager::audioRenderDevices[_i].GetName());
-				Console::Write('\n');
-			}
-			Console::Write('\n');
-			Console::Write();
+			for (auto& p : std::filesystem::directory_iterator(".")) {
+				size_t _pathSize = p.path().generic_string().size();
 
-			userInput = GetNextCommand();
-		} while (myParse<size_t>(userInput) < 0 || myParse<size_t>(userInput) >= DevicesManager::audioRenderDevices.size());
-
-		Main::_audioRenderID = myParse<size_t>(userInput);
-
-		// Select Network Interface
-		do {
-			Console::Write("Select your Network Interface :\n");
-			for (int _i = 0; _i < Network::netInterfaces.size(); _i++) {
-				Console::Write('[');
-				Console::Write(_i);
-				Console::Write("] : ");
-				Console::Write(Network::netInterfaces[_i].ip);
-				Console::Write('\n');
+				// File Extension == .avcs?
+				if (_pathSize > 5)
+					if (p.path().c_str()[_pathSize - 1] == 's')
+						if (p.path().c_str()[_pathSize - 2] == 'c')
+							if (p.path().c_str()[_pathSize - 3] == 'v')
+								if (p.path().c_str()[_pathSize - 4] == 'a')
+									if (p.path().c_str()[_pathSize - 5] == '.')
+										_settingFiles.push_back(p.path());
 			}
 
-			Console::Write('[');
-			Console::Write((int)Network::netInterfaces.size());
-			Console::Write("] : ANY");
-			Console::Write('\n');
+			// Select Configuration File
+			do {
+				Console::Write("Select your Configuration File :\n");
+				for (int _i = 0; _i < _settingFiles.size(); _i++) {
+					Console::Write('[');
+					Console::Write(_i);
+					Console::Write("] : ");
+					Console::Write(_settingFiles[_i]);
+					Console::Write('\n');
+				}
+				Console::Write('\n');
+				Console::Write();
 
-			Console::Write('\n');
+				userInput = GetNextCommand();
+			} while (myParse<size_t>(userInput) < 0 || myParse<size_t>(userInput) >= _settingFiles.size());
+
+			LoadClientSetting(_settingFiles[myParse<size_t>(userInput)], Main::_audioRenderID, Main::_audioCaptureID, Main::_netInterfaceID, _serverIP);
+		}
+		else {					// New Setting
+			std::string _fileName;
+
+			// Get the file name from user
+			Console::Write("Nom du fichier:");
 			Console::Write();
+			_fileName = GetNextCommand();
 
-			userInput = GetNextCommand();
-		} while (myParse<size_t>(userInput) < 0 || myParse<size_t>(userInput) >= Network::netInterfaces.size() + 1);
+			// File Extension != .avcs?
+			if (_fileName.size() < 5 ||
+				_fileName[_fileName.size() - 1] != 's' ||
+				_fileName[_fileName.size() - 2] != 'c' ||
+				_fileName[_fileName.size() - 3] != 'v' ||
+				_fileName[_fileName.size() - 4] != 'a' ||
+				_fileName[_fileName.size() - 5] != '.')
+				_fileName += ".avcs";
 
-		
-		Main::_netInterfaceID = myParse<size_t>(userInput);
+			// Select Mic
+			do {
+				Console::Write("Select your Microphone :\n");
+				for (int _i = 0; _i < DevicesManager::audioCaptureDevices.size(); _i++) {
+					Console::Write('[');
+					Console::Write(_i);
+					Console::Write("] : ");
+					Console::Write(DevicesManager::audioCaptureDevices[_i].GetName());
+					Console::Write('\n');
+				}
+				Console::Write('\n');
+				Console::Write();
 
-		//Network::udp[0].Bind(INADDR_ANY, 0);
+				userInput = GetNextCommand();
+			} while (myParse<size_t>(userInput) < 0 || myParse<size_t>(userInput) >= DevicesManager::audioCaptureDevices.size());
+
+			Main::_audioCaptureID = myParse<size_t>(userInput);
+
+			// Select Speaker
+			do {
+				Console::Write("Select your Speaker/Headphone :\n");
+				for (int _i = 0; _i < DevicesManager::audioRenderDevices.size(); _i++) {
+					Console::Write('[');
+					Console::Write(_i);
+					Console::Write("] : ");
+					Console::Write(DevicesManager::audioRenderDevices[_i].GetName());
+					Console::Write('\n');
+				}
+				Console::Write('\n');
+				Console::Write();
+
+				userInput = GetNextCommand();
+			} while (myParse<size_t>(userInput) < 0 || myParse<size_t>(userInput) >= DevicesManager::audioRenderDevices.size());
+
+			Main::_audioRenderID = myParse<size_t>(userInput);
+
+			// Select Network Interface
+			do {
+				Console::Write("Select your Network Interface :\n");
+				for (int _i = 0; _i < Network::netInterfaces.size(); _i++) {
+					Console::Write('[');
+					Console::Write(_i);
+					Console::Write("] : ");
+					Console::Write(Network::netInterfaces[_i].ip);
+					Console::Write('\n');
+				}
+
+				Console::Write('[');
+				Console::Write((int)Network::netInterfaces.size());
+				Console::Write("] : ANY");
+				Console::Write('\n');
+
+				Console::Write('\n');
+				Console::Write();
+
+				userInput = GetNextCommand();
+			} while (myParse<size_t>(userInput) < 0 || myParse<size_t>(userInput) >= Network::netInterfaces.size() + 1);
+
+
+			Main::_netInterfaceID = myParse<size_t>(userInput);
+
+			// Get the server address from user
+			Console::Write("IP du Serveur:");
+			Console::Write();
+			_serverIP = GetNextCommand();
+
+			SaveClientSetting(_fileName, Main::_audioRenderID, Main::_audioCaptureID, Main::_netInterfaceID, _serverIP);
+		}
+
+		// Bind to selected Network Interface
 		if (Main::_netInterfaceID < Network::netInterfaces.size())
 			Network::udp[0].Bind(Network::netInterfaces[Main::_netInterfaceID], 0);
 		else
 			Network::udp[0].Bind(ADDR_ANY, 0);
 
 		// Connect to Server
-		Console::Write("IP du Serveur:");
-		Console::Write();
-		_serverIP = GetNextCommand();
-
-		if (_serverIP == "0") _serverIP = Network::udp[0].netInterface.ip; // Localhost 
+		if (_serverIP == "0") 
+			_serverIP = Network::udp[0].netInterface.ip; // Localhost 
 
 		Network::udp[0].AddToBook(_serverIP, Main::serverPort);
 
@@ -496,4 +562,54 @@ size_t GetVOIPClient(std::vector<VOIPClient> _clients, unsigned int _networkID) 
 			return _clientID;
 
 	return _clients.size();
+}
+
+void SaveClientSetting(std::string _fileName, size_t _audioRenderID, size_t _audioCaptureID, size_t _netInterfaceID, std::string _serverIP) {
+	std::ofstream _file;
+
+	_file.open(_fileName);
+
+	_file << "Audio Render ID :" << _audioRenderID << '\n' << "Audio Capture ID :" << _audioCaptureID << '\n' << "Net Interface ID :" << _netInterfaceID << '\n' << "Server IP :" << _serverIP;
+
+	_file.close();
+}
+
+void LoadClientSetting(std::wstring _fileName, size_t& _audioRenderID, size_t& _audioCaptureID, size_t& _netInterfaceID, std::string& _serverIP) {
+	std::ifstream _file;
+
+	_file.open(_fileName);
+
+	LoadClientSetting(_file, _audioRenderID, _audioCaptureID, _netInterfaceID, _serverIP);
+
+	_file.close();
+}
+
+void LoadClientSetting(std::string _fileName, size_t &_audioRenderID, size_t &_audioCaptureID, size_t &_netInterfaceID, std::string &_serverIP) {
+	std::ifstream _file;
+
+	_file.open(_fileName);
+
+	LoadClientSetting(_file, _audioRenderID, _audioCaptureID, _netInterfaceID, _serverIP);
+
+	_file.close();
+}
+
+void LoadClientSetting(std::ifstream& _file, size_t& _audioRenderID, size_t& _audioCaptureID, size_t& _netInterfaceID, std::string& _serverIP) {
+	char _charBuf[256];
+
+	_file.getline(_charBuf, 256, ':'); // Skip "Audio Render ID :"
+	_file.getline(_charBuf, 256); // Get Audio Render ID
+	_audioRenderID = myParse<size_t>(_charBuf); // Store Get Audio Render ID
+
+	_file.getline(_charBuf, 256, ':'); // Skip "Audio Capture ID :"
+	_file.getline(_charBuf, 256); // Get Audio Capture ID
+	_audioCaptureID = myParse<size_t>(_charBuf); // Store Audio Capture ID
+
+	_file.getline(_charBuf, 256, ':'); // Skip "Net Interface ID :"
+	_file.getline(_charBuf, 256); // Get Net Interface ID
+	_netInterfaceID = myParse<size_t>(_charBuf); // Store Net Interface ID
+
+	_file.getline(_charBuf, 256, ':'); // Skip "Server IP :"
+	_file.getline(_charBuf, 256); // Get Server IP
+	_serverIP = _charBuf; // Store Server IP
 }
